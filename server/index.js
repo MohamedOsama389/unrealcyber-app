@@ -225,6 +225,21 @@ app.post('/api/vms/status', authenticateToken, (req, res) => {
     res.json({ success: true });
 });
 
+app.put('/api/vms/:id', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    const { id } = req.params;
+    const { name, ip, type, username, password } = req.body;
+    db.prepare('UPDATE vms SET name=?, ip=?, type=?, username=?, password=? WHERE id=?').run(name, ip, type, username, password, id);
+    res.json({ success: true });
+});
+
+app.delete('/api/vms/:id', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    const { id } = req.params;
+    db.prepare('DELETE FROM vms WHERE id = ?').run(id);
+    res.json({ success: true });
+});
+
 // --- USERS ---
 app.get('/api/users', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);

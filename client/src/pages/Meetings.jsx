@@ -18,7 +18,7 @@ const Meetings = () => {
 
     const fetchMeeting = async () => {
         try {
-            const res = await axios.get('http://localhost:3000/api/meetings');
+            const res = await axios.get('/api/meetings');
             setMeeting(res.data);
         } catch (err) {
             console.error(err);
@@ -28,7 +28,7 @@ const Meetings = () => {
     const handleUpdate = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:3000/api/meetings', meeting);
+            await axios.post('/api/meetings', meeting);
             setMessage('Meeting status updated successfully');
             setTimeout(() => setMessage(''), 3000);
         } catch (err) {
@@ -52,8 +52,8 @@ const Meetings = () => {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className={`flex items-center justify-center p-12 rounded-3xl mb-8 border transition-all duration-500 ${meeting.is_active
-                        ? 'bg-green-500/10 border-green-500/30 shadow-[0_0_50px_rgba(34,197,94,0.2)]'
-                        : 'bg-red-500/10 border-red-500/30'
+                    ? 'bg-green-500/10 border-green-500/30 shadow-[0_0_50px_rgba(34,197,94,0.2)]'
+                    : 'bg-red-500/10 border-red-500/30'
                     }`}
             >
                 <div className="text-center">

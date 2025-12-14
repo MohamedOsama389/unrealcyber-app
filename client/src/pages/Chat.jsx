@@ -13,7 +13,7 @@ const Chat = () => {
     const scrollRef = useRef();
 
     useEffect(() => {
-        socketRef.current = io('http://localhost:3000');
+        socketRef.current = io(); // Connect to same origin
 
         socketRef.current.on('init_messages', (msgs) => {
             setMessages(msgs);
@@ -83,8 +83,8 @@ const Chat = () => {
                                 </div>
                                 <div
                                     className={`max-w-[80%] px-4 py-2 rounded-2xl text-sm ${isMe
-                                            ? 'bg-cyan-600 text-white rounded-br-none'
-                                            : 'bg-slate-700 text-slate-200 rounded-bl-none'
+                                        ? 'bg-cyan-600 text-white rounded-br-none'
+                                        : 'bg-slate-700 text-slate-200 rounded-bl-none'
                                         }`}
                                 >
                                     {msg.content}

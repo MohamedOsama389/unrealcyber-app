@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { Terminal, Monitor, Server } from 'lucide-react';
+import { Terminal, Monitor, Server, Trash2, Edit } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const VMRental = () => {
     const { user } = useAuth();
     const [vms, setVms] = useState([]);
     const [newVM, setNewVM] = useState({ name: '', ip: '', type: 'Linux', username: '', password: '' });
+    const [editingId, setEditingId] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -28,12 +29,33 @@ const VMRental = () => {
     const handleAddVM = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('/api/vms', newVM);
+            if (editingId) {
+                await axios.put(`/api/vms/${editingId}`, newVM);
+                setEditingId(null);
+            } else {
+                await axios.post('/api/vms', newVM);
+            }
             setNewVM({ name: '', ip: '', type: 'Linux', username: '', password: '' });
             fetchVMs();
         } catch (err) {
-            console.error("Failed to add VM");
+            console.error("Failed to save VM");
         }
+    };
+
+    const handleDelete = async (id) => {
+        if (!confirm("Delete this Virtual Machine instance?")) return;
+        try {
+            await axios.delete(`/api/vms/${id}`);
+            fetchVMs();
+        } catch (err) {
+            console.error("Failed to delete VM");
+        }
+    };
+
+    const startEdit = (vm) => {
+        setNewVM(vm);
+        setEditingId(vm.id);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const toggleStatus = async (vm) => {
@@ -63,7 +85,14 @@ const VMRental = () => {
 
             {user?.role === 'admin' && (
                 <div className="glass-panel p-6 mb-8 border-l-4 border-purple-500">
-                    <h3 className="text-lg font-bold text-white mb-4">Deploy New Instance</h3>
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-lg font-bold text-white">{editingId ? 'Update Instance Configuration' : 'Deploy New Instance'}</h3>
+                        {editingId && (
+                            <button onClick={() => { setEditingId(null); setNewVM({ name: '', ip: '', type: 'Linux', username: '', password: '' }); }} className="text-xs text-slate-400 hover:text-white">
+                                Cancel Edit
+                            </button>
+                        )}
+                    </div>
                     <form onSubmit={handleAddVM} className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <input type="text" placeholder="Machine Name" value={newVM.name} onChange={e => setNewVM({ ...newVM, name: e.target.value })} className="input-field" required />
                         <input type="text" placeholder="IP Address" value={newVM.ip} onChange={e => setNewVM({ ...newVM, ip: e.target.value })} className="input-field" required />
@@ -74,7 +103,9 @@ const VMRental = () => {
                         <input type="text" placeholder="Username" value={newVM.username} onChange={e => setNewVM({ ...newVM, username: e.target.value })} className="input-field" required />
                         <input type="text" placeholder="Password" value={newVM.password} onChange={e => setNewVM({ ...newVM, password: e.target.value })} className="input-field" required />
                         <div className="md:col-span-1">
-                            <button type="submit" className="w-full btn-primary h-full">Deploy VM</button>
+                            <button type="submit" className="w-full btn-primary h-full">
+                                {editingId ? 'Update VM' : 'Deploy VM'}
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -124,7 +155,22 @@ const VMRental = () => {
                         </div>
 
                         {user?.role === 'admin' && (
-                            <div className="flex justify-end items-center space-x-3">
+                            <div className="flex justify-end items-center space-x-2 mt-4 pt-4 border-t border-slate-700">
+                                <button
+                                    onClick={() => startEdit(vm)}
+                                    className="p-2 hover:bg-slate-700 rounded text-cyan-400"
+                                    title="Edit Config"
+                                >
+                                    <Edit size={16} />
+                                </button>
+                                <button
+                                    onClick={() => handleDelete(vm.id)}
+                                    className="p-2 hover:bg-slate-700 rounded text-red-400"
+                                    title="Terminate Instance"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                                <div className="h-4 w-px bg-slate-700 mx-2" />
                                 <span className={`text-xs font-bold uppercase ${vm.status === 'online' ? 'text-green-400' : 'text-slate-500'}`}>
                                     {vm.status === 'online' ? 'Active' : 'Offline'}
                                 </span>

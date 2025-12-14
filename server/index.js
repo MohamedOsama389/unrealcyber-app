@@ -14,10 +14,12 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: "http://localhost:5173",
+        origin: "*", // Allow all origins for simplicity in this demo/free host
         methods: ["GET", "POST"]
     }
 });
+// ... (keep middle content implicitly by not touching it, wait, replace_file_content replaces block)
+// I need two separate chunks or one large chunk. I will use multi_replace for safety.
 
 app.use(cors());
 app.use(express.json());
@@ -252,7 +254,7 @@ app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, '../client/dist/index.html'));
 });
 
-const PORT = 3000;
-server.listen(PORT, () => {
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);
 });

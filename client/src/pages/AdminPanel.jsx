@@ -20,7 +20,7 @@ const AdminPanel = () => {
 
     const fetchUsers = async () => {
         try {
-            const res = await axios.get('http://localhost:3000/api/users');
+            const res = await axios.get('/api/users');
             setUsers(res.data);
         } catch (err) {
             console.error("Failed to fetch users");
@@ -29,7 +29,7 @@ const AdminPanel = () => {
 
     const fetchSubmissions = async () => {
         try {
-            const res = await axios.get('http://localhost:3000/api/tasks/uploads');
+            const res = await axios.get('/api/tasks/uploads');
             setSubmissions(res.data);
         } catch (err) {
             console.error("Failed to fetch submissions");
@@ -39,7 +39,7 @@ const AdminPanel = () => {
     const toggleRole = async (userId, currentRole) => {
         const newRole = currentRole === 'admin' ? 'student' : 'admin';
         try {
-            await axios.post('http://localhost:3000/api/users/promote', { id: userId, role: newRole });
+            await axios.post('/api/users/promote', { id: userId, role: newRole });
             fetchUsers();
         } catch (err) {
             console.error("Failed to update role");
@@ -49,7 +49,7 @@ const AdminPanel = () => {
     const submitGrade = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:3000/api/tasks/rate', grading);
+            await axios.post('/api/tasks/rate', grading);
             setGrading({ id: null, rating: 0, admin_notes: '' });
             fetchSubmissions();
         } catch (err) {
@@ -60,7 +60,7 @@ const AdminPanel = () => {
     const handleDelete = async (id) => {
         if (!confirm("Confirm removal of student mission data?")) return;
         try {
-            await axios.delete(`http://localhost:3000/api/tasks/upload/${id}`);
+            await axios.delete(`/api/tasks/upload/${id}`);
             fetchSubmissions();
         } catch (err) {
             console.error("Failed to delete");

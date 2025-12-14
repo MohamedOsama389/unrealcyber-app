@@ -254,6 +254,11 @@ io.on('connection', (socket) => {
     });
 });
 
+// --- HEALTH CHECK (Railway/Rentals) ---
+app.get('/health', (req, res) => {
+    res.status(200).send('OK');
+});
+
 // --- REACT ROUTER CATCH-ALL ---
 app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, '../client/dist/index.html'));

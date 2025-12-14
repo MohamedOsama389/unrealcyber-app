@@ -18,7 +18,7 @@ const Dashboard = () => {
         const fetchData = async () => {
             try {
                 // Get Meeting Status
-                const meetingRes = await axios.get('http://localhost:3000/api/meetings');
+                const meetingRes = await axios.get('/api/meetings');
                 const meetingActive = meetingRes.data.is_active === 1;
 
                 let tasksTotal = 0;
@@ -27,11 +27,11 @@ const Dashboard = () => {
 
                 if (user.role === 'student') {
                     // Get Tasks Count
-                    const tasksRes = await axios.get('http://localhost:3000/api/tasks');
+                    const tasksRes = await axios.get('/api/tasks');
                     tasksTotal = tasksRes.data.length;
 
                     // Get My Submissions
-                    const subsRes = await axios.get('http://localhost:3000/api/tasks/my-submissions');
+                    const subsRes = await axios.get('/api/tasks/my-submissions');
                     tasksCompleted = subsRes.data.length;
 
                     // Calculate Rating

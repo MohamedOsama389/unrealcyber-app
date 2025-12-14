@@ -16,7 +16,7 @@ const VMRental = () => {
 
     const fetchVMs = async () => {
         try {
-            const res = await axios.get(`http://localhost:3000/api/vms?t=${Date.now()}`);
+            const res = await axios.get(`/api/vms?t=${Date.now()}`);
             setVms(res.data);
             setLoading(false);
         } catch (err) {
@@ -28,7 +28,7 @@ const VMRental = () => {
     const handleAddVM = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:3000/api/vms', newVM);
+            await axios.post('/api/vms', newVM);
             setNewVM({ name: '', ip: '', type: 'Linux', username: '', password: '' });
             fetchVMs();
         } catch (err) {
@@ -41,7 +41,7 @@ const VMRental = () => {
             const currentStatus = vm.status || 'offline';
             const newStatus = currentStatus === 'online' ? 'offline' : 'online';
             console.log(`Toggling VM ${vm.id} from ${currentStatus} to ${newStatus}`);
-            await axios.post('http://localhost:3000/api/vms/status', { id: vm.id, status: newStatus });
+            await axios.post('/api/vms/status', { id: vm.id, status: newStatus });
             setTimeout(fetchVMs, 500);
         } catch (err) {
             console.error("Failed to toggle status", err);

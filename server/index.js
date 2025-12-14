@@ -118,6 +118,11 @@ app.post('/api/tasks/upload', authenticateToken, upload.single('file'), async (r
 
         const driveFile = await driveService.uploadFile(req.file, studentName, task.title);
 
+        // Ephemeral DB Fix: Ensure student exists before FK check
+        // If DB was wiped, the User ID from JWT won't exist. We recreate a placeholder.
+        const dummyHash = "$2a$10$Ephemera1DBPlaceho1derHa5h"; // Placeholder
+        db.prepare('INSERT OR IGNORE INTO users (id, username, password, role) VALUES (?, ?, ?, ?)').run(req.user.id, req.user.username, dummyHash, req.user.role);
+
         // Save metadata to DB
         db.prepare('INSERT INTO student_uploads (task_id, student_id, upload_link, notes) VALUES (?, ?, ?, ?)').run(task_id, req.user.id, driveFile.webViewLink, notes);
 
@@ -254,23 +259,10 @@ app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, '../client/dist/index.html'));
 });
 
-const PORT = Number(process.env.PORT);
-if (!PORT) {
-    console.error("PORT env var missing. Railway requires process.env.PORT.");
-    // In local dev we might want fallback? The user said "CRITICAL FIX... if !PORT exit".
-    // I will respect the user request for the crash to enforce correctness on Railway.
-    // BUT for local dev `npm start` usually doesn't set PORT.
-    // I will check NODE_ENV. If production and no PORT, crash. If dev, default 3000.
-    if (process.env.NODE_ENV === 'production') {
-        process.exit(1);
-    } else {
-        console.warn("PORT missing in dev, using 3000");
-    }
-}
-const effectivePort = PORT || 3000;
+const PORT = Number(process.env.PORT) || 8080;
 
-server.listen(effectivePort, '0.0.0.0', () => {
-    console.log(`Server running on port ${effectivePort} (Bound to 0.0.0.0 for Railway)`);
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on port ${PORT} (Bound to 0.0.0.0 for Railway)`);
     console.log(`Environment: ${process.env.NODE_ENV}`);
     console.log(`Health Check: Server is ready.`);
 });

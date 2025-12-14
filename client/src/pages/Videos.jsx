@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
-import { Video, Play, Plus } from 'lucide-react';
+import { Video, Play, Plus, Star } from 'lucide-react';
 
 const Videos = () => {
     const { user } = useAuth();
@@ -33,6 +33,17 @@ const Videos = () => {
             setTimeout(() => setMessage(''), 3000);
         } catch (err) {
             setMessage('Failed to add video');
+        }
+    };
+
+    const handleFeature = async (id) => {
+        try {
+            await axios.put(`/api/videos/${id}/feature`);
+            fetchVideos(); // Refresh to show starred status (optional visual feedback)
+            setMessage('Video featured on Dashboard!');
+            setTimeout(() => setMessage(''), 3000);
+        } catch (err) {
+            console.error("Failed to feature video");
         }
     };
 
@@ -90,7 +101,8 @@ const Videos = () => {
                             <iframe
                                 src={vid.drive_link.replace('/view', '/preview')}
                                 className="w-full h-full border-0"
-                                allow="autoplay"
+                                allow="autoplay; fullscreen"
+                                allowFullScreen
                                 title={vid.title}
                             ></iframe>
                         </div>
@@ -103,7 +115,17 @@ const Videos = () => {
                                 className="block w-full text-center py-2 bg-slate-700 hover:bg-cyan-600 rounded-lg text-sm font-medium transition-colors"
                             >
                                 Open in Drive
+                                Open in Drive
                             </a>
+                            {user.role === 'admin' && (
+                                <button
+                                    onClick={() => handleFeature(vid.id)}
+                                    className={`mt-2 w-full flex items-center justify-center py-2 rounded-lg text-sm font-bold transition-all ${vid.is_featured ? 'bg-yellow-500 text-black' : 'bg-slate-700 hover:bg-yellow-500/20 text-yellow-500'}`}
+                                >
+                                    <Star size={16} className={`mr-2 ${vid.is_featured ? 'fill-black' : ''}`} />
+                                    {vid.is_featured ? 'Featured on Dashboard' : 'Feature on Dashboard'}
+                                </button>
+                            )}
                         </div>
                     </motion.div>
                 ))}

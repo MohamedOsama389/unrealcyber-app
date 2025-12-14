@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import StarRating from '../components/StarRating';
-import { Activity, Calendar, CheckCircle, Award } from 'lucide-react';
+import { Activity, Calendar, CheckCircle, Award, Server, Play } from 'lucide-react';
 
 const Dashboard = () => {
     const { user } = useAuth();
@@ -11,8 +11,11 @@ const Dashboard = () => {
         meetingActive: false,
         tasksTotal: 0,
         tasksCompleted: 0,
-        averageRating: 0
+        averageRating: 0,
+        vmOnlineCount: 0,
+        vmTotalCount: 0
     });
+    const [featuredVideo, setFeaturedVideo] = useState(null);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -20,6 +23,16 @@ const Dashboard = () => {
                 // Get Meeting Status
                 const meetingRes = await axios.get('/api/meetings');
                 const meetingActive = meetingRes.data.is_active === 1;
+
+                // Get featured video
+                const videosRes = await axios.get('/api/videos');
+                const featured = videosRes.data.find(v => v.is_featured);
+                setFeaturedVideo(featured);
+
+                // Get VM Stats
+                const vmsRes = await axios.get('/api/vms');
+                const vmTotalCount = vmsRes.data.length;
+                const vmOnlineCount = vmsRes.data.filter(vm => vm.status === 'online').length;
 
                 let tasksTotal = 0;
                 let tasksCompleted = 0;
@@ -42,7 +55,7 @@ const Dashboard = () => {
                     }
                 }
 
-                setStats({ meetingActive, tasksTotal, tasksCompleted, averageRating });
+                setStats({ meetingActive, tasksTotal, tasksCompleted, averageRating, vmOnlineCount, vmTotalCount });
             } catch (err) {
                 console.error("Dashboard data fetch error", err);
             }
@@ -65,6 +78,42 @@ const Dashboard = () => {
                     Operated by <span className="text-cyan-400 font-semibold">Mohamed Osama</span>
                 </p>
             </motion.div>
+
+            {/* FEATURED VIDEO SECTION */}
+            {featuredVideo && (
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="mb-8 glass-panel p-1 overflow-hidden relative group"
+                >
+                    <div className="absolute top-0 left-0 bg-gradient-to-r from-cyan-600 to-blue-600 text-white text-xs font-bold px-3 py-1 rounded-br-lg z-10 flex items-center">
+                        <Play size={12} className="mr-1 fill-white" /> FEATURED SESSION
+                    </div>
+                    <div className="flex flex-col md:flex-row">
+                        <div className="w-full md:w-2/3 aspect-video bg-slate-900">
+                            <iframe
+                                src={featuredVideo.drive_link.replace('/view', '/preview')}
+                                className="w-full h-full"
+                                allow="autoplay; fullscreen"
+                                allowFullScreen
+                                title={featuredVideo.title}
+                            ></iframe>
+                        </div>
+                        <div className="p-6 flex flex-col justify-center">
+                            <h2 className="text-2xl font-bold text-white mb-2">{featuredVideo.title}</h2>
+                            <p className="text-slate-400 mb-4">Recommended viewing for this week's module.</p>
+                            <a
+                                href={featuredVideo.drive_link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="btn-primary text-center"
+                            >
+                                Open in Drive
+                            </a>
+                        </div>
+                    </div>
+                </motion.div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* SYSTEM STATUS CARD */}
@@ -109,6 +158,29 @@ const Dashboard = () => {
                     ) : (
                         <div className="text-slate-500 text-sm">No active sessions. Standby.</div>
                     )}
+                </motion.div>
+
+                {/* VM STATUS CARD (New) */}
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.25 }}
+                    className="glass-panel p-6 hover:bg-slate-800/50 transition-colors"
+                >
+                    <div className="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 className="text-xl font-semibold mb-1 text-purple-400">VM Infrastructure</h3>
+                            <p className="text-slate-400 text-sm uppercase tracking-wider">Lab Status</p>
+                        </div>
+                        <Server className="text-purple-500" size={24} />
+                    </div>
+                    <div className="flex items-end justify-between">
+                        <div>
+                            <div className="text-3xl font-bold text-white">{stats.vmOnlineCount} <span className="text-sm text-slate-500 font-normal">/ {stats.vmTotalCount}</span></div>
+                            <span className="text-xs text-green-400">Running Instances</span>
+                        </div>
+                        <div className={`h-2 w-2 rounded-full ${stats.vmOnlineCount > 0 ? 'bg-green-500 animate-pulse' : 'bg-slate-600'}`}></div>
+                    </div>
                 </motion.div>
 
                 {/* STUDENT PROGRESS CARD */}

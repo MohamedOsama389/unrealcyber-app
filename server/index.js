@@ -176,32 +176,28 @@ app.delete('/api/tasks/upload/:id', authenticateToken, (req, res) => {
 });
 
 // --- VIDEOS ---
-app.get('/api/videos', authenticateToken, async (req, res) => {
-    // Determine if we should fetch from DB or Drive. 
-    // For "Complex Mode", we fetch from Drive and sync/merge or just return Drive files.
-    // Let's return Drive files directly for the "2026 UI" dynamic feel.
-    try {
-        const driveVideos = await driveService.listVideos();
-        // Map to expected format
-        const videos = driveVideos.map(v => ({
-            id: v.id,
-            title: v.name,
-            drive_link: v.webViewLink,
-            thumbnail: v.thumbnailLink
-        }));
-        res.json(videos);
-    } catch (err) {
-        // Fallback to DB if Drive fails or not configured
-        console.warn("Drive Video List failed, falling back to DB", err);
-        const videos = db.prepare('SELECT * FROM videos ORDER BY created_at DESC').all();
-        res.json(videos);
-    }
+app.get('/api/videos', authenticateToken, (req, res) => {
+    // Return DB videos to ensure manually added/featured videos are shown
+    const videos = db.prepare('SELECT * FROM videos ORDER BY created_at DESC').all();
+    res.json(videos);
 });
 
 app.post('/api/videos', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
     const { title, drive_link } = req.body;
     db.prepare('INSERT INTO videos (title, drive_link) VALUES (?, ?)').run(title, drive_link);
+    res.json({ success: true });
+});
+
+app.put('/api/videos/:id/feature', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    const { id } = req.params;
+    // Transaction: Unfeature all, then feature target
+    const update = db.transaction(() => {
+        db.prepare('UPDATE videos SET is_featured = 0').run();
+        db.prepare('UPDATE videos SET is_featured = 1 WHERE id = ?').run(id);
+    });
+    update();
     res.json({ success: true });
 });
 

@@ -249,6 +249,7 @@ app.post('/api/vms', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
     const { name, ip, type, username, password, status } = req.body;
     db.prepare('INSERT INTO vms (name, ip, type, username, password, status) VALUES (?, ?, ?, ?, ?, ?)').run(name, ip, type, username, password, status || 'offline');
+    io.emit('vm_update');
     res.json({ success: true });
 });
 
@@ -256,6 +257,7 @@ app.post('/api/vms/status', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
     const { id, status } = req.body;
     db.prepare('UPDATE vms SET status = ? WHERE id = ?').run(status, id);
+    io.emit('vm_update');
     res.json({ success: true });
 });
 
@@ -264,6 +266,7 @@ app.put('/api/vms/:id', authenticateToken, (req, res) => {
     const { id } = req.params;
     const { name, ip, type, username, password } = req.body;
     db.prepare('UPDATE vms SET name=?, ip=?, type=?, username=?, password=? WHERE id=?').run(name, ip, type, username, password, id);
+    io.emit('vm_update');
     res.json({ success: true });
 });
 
@@ -271,6 +274,7 @@ app.delete('/api/vms/:id', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
     const { id } = req.params;
     db.prepare('DELETE FROM vms WHERE id = ?').run(id);
+    io.emit('vm_update');
     res.json({ success: true });
 });
 

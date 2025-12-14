@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
 import { Video, Wifi, WifiOff, Link as LinkIcon, Save } from 'lucide-react';
+import io from 'socket.io-client';
 
 const Meetings = () => {
     const { user } = useAuth();
@@ -11,9 +12,17 @@ const Meetings = () => {
 
     useEffect(() => {
         fetchMeeting();
-        // Poll status every 10 seconds for students
-        const interval = setInterval(fetchMeeting, 10000);
-        return () => clearInterval(interval);
+        fetchMeeting();
+
+        const socket = io();
+        socket.on('meeting_update', (data) => {
+            console.log("Meeting real-time update", data);
+            // Directly update state if possible, or refetch
+            // Since format matches, we can set data or just refetch
+            fetchMeeting();
+        });
+
+        return () => socket.disconnect();
     }, []);
 
     const fetchMeeting = async () => {

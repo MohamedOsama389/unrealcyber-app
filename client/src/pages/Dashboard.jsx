@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import axios from 'axios';
 import StarRating from '../components/StarRating';
 import { Activity, Calendar, CheckCircle, Award, Server, Play } from 'lucide-react';
+import io from 'socket.io-client';
 
 const Dashboard = () => {
     const { user } = useAuth();
@@ -62,6 +63,21 @@ const Dashboard = () => {
         };
 
         fetchData();
+
+        // Real-time Socket Updates
+        const socket = io();
+
+        socket.on('meeting_update', () => {
+            console.log("Meeting update received");
+            fetchData();
+        });
+
+        socket.on('vm_update', () => {
+            console.log("VM update received");
+            fetchData();
+        });
+
+        return () => socket.disconnect();
     }, [user.role]);
 
     return (

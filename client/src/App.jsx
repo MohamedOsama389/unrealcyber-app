@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
+import PageTitle from './components/PageTitle';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
@@ -15,6 +16,7 @@ import AdminPanel from './pages/AdminPanel';
 function App() {
   return (
     <BrowserRouter>
+      <PageTitle />
       <AuthProvider>
         <div className="flex min-h-screen bg-slate-950 text-white font-sans selection:bg-cyan-500/30">
           <Navbar />

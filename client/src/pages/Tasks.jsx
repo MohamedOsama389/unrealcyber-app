@@ -16,7 +16,7 @@ const AdminTaskReviews = ({ taskId }) => {
 
     const fetchSubs = async () => {
         try {
-            const res = await axios.get('http://localhost:3000/api/tasks/uploads');
+            const res = await axios.get('/api/tasks/uploads');
             // Filter client-side or backend, here client-side for simplicity matching TaskID
             const relevant = res.data.filter(s => s.task_id === taskId);
             setSubmissions(relevant);
@@ -28,7 +28,7 @@ const AdminTaskReviews = ({ taskId }) => {
     const submitGrade = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:3000/api/tasks/rate', grading);
+            await axios.post('/api/tasks/rate', grading);
             setGrading({ id: null, rating: 0, admin_notes: '' });
             fetchSubs();
         } catch (err) { console.error(err); }
@@ -37,7 +37,7 @@ const AdminTaskReviews = ({ taskId }) => {
     const handleDelete = async (id) => {
         if (!confirm("Remove this student submission?")) return;
         try {
-            await axios.delete(`http://localhost:3000/api/tasks/upload/${id}`);
+            await axios.delete(`/api/tasks/upload/${id}`);
             fetchSubs();
         } catch (err) { console.error(err); }
     };
@@ -107,7 +107,7 @@ const Tasks = () => {
 
     const fetchTasks = async () => {
         try {
-            const res = await axios.get('http://localhost:3000/api/tasks');
+            const res = await axios.get('/api/tasks');
             setTasks(res.data);
         } catch (err) {
             console.error(err);
@@ -116,7 +116,7 @@ const Tasks = () => {
 
     const fetchMySubmissions = async () => {
         try {
-            const res = await axios.get('http://localhost:3000/api/tasks/my-submissions');
+            const res = await axios.get('/api/tasks/my-submissions');
             setMySubmissions(res.data);
         } catch (err) {
             console.error("Failed to fetch submissions");
@@ -128,7 +128,7 @@ const Tasks = () => {
     const handleCreateTask = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:3000/api/tasks', newTask);
+            await axios.post('/api/tasks', newTask);
             setMessage('Task created!');
             setNewTask({ title: '', drive_link: '', notes: '' });
             fetchTasks();
@@ -150,7 +150,7 @@ const Tasks = () => {
         }
 
         try {
-            await axios.post('http://localhost:3000/api/tasks/upload', formData, {
+            await axios.post('/api/tasks/upload', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             setMessage('Task submitted successfully!');
@@ -166,7 +166,7 @@ const Tasks = () => {
     const handleDelete = async (id) => {
         if (!confirm("Are you sure you want to retract this mission submission?")) return;
         try {
-            await axios.delete(`http://localhost:3000/api/tasks/upload/${id}`);
+            await axios.delete(`/api/tasks/upload/${id}`);
             setMessage('Submission retracted.');
             fetchMySubmissions();
             setTimeout(() => setMessage(''), 3000);
@@ -178,7 +178,7 @@ const Tasks = () => {
     const handleDeleteTask = async (id) => {
         if (!confirm("Are you sure you want to delete this mission? This cannot be undone.")) return;
         try {
-            await axios.delete(`http://localhost:3000/api/tasks/${id}`);
+            await axios.delete(`/api/tasks/${id}`);
             setMessage('Mission deleted successfully.');
             fetchTasks();
             setTimeout(() => setMessage(''), 3000);

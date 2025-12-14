@@ -16,7 +16,7 @@ const Videos = () => {
 
     const fetchVideos = async () => {
         try {
-            const res = await axios.get('http://localhost:3000/api/videos');
+            const res = await axios.get('/api/videos');
             setVideos(res.data);
         } catch (err) {
             console.error(err);
@@ -26,7 +26,7 @@ const Videos = () => {
     const handleAddVideo = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:3000/api/videos', newVideo);
+            await axios.post('/api/videos', newVideo);
             setMessage('Video added!');
             setNewVideo({ title: '', drive_link: '' });
             fetchVideos();

@@ -176,8 +176,37 @@ app.delete('/api/tasks/upload/:id', authenticateToken, (req, res) => {
 });
 
 // --- VIDEOS ---
-app.get('/api/videos', authenticateToken, (req, res) => {
-    // Return DB videos to ensure manually added/featured videos are shown
+// --- VIDEOS ---
+app.get('/api/videos', authenticateToken, async (req, res) => {
+    try {
+        // Auto-Sync: Fetch from Drive and populate DB if missing
+        // This ensures videos persist across Railway restarts and have IDs for specific features
+        const driveVideos = await driveService.listVideos();
+
+        const insert = db.prepare('INSERT OR IGNORE INTO videos (title, drive_link) VALUES (?, ?)');
+        // Note: We use drive_link as a pseudo-unique check if we had a constraint, 
+        // but since we don't enforce unique links in schema, we'll check existence manually or rely on title.
+        // Better: Check if link exists to avoid duplicates
+        const check = db.prepare('SELECT id FROM videos WHERE drive_link = ?');
+
+        const tx = db.transaction((videos) => {
+            for (const v of videos) {
+                const exists = check.get(v.webViewLink);
+                if (!exists) {
+                    insert.run(v.name, v.webViewLink);
+                }
+            }
+        });
+
+        if (driveVideos.length > 0) {
+            tx(driveVideos);
+        }
+
+    } catch (err) {
+        console.error("Auto-Sync Drive Videos failed:", err);
+    }
+
+    // Return DB videos (now synced)
     const videos = db.prepare('SELECT * FROM videos ORDER BY created_at DESC').all();
     res.json(videos);
 });

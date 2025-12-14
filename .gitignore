@@ -1,0 +1,15 @@
+node_modules/
+.env
+database.db
+database.db-shm
+database.db-wal
+server/node_modules/
+client/node_modules/
+dist/
+client/dist/
+service-account.json
+client_secret*.json
+final_tokens.json
+secrets_output.txt
+tokens.json
+.DS_Store

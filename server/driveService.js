@@ -37,7 +37,7 @@ try {
     }
 
     const redirectUri = process.env.NODE_ENV === 'production'
-        ? 'https://your-app-name.onrender.com' // TODO: Update this after deploy
+        ? (process.env.RENDER_EXTERNAL_URL || 'https://unrealcyber-app.onrender.com')
         : 'http://localhost:3000';
 
     const oauth2Client = new google.auth.OAuth2(

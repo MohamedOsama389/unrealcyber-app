@@ -115,7 +115,6 @@ const Videos = () => {
                                 className="block w-full text-center py-2 bg-slate-700 hover:bg-cyan-600 rounded-lg text-sm font-medium transition-colors"
                             >
                                 Open in Drive
-                                Open in Drive
                             </a>
                             {user.role === 'admin' && (
                                 <button

@@ -221,10 +221,19 @@ app.post('/api/videos', authenticateToken, (req, res) => {
 app.put('/api/videos/:id/feature', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
     const { id } = req.params;
-    // Transaction: Unfeature all, then feature target
+
     const update = db.transaction(() => {
+        // Check current status
+        const current = db.prepare('SELECT is_featured FROM videos WHERE id = ?').get(id);
+
+        // Reset ALL videos to 0
         db.prepare('UPDATE videos SET is_featured = 0').run();
-        db.prepare('UPDATE videos SET is_featured = 1 WHERE id = ?').run(id);
+
+        // If it wasn't featured before, feature it now.
+        // If it WAS featured, we just leave it as 0 (effectively unselecting it).
+        if (!current || current.is_featured === 0) {
+            db.prepare('UPDATE videos SET is_featured = 1 WHERE id = ?').run(id);
+        }
     });
     update();
     res.json({ success: true });

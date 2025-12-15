@@ -1,0 +1,17 @@
+2025-12-14T15:41:06.000000000Z [inf]  Starting Container
+2025-12-14T15:41:06.587758813Z [inf]  > node server/index.js
+2025-12-14T15:41:06.587769411Z [inf]  
+2025-12-14T15:41:06.587773605Z [err]  npm warn config production Use `--omit=dev` instead.
+2025-12-14T15:41:06.587778322Z [inf]  
+2025-12-14T15:41:06.587783733Z [inf]  > unreal-cyber-academy@1.0.0 start
+2025-12-14T15:41:06.733966241Z [inf]  Seeding Admin User...
+2025-12-14T15:41:06.829377681Z [inf]  Admin seeded.
+2025-12-14T15:41:07.697053590Z [inf]  Loading Credentials from Environment Variables...
+2025-12-14T15:41:07.697059569Z [inf]  Drive Service Initialized with OAuth2
+2025-12-14T15:41:07.703065951Z [inf]  Server running on port 8080 (Bound to 0.0.0.0 for Railway)
+2025-12-14T15:41:10.000000000Z [inf]  Stopping Container
+2025-12-14T15:41:18.769258874Z [err]  npm error path /app
+2025-12-14T15:41:18.769264580Z [err]  npm error command failed
+2025-12-14T15:41:18.769269261Z [err]  npm error signal SIGTERM
+2025-12-14T15:41:18.769274060Z [err]  npm error command sh -c node server/index.js
+2025-12-14T15:41:18.769281046Z [err]  npm error A complete log of this run can be found in: /root/.npm/_logs/2025-12-14T15_26_03_457Z-debug-0.log

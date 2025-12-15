@@ -52,19 +52,19 @@ const Videos = () => {
             <motion.h1
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="text-3xl font-bold mb-8 flex items-center space-x-3"
+                className="text-3xl font-bold mb-8 flex items-center space-x-3 text-white"
             >
-                <Video className="text-cyan-400" />
+                <Video className="text-neon-cyan drop-shadow-neon" />
                 <span>Recorded Sessions</span>
             </motion.h1>
 
             {/* ADMIN ADD VIDEO */}
             {user.role === 'admin' && (
-                <div className="glass-panel p-6 mb-8 border-l-4 border-l-purple-500">
+                <div className="glass-panel p-6 mb-8 border-l-4 border-l-neon-purple relative overflow-hidden">
                     <h3 className="text-lg font-bold text-white mb-4 flex items-center">
-                        <Plus className="mr-2" /> Upload Recording Link
+                        <Plus className="mr-2 text-neon-purple" /> Upload Recording Link
                     </h3>
-                    <form onSubmit={handleAddVideo} className="flex flex-col md:flex-row gap-4">
+                    <form onSubmit={handleAddVideo} className="flex flex-col md:flex-row gap-4 relative z-10">
                         <input
                             type="text"
                             placeholder="Video Title"
@@ -81,11 +81,11 @@ const Videos = () => {
                             className="input-field flex-1"
                             required
                         />
-                        <button type="submit" className="btn-primary whitespace-nowrap">
+                        <button type="submit" className="btn-primary whitespace-nowrap shadow-neon-purple bg-gradient-to-r from-neon-purple to-pink-500">
                             Add Video
                         </button>
                     </form>
-                    {message && <p className="text-green-400 mt-2 text-sm">{message}</p>}
+                    {message && <p className="text-neon-green mt-2 text-sm font-bold">{message}</p>}
                 </div>
             )}
 
@@ -95,9 +95,9 @@ const Videos = () => {
                         key={vid.id}
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="glass-panel overflow-hidden group hover:border-cyan-500/50 transition-colors"
+                        className="glass-panel overflow-hidden group hover:shadow-neon transition-all duration-300"
                     >
-                        <div className="aspect-video bg-slate-900 relative">
+                        <div className="aspect-video bg-black/50 relative">
                             <iframe
                                 src={vid.drive_link.replace('/view', '/preview')}
                                 className="w-full h-full border-0"
@@ -106,22 +106,22 @@ const Videos = () => {
                                 title={vid.title}
                             ></iframe>
                         </div>
-                        <div className="p-4">
-                            <h3 className="font-bold text-white text-lg mb-2">{vid.title}</h3>
+                        <div className="p-5">
+                            <h3 className="font-bold text-white text-lg mb-4 truncate">{vid.title}</h3>
                             <a
                                 href={vid.drive_link}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="block w-full text-center py-2 bg-slate-700 hover:bg-cyan-600 rounded-lg text-sm font-medium transition-colors"
+                                className="block w-full text-center py-3 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl text-sm font-bold transition-all text-white/80 hover:text-white"
                             >
                                 Open in Drive
                             </a>
                             {user.role === 'admin' && (
                                 <button
                                     onClick={() => handleFeature(vid.id)}
-                                    className={`mt-2 w-full flex items-center justify-center py-2 rounded-lg text-sm font-bold transition-all ${vid.is_featured ? 'bg-yellow-500 text-black' : 'bg-slate-700 hover:bg-yellow-500/20 text-yellow-500'}`}
+                                    className={`mt-2 w-full flex items-center justify-center py-3 rounded-xl text-sm font-bold transition-all border ${vid.is_featured ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' : 'bg-transparent text-white/30 border-transparent hover:bg-white/5 hover:text-yellow-400'}`}
                                 >
-                                    <Star size={16} className={`mr-2 ${vid.is_featured ? 'fill-black' : ''}`} />
+                                    <Star size={16} className={`mr-2 ${vid.is_featured ? 'fill-yellow-400' : ''}`} />
                                     {vid.is_featured ? 'Featured on Dashboard' : 'Feature on Dashboard'}
                                 </button>
                             )}

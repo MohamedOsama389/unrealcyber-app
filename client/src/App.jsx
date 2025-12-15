@@ -18,9 +18,9 @@ function App() {
     <BrowserRouter>
       <PageTitle />
       <AuthProvider>
-        <div className="flex min-h-screen bg-slate-950 text-white font-sans selection:bg-cyan-500/30">
+        <div className="flex min-h-screen text-white font-sans selection:bg-neon-cyan/30">
           <Navbar />
-          <div className="flex-1 ml-0 md:ml-72 pt-16 md:pt-0 transition-all duration-300">
+          <div className="flex-1 ml-0 md:ml-80 pt-16 md:pt-4 pr-4 transition-all duration-300">
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />

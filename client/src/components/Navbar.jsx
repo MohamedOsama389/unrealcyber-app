@@ -53,55 +53,68 @@ const Navbar = () => {
             <AnimatePresence>
                 {(isOpen || window.innerWidth >= 768) && (
                     <motion.nav
-                        initial={{ x: -280 }}
-                        animate={{ x: 0 }}
-                        exit={{ x: -280 }}
-                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                        className={`fixed top-0 left-0 h-full w-72 bg-slate-900 border-r border-slate-800 p-6 flex flex-col z-40 ${isOpen ? 'block pt-20' : 'hidden md:block'}`}
+                        initial={{ x: -300, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        exit={{ x: -300, opacity: 0 }}
+                        transition={{ type: "spring", stiffness: 200, damping: 25 }}
+                        className={`fixed top-4 left-4 h-[calc(100vh-2rem)] w-72 glass-panel flex flex-col z-40 ${isOpen ? 'block pt-20' : 'hidden md:block'}`}
                     >
-                        <div className="mb-10 px-2 hidden md:block">
-                            <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
+                        <div className="mb-8 px-6 pt-6 hidden md:block">
+                            <h1 className="text-3xl font-bold bg-gradient-to-r from-neon-cyan via-white to-neon-pink bg-clip-text text-transparent drop-shadow-lg">
                                 Unreal Cyber
                             </h1>
-                            <p className="text-xs text-slate-500 tracking-widest mt-1">ACADEMY OS v2.0</p>
+                            <div className="flex items-center mt-2 space-x-2">
+                                <div className="h-1 w-1 rounded-full bg-neon-accent animate-pulse"></div>
+                                <p className="text-[10px] text-glass-highlight tracking-[0.2em] uppercase font-semibold">Academy OS v2.0</p>
+                            </div>
                         </div>
 
-                        <div className="space-y-2 flex-1 overflow-y-auto">
+                        <div className="space-y-2 flex-1 overflow-y-auto px-4 scrollbar-hide">
                             {navItems.map((item) => (
                                 <NavLink
                                     key={item.path}
                                     to={item.path}
                                     onClick={() => setIsOpen(false)}
                                     className={({ isActive }) => `
-                                        flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300
+                                        flex items-center space-x-3 px-4 py-3.5 rounded-xl transition-all duration-300 group relative overflow-hidden
                                         ${isActive
-                                            ? 'bg-cyan-500/10 text-cyan-400 border-l-4 border-cyan-500 shadow-[0_0_20px_rgba(34,211,238,0.1)]'
-                                            : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                            ? 'bg-gradient-to-r from-neon-cyan/20 to-transparent text-white shadow-neon border border-neon-cyan/30'
+                                            : 'text-slate-400 hover:text-white hover:bg-white/5'
                                         }
                                     `}
                                 >
-                                    <item.icon size={20} />
-                                    <span className="font-medium text-sm">{item.label}</span>
+                                    {({ isActive }) => (
+                                        <>
+                                            <div className={`absolute left-0 top-0 bottom-0 w-1 bg-neon-cyan transition-all duration-300 ${isActive ? 'opacity-100' : 'opacity-0'}`} />
+                                            <item.icon size={20} className={`relative z-10 transition-transform duration-300 ${isActive ? 'scale-110 text-neon-cyan' : 'group-hover:scale-110 group-hover:text-white'}`} />
+                                            <span className="font-medium text-sm relative z-10 tracking-wide">{item.label}</span>
+                                            {isActive && <motion.div layoutId="active-glow" className="absolute inset-0 bg-neon-cyan/5 blur-xl" />}
+                                        </>
+                                    )}
                                 </NavLink>
                             ))}
                         </div>
 
-                        <div className="mt-8 pt-6 border-t border-slate-800">
-                            <div className="flex items-center space-x-3 px-4 mb-4">
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center font-bold text-white shadow-lg">
-                                    {user.username[0].toUpperCase()}
+                        <div className="mt-4 p-4 mx-4 mb-4 rounded-2xl bg-black/20 border border-white/5 backdrop-blur-sm">
+                            <div className="flex items-center space-x-3 mb-3">
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-neon-blue to-neon-cyan p-[1px] shadow-lg">
+                                    <div className="w-full h-full rounded-full bg-black flex items-center justify-center">
+                                        <span className="font-bold text-white">{user.username[0].toUpperCase()}</span>
+                                    </div>
                                 </div>
                                 <div className="overflow-hidden">
-                                    <p className="text-white font-bold truncate">{user.username}</p>
-                                    <p className="text-xs text-slate-500 capitalize">{user.role}</p>
+                                    <p className="text-white font-bold truncate text-sm">{user.username}</p>
+                                    <div className="px-2 py-0.5 rounded-full bg-neon-purple/20 border border-neon-purple/30 inline-block">
+                                        <p className="text-[10px] text-neon-purple uppercase font-bold tracking-wider">{user.role}</p>
+                                    </div>
                                 </div>
                             </div>
                             <button
                                 onClick={handleLogout}
-                                className="w-full flex items-center space-x-3 px-4 py-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors text-sm font-medium"
+                                className="w-full flex items-center justify-center space-x-2 py-2 text-red-400 hover:text-white hover:bg-red-500/20 rounded-lg transition-all duration-300 text-xs font-bold border border-transparent hover:border-red-500/30"
                             >
-                                <LogOut size={18} />
-                                <span>Sign Out</span>
+                                <LogOut size={16} />
+                                <span>TERMINATE SESSION</span>
                             </button>
                         </div>
                     </motion.nav>

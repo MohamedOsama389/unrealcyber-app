@@ -85,13 +85,17 @@ const Dashboard = () => {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-12"
+                className="mb-12 relative"
             >
-                <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-                    Welcome to <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Unreal Cyber Academy</span>
+                {/* Header Glow */}
+                <div className="absolute -top-20 -left-20 w-64 h-64 bg-neon-cyan/20 rounded-full blur-[100px] pointer-events-none" />
+
+                <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 drop-shadow-lg relative z-10">
+                    Welcome to <span className="bg-gradient-to-r from-neon-cyan via-white to-neon-blue bg-clip-text text-transparent drop-shadow-neon">Unreal Cyber</span>
                 </h1>
-                <p className="text-xl text-slate-400">
-                    Operated by <span className="text-cyan-400 font-semibold">Mohamed Osama</span>
+                <p className="text-xl text-glass-muted flex items-center gap-2 relative z-10">
+                    Operated by <span className="text-neon-cyan font-bold tracking-wide">Mohamed Osama</span>
+                    <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-white/50">SYSADMIN</span>
                 </p>
             </motion.div>
 
@@ -100,13 +104,13 @@ const Dashboard = () => {
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="mb-8 glass-panel p-1 overflow-hidden relative group"
+                    className="mb-8 glass-panel p-1 overflow-hidden relative group border-t border-white/20"
                 >
-                    <div className="absolute top-0 left-0 bg-gradient-to-r from-cyan-600 to-blue-600 text-white text-xs font-bold px-3 py-1 rounded-br-lg z-10 flex items-center">
-                        <Play size={12} className="mr-1 fill-white" /> FEATURED SESSION
+                    <div className="absolute top-0 left-0 bg-gradient-to-r from-neon-blue to-neon-cyan text-black text-xs font-bold px-4 py-1.5 rounded-br-xl z-10 flex items-center shadow-neon">
+                        <Play size={12} className="mr-1 fill-black" /> FEATURED SESSION
                     </div>
                     <div className="flex flex-col md:flex-row">
-                        <div className="w-full md:w-2/3 aspect-video bg-slate-900">
+                        <div className="w-full md:w-2/3 aspect-video bg-black/50 relative group-hover:shadow-[0_0_40px_rgba(79,172,254,0.3)] transition-all duration-500">
                             <iframe
                                 src={featuredVideo.drive_link.replace('/view', '/preview')}
                                 className="w-full h-full"
@@ -115,14 +119,14 @@ const Dashboard = () => {
                                 title={featuredVideo.title}
                             ></iframe>
                         </div>
-                        <div className="p-6 flex flex-col justify-center">
-                            <h2 className="text-2xl font-bold text-white mb-2">{featuredVideo.title}</h2>
-                            <p className="text-slate-400 mb-4">Recommended viewing for this week's module.</p>
+                        <div className="p-8 flex flex-col justify-center bg-gradient-to-b from-transparent to-black/30">
+                            <h2 className="text-3xl font-bold text-white mb-2 leading-tight">{featuredVideo.title}</h2>
+                            <p className="text-glass-muted mb-6">Recommended viewing for this week's module.</p>
                             <a
                                 href={featuredVideo.drive_link}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="btn-primary text-center"
+                                className="btn-primary text-center shadow-neon"
                             >
                                 Open in Drive
                             </a>
@@ -137,20 +141,25 @@ const Dashboard = () => {
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.1 }}
-                    className="glass-panel p-6 hover:bg-slate-800/50 transition-colors cursor-default relative overflow-hidden"
+                    className="glass-panel p-6 glass-card-hover cursor-default relative overflow-hidden group"
                 >
-                    <div className="flex justify-between items-start mb-4">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-neon-cyan/10 rounded-full blur-[50px] -translate-y-1/2 translate-x-1/2 group-hover:bg-neon-cyan/20 transition-all duration-500" />
+
+                    <div className="flex justify-between items-start mb-4 relative z-10">
                         <div>
-                            <h3 className="text-xl font-semibold mb-1 text-cyan-400">System Status</h3>
-                            <p className="text-slate-400 text-sm uppercase tracking-wider">Connection</p>
+                            <h3 className="text-xl font-bold mb-1 text-white group-hover:text-neon-cyan transition-colors">System Status</h3>
+                            <p className="text-white/40 text-xs font-bold uppercase tracking-widest">Connection</p>
                         </div>
-                        <Activity className="text-cyan-500" size={24} />
+                        <Activity className="text-neon-cyan group-hover:scale-110 transition-transform duration-300" size={24} />
                     </div>
-                    <div className="flex items-center space-x-2">
-                        <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-                        <span className="text-white font-mono">ONLINE</span>
+                    <div className="flex items-center space-x-3 relative z-10">
+                        <div className="relative">
+                            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse relative z-10" />
+                            <div className="absolute inset-0 bg-green-500 blur-md animate-pulse" />
+                        </div>
+                        <span className="text-white font-mono font-bold tracking-wider text-lg">ONLINE</span>
                     </div>
-                    <p className="text-slate-500 text-xs mt-2">Role: {user.role.toUpperCase()}</p>
+                    <p className="text-white/30 text-[10px] mt-4 font-mono border-t border-white/5 pt-2">USER ROLE: <span className="text-neon-cyan">{user.role.toUpperCase()}</span></p>
                 </motion.div>
 
                 {/* MEETING STATUS CARD */}
@@ -158,44 +167,47 @@ const Dashboard = () => {
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.2 }}
-                    className={`glass-panel p-6 transition-colors border-l-4 ${stats.meetingActive ? 'border-l-green-500 bg-green-500/10' : 'border-l-slate-700'}`}
+                    className={`glass-panel p-6 glass-card-hover relative overflow-hidden transition-all duration-500 ${stats.meetingActive ? 'border-neon-accent/50 shadow-[0_0_30px_rgba(66,255,213,0.15)]' : ''}`}
                 >
-                    <div className="flex justify-between items-start mb-4">
+                    <div className="flex justify-between items-start mb-4 relative z-10">
                         <div>
-                            <h3 className={`text-xl font-semibold mb-1 ${stats.meetingActive ? 'text-green-400' : 'text-slate-400'}`}>Session Status</h3>
-                            <p className="text-slate-400 text-sm uppercase tracking-wider">Live Meetings</p>
+                            <h3 className={`text-xl font-bold mb-1 transition-colors ${stats.meetingActive ? 'text-neon-accent' : 'text-white'}`}>Session Status</h3>
+                            <p className="text-white/40 text-xs font-bold uppercase tracking-widest">Live Meetings</p>
                         </div>
-                        <Calendar className={stats.meetingActive ? 'text-green-500' : 'text-slate-600'} size={24} />
+                        <Calendar className={stats.meetingActive ? 'text-neon-accent drop-shadow-neon' : 'text-white/30'} size={24} />
                     </div>
                     {stats.meetingActive ? (
-                        <div className="inline-block px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-bold animate-pulse">
+                        <div className="inline-flex items-center px-4 py-1.5 bg-neon-accent/10 border border-neon-accent/30 text-neon-accent rounded-full text-sm font-bold animate-pulse shadow-neon relative z-10">
+                            <span className="w-2 h-2 bg-neon-accent rounded-full mr-2 animate-ping" />
                             SESSION ACTIVE
                         </div>
                     ) : (
-                        <div className="text-slate-500 text-sm">No active sessions. Standby.</div>
+                        <div className="text-white/40 text-sm font-medium italic relative z-10">No active sessions. Standby.</div>
                     )}
                 </motion.div>
 
-                {/* VM STATUS CARD (New) */}
+                {/* VM STATUS CARD */}
                 <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.25 }}
-                    className="glass-panel p-6 hover:bg-slate-800/50 transition-colors"
+                    className="glass-panel p-6 glass-card-hover group relative overflow-hidden"
                 >
-                    <div className="flex justify-between items-start mb-4">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-neon-purple/10 rounded-full blur-[50px] -translate-y-1/2 translate-x-1/2 group-hover:bg-neon-purple/20 transition-all duration-500" />
+
+                    <div className="flex justify-between items-start mb-4 relative z-10">
                         <div>
-                            <h3 className="text-xl font-semibold mb-1 text-purple-400">VM Infrastructure</h3>
-                            <p className="text-slate-400 text-sm uppercase tracking-wider">Lab Status</p>
+                            <h3 className="text-xl font-bold mb-1 text-white group-hover:text-neon-purple transition-colors">VM Infrastructure</h3>
+                            <p className="text-white/40 text-xs font-bold uppercase tracking-widest">Lab Status</p>
                         </div>
-                        <Server className="text-purple-500" size={24} />
+                        <Server className="text-neon-purple group-hover:scale-110 transition-transform duration-300" size={24} />
                     </div>
-                    <div className="flex items-end justify-between">
+                    <div className="flex items-end justify-between relative z-10">
                         <div>
-                            <div className="text-3xl font-bold text-white">{stats.vmOnlineCount} <span className="text-sm text-slate-500 font-normal">/ {stats.vmTotalCount}</span></div>
-                            <span className="text-xs text-green-400">Running Instances</span>
+                            <div className="text-4xl font-bold text-white tracking-tight">{stats.vmOnlineCount} <span className="text-lg text-white/30 font-normal">/ {stats.vmTotalCount}</span></div>
+                            <span className="text-xs text-neon-accent uppercase font-bold tracking-wider">Running Instances</span>
                         </div>
-                        <div className={`h-2 w-2 rounded-full ${stats.vmOnlineCount > 0 ? 'bg-green-500 animate-pulse' : 'bg-slate-600'}`}></div>
+                        <div className={`h-3 w-3 rounded-full ${stats.vmOnlineCount > 0 ? 'bg-neon-accent shadow-neon animate-pulse' : 'bg-white/10'}`}></div>
                     </div>
                 </motion.div>
 
@@ -205,32 +217,34 @@ const Dashboard = () => {
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.3 }}
-                        className="glass-panel p-6 hover:bg-slate-800/50 transition-colors"
+                        className="glass-panel p-6 glass-card-hover group relative overflow-hidden"
                     >
-                        <div className="flex justify-between items-start mb-4">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-neon-pink/10 rounded-full blur-[50px] -translate-y-1/2 translate-x-1/2 group-hover:bg-neon-pink/20 transition-all duration-500" />
+
+                        <div className="flex justify-between items-start mb-4 relative z-10">
                             <div>
-                                <h3 className="text-xl font-semibold mb-1 text-purple-400">Performance</h3>
-                                <p className="text-slate-400 text-sm uppercase tracking-wider">Mission Data</p>
+                                <h3 className="text-xl font-bold mb-1 text-white group-hover:text-neon-pink transition-colors">Performance</h3>
+                                <p className="text-white/40 text-xs font-bold uppercase tracking-widest">Mission Data</p>
                             </div>
-                            <Award className="text-purple-500" size={24} />
+                            <Award className="text-neon-pink group-hover:scale-110 transition-transform duration-300" size={24} />
                         </div>
 
-                        <div className="space-y-4">
+                        <div className="space-y-5 relative z-10">
                             <div>
-                                <div className="flex justify-between text-sm mb-1">
-                                    <span className="text-slate-300">Completion Rate</span>
+                                <div className="flex justify-between text-sm mb-2">
+                                    <span className="text-white/60 font-medium">Completion Rate</span>
                                     <span className="text-white font-bold">{stats.tasksTotal > 0 ? Math.round((stats.tasksCompleted / stats.tasksTotal) * 100) : 0}%</span>
                                 </div>
-                                <div className="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
+                                <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden border border-white/5">
                                     <div
-                                        className="bg-purple-500 h-full transition-all duration-1000"
+                                        className="bg-gradient-to-r from-neon-pink to-neon-purple h-full transition-all duration-1000 shadow-[0_0_10px_rgba(240,147,251,0.5)]"
                                         style={{ width: `${stats.tasksTotal > 0 ? (stats.tasksCompleted / stats.tasksTotal) * 100 : 0}%` }}
                                     />
                                 </div>
                             </div>
 
-                            <div className="flex justify-between items-center bg-slate-800/50 p-3 rounded-lg">
-                                <span className="text-slate-300 text-sm">Avg Rating</span>
+                            <div className="flex justify-between items-center bg-white/5 border border-white/5 p-3 rounded-xl backdrop-blur-sm">
+                                <span className="text-white/60 text-sm font-medium">Avg Rating</span>
                                 <StarRating rating={stats.averageRating} readonly />
                             </div>
                         </div>

@@ -1,0 +1,34 @@
+2025-12-14T15:23:42.000000000Z [inf]  Starting Container
+2025-12-14T15:23:43.805685491Z [inf]  Server running on port 8080
+2025-12-14T15:23:43.805715460Z [err]  npm warn config production Use `--omit=dev` instead.
+2025-12-14T15:23:43.805721411Z [inf]  
+2025-12-14T15:23:43.805726453Z [inf]  > unreal-cyber-academy@1.0.0 start
+2025-12-14T15:23:43.805730718Z [inf]  > node server/index.js
+2025-12-14T15:23:43.805735439Z [inf]  
+2025-12-14T15:23:43.805740832Z [inf]  Seeding Admin User...
+2025-12-14T15:23:43.805745396Z [inf]  Admin seeded.
+2025-12-14T15:23:43.805750864Z [inf]  Loading Credentials from Environment Variables...
+2025-12-14T15:23:43.805754719Z [inf]  Drive Service Initialized with OAuth2
+2025-12-14T15:23:46.000000000Z [inf]  Stopping Container
+2025-12-14T15:23:49.989758422Z [err]  npm error path /app
+2025-12-14T15:23:49.989778491Z [err]  npm error command failed
+2025-12-14T15:23:49.989785300Z [err]  npm error signal SIGTERM
+2025-12-14T15:23:49.989791687Z [err]  npm error command sh -c node server/index.js
+2025-12-14T15:23:49.989796729Z [err]  npm error A complete log of this run can be found in: /root/.npm/_logs/2025-12-14T15_13_40_421Z-debug-0.log
+2025-12-14T15:26:03.000000000Z [inf]  Starting Container
+2025-12-14T15:26:03.786208327Z [err]  npm warn config production Use `--omit=dev` instead.
+2025-12-14T15:26:03.786218463Z [inf]  
+2025-12-14T15:26:03.786226796Z [inf]  > unreal-cyber-academy@1.0.0 start
+2025-12-14T15:26:03.786233541Z [inf]  > node server/index.js
+2025-12-14T15:26:03.786240638Z [inf]  
+2025-12-14T15:26:03.786250527Z [inf]  Seeding Admin User...
+2025-12-14T15:26:03.786256820Z [inf]  Admin seeded.
+2025-12-14T15:26:04.519706379Z [inf]  Loading Credentials from Environment Variables...
+2025-12-14T15:26:04.519716338Z [inf]  Drive Service Initialized with OAuth2
+2025-12-14T15:26:04.529984832Z [inf]  Server running on port 8080
+2025-12-14T15:26:07.000000000Z [inf]  Stopping Container
+2025-12-14T15:26:13.861429414Z [err]  npm error A complete log of this run can be found in: /root/.npm/_logs/2025-12-14T15_23_42_720Z-debug-0.log
+2025-12-14T15:26:13.861585392Z [err]  npm error path /app
+2025-12-14T15:26:13.861594225Z [err]  npm error command failed
+2025-12-14T15:26:13.861604672Z [err]  npm error signal SIGTERM
+2025-12-14T15:26:13.861612787Z [err]  npm error command sh -c node server/index.js

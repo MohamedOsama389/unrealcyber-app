@@ -79,31 +79,33 @@ const VMRental = () => {
                 animate={{ opacity: 1, x: 0 }}
                 className="text-3xl font-bold mb-8 flex items-center space-x-3 text-white"
             >
-                <Terminal className="text-cyan-400" />
+                <Terminal className="text-neon-cyan drop-shadow-neon" />
                 <span>Virtual Machine Access</span>
             </motion.h1>
 
             {user?.role === 'admin' && (
-                <div className="glass-panel p-6 mb-8 border-l-4 border-purple-500">
-                    <div className="flex justify-between items-center mb-4">
+                <div className="glass-panel p-6 mb-8 border-l-4 border-neon-purple relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-neon-purple/5 rounded-full blur-[80px] pointer-events-none" />
+
+                    <div className="flex justify-between items-center mb-6 relative z-10">
                         <h3 className="text-lg font-bold text-white">{editingId ? 'Update Instance Configuration' : 'Deploy New Instance'}</h3>
                         {editingId && (
-                            <button onClick={() => { setEditingId(null); setNewVM({ name: '', ip: '', type: 'Linux', username: '', password: '' }); }} className="text-xs text-slate-400 hover:text-white">
+                            <button onClick={() => { setEditingId(null); setNewVM({ name: '', ip: '', type: 'Linux', username: '', password: '' }); }} className="text-xs text-white/50 hover:text-white uppercase tracking-wider font-bold">
                                 Cancel Edit
                             </button>
                         )}
                     </div>
-                    <form onSubmit={handleAddVM} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <form onSubmit={handleAddVM} className="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-10">
                         <input type="text" placeholder="Machine Name" value={newVM.name} onChange={e => setNewVM({ ...newVM, name: e.target.value })} className="input-field" required />
                         <input type="text" placeholder="IP Address" value={newVM.ip} onChange={e => setNewVM({ ...newVM, ip: e.target.value })} className="input-field" required />
-                        <select value={newVM.type} onChange={e => setNewVM({ ...newVM, type: e.target.value })} className="input-field" required>
+                        <select value={newVM.type} onChange={e => setNewVM({ ...newVM, type: e.target.value })} className="input-field appearance-none" required>
                             <option>Linux</option>
                             <option>Windows</option>
                         </select>
                         <input type="text" placeholder="Username" value={newVM.username} onChange={e => setNewVM({ ...newVM, username: e.target.value })} className="input-field" required />
                         <input type="text" placeholder="Password" value={newVM.password} onChange={e => setNewVM({ ...newVM, password: e.target.value })} className="input-field" required />
                         <div className="md:col-span-1">
-                            <button type="submit" className="w-full btn-primary h-full">
+                            <button type="submit" className="w-full btn-primary h-full shadow-neon bg-gradient-to-r from-neon-purple to-neon-blue">
                                 {editingId ? 'Update VM' : 'Deploy VM'}
                             </button>
                         </div>
@@ -118,68 +120,68 @@ const VMRental = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.1 }}
-                        className={`glass-panel p-6 relative overflow-hidden border-l-4 transition-all hover:scale-[1.01] ${vm.status === 'online' ? 'border-l-green-500' : 'border-l-red-500'}`}
+                        className={`glass-panel p-6 relative overflow-hidden border-l-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl ${vm.status === 'online' ? 'border-l-green-500 shadow-[0_0_20px_rgba(34,197,94,0.1)]' : 'border-l-red-500'}`}
                     >
-                        <div className="absolute top-0 right-0 p-4 opacity-10">
-                            <Server size={100} />
+                        <div className={`absolute -right-4 -top-4 opacity-10 blur-sm transform rotate-12 transition-colors ${vm.status === 'online' ? 'text-green-500' : 'text-red-500'}`}>
+                            <Server size={120} />
                         </div>
 
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center space-x-3">
-                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${vm.type === 'Windows' ? 'bg-blue-600' : 'bg-orange-500'}`}>
-                                    <Monitor className="text-white" size={20} />
+                        <div className="flex items-center justify-between mb-6 relative z-10">
+                            <div className="flex items-center space-x-4">
+                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-lg ${vm.type === 'Windows' ? 'bg-blue-600' : 'bg-orange-500'}`}>
+                                    <Monitor className="text-white" size={24} />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-white text-lg">{vm.name}</h3>
-                                    <p className="text-xs text-slate-400 uppercase">{vm.type} Instance</p>
+                                    <h3 className="font-bold text-white text-lg leading-tight">{vm.name}</h3>
+                                    <p className="text-[10px] text-white/50 uppercase font-mono tracking-widest">{vm.type} Instance</p>
                                 </div>
                             </div>
-                            <div className={`px-2 py-1 rounded text-xs font-bold uppercase ${vm.status === 'online' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                            <div className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider border ${vm.status === 'online' ? 'bg-green-500/10 text-green-400 border-green-500/20 shadow-neon-green' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
                                 {vm.status || 'OFFLINE'}
                             </div>
                         </div>
 
-                        <div className="space-y-3 font-mono text-sm mb-4">
-                            <div className="bg-slate-900/50 p-3 rounded-lg flex justify-between items-center group cursor-pointer" title="Click to copy">
-                                <span className="text-slate-500">IP:</span>
-                                <span className="text-cyan-400">{vm.ip}</span>
+                        <div className="space-y-3 font-mono text-xs mb-6 relative z-10">
+                            <div className="bg-black/20 p-3 rounded-lg flex justify-between items-center group cursor-pointer border border-white/5 hover:border-neon-cyan/30 transition-colors" title="Click to copy">
+                                <span className="text-white/40 font-bold">IP_ADDR</span>
+                                <span className="text-neon-cyan">{vm.ip}</span>
                             </div>
-                            <div className="bg-slate-900/50 p-3 rounded-lg flex justify-between items-center">
-                                <span className="text-slate-500">User:</span>
-                                <span className="text-green-400">{vm.username}</span>
+                            <div className="bg-black/20 p-3 rounded-lg flex justify-between items-center border border-white/5">
+                                <span className="text-white/40 font-bold">USER_ID</span>
+                                <span className="text-neon-green">{vm.username}</span>
                             </div>
-                            <div className="bg-slate-900/50 p-3 rounded-lg flex justify-between items-center">
-                                <span className="text-slate-500">Pass:</span>
-                                <span className="text-pink-400">{vm.password}</span>
+                            <div className="bg-black/20 p-3 rounded-lg flex justify-between items-center border border-white/5">
+                                <span className="text-white/40 font-bold">PASS_KEY</span>
+                                <span className="text-neon-pink">{vm.password}</span>
                             </div>
                         </div>
 
                         {user?.role === 'admin' && (
-                            <div className="flex justify-end items-center space-x-2 mt-4 pt-4 border-t border-slate-700">
+                            <div className="flex justify-end items-center space-x-2 mt-4 pt-4 border-t border-white/10 relative z-10">
                                 <button
                                     onClick={() => startEdit(vm)}
-                                    className="p-2 hover:bg-slate-700 rounded text-cyan-400"
+                                    className="p-2 hover:bg-white/10 rounded-lg text-neon-cyan transition-colors"
                                     title="Edit Config"
                                 >
                                     <Edit size={16} />
                                 </button>
                                 <button
                                     onClick={() => handleDelete(vm.id)}
-                                    className="p-2 hover:bg-slate-700 rounded text-red-400"
+                                    className="p-2 hover:bg-white/10 rounded-lg text-red-400 transition-colors"
                                     title="Terminate Instance"
                                 >
                                     <Trash2 size={16} />
                                 </button>
-                                <div className="h-4 w-px bg-slate-700 mx-2" />
-                                <span className={`text-xs font-bold uppercase ${vm.status === 'online' ? 'text-green-400' : 'text-slate-500'}`}>
+                                <div className="h-4 w-px bg-white/10 mx-2" />
+                                <span className={`text-[10px] font-bold uppercase tracking-wide ${vm.status === 'online' ? 'text-green-400' : 'text-white/30'}`}>
                                     {vm.status === 'online' ? 'Active' : 'Offline'}
                                 </span>
                                 <button
                                     onClick={() => toggleStatus(vm)}
-                                    className={`relative w-12 h-6 rounded-full p-1 transition-colors duration-300 ease-in-out ${vm.status === 'online' ? 'bg-green-500' : 'bg-slate-700'}`}
+                                    className={`relative w-10 h-5 rounded-full p-0.5 transition-colors duration-300 ease-in-out border border-white/10 ${vm.status === 'online' ? 'bg-green-500 shadow-neon-green' : 'bg-black/40'}`}
                                     title={`Toggle ${vm.status === 'online' ? 'Offline' : 'Online'}`}
                                 >
-                                    <div className={`w-4 h-4 rounded-full bg-white shadow-lg transform transition-transform duration-300 ${vm.status === 'online' ? 'translate-x-6' : 'translate-x-0'}`} />
+                                    <div className={`w-3.5 h-3.5 rounded-full bg-white shadow-sm transform transition-transform duration-300 ${vm.status === 'online' ? 'translate-x-5' : 'translate-x-0'}`} />
                                 </button>
                             </div>
                         )}
@@ -188,7 +190,9 @@ const VMRental = () => {
             </div>
 
             {vms.length === 0 && !loading && (
-                <div className="text-center text-slate-500 mt-12">No virtual machines currently active.</div>
+                <div className="text-center text-white/30 mt-12 py-12 glass-panel border-dashed border-2 border-white/10">
+                    No virtual machines currently active in the grid.
+                </div>
             )}
         </div>
     );

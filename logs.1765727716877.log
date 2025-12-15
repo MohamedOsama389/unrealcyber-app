@@ -1,0 +1,130 @@
+2025-12-14T15:13:40.000000000Z [inf]  Starting Container
+2025-12-14T15:13:40.672277143Z [inf]  > unreal-cyber-academy@1.0.0 start
+2025-12-14T15:13:40.672289494Z [inf]  > node server/index.js
+2025-12-14T15:13:40.672298136Z [inf]  
+2025-12-14T15:13:40.672378878Z [err]  npm warn config production Use `--omit=dev` instead.
+2025-12-14T15:13:40.672386193Z [inf]  
+2025-12-14T15:13:40.793716379Z [inf]  Seeding Admin User...
+2025-12-14T15:13:40.887268497Z [inf]  Admin seeded.
+2025-12-14T15:13:41.577858953Z [inf]  Server running on port 8080
+2025-12-14T15:13:41.577864086Z [inf]  > unreal-cyber-academy@1.0.0 start
+2025-12-14T15:13:41.577865022Z [err]      at Module._compile (node:internal/modules/cjs/loader:1364:14)
+2025-12-14T15:13:41.577875263Z [err]      at Module._extensions..js (node:internal/modules/cjs/loader:1422:10)
+2025-12-14T15:13:41.577875530Z [inf]  > node server/index.js
+2025-12-14T15:13:41.577883625Z [err]  Uploads will fail until this is fixed.
+2025-12-14T15:13:41.577885325Z [inf]  
+2025-12-14T15:13:41.577889490Z [err]      at Module.load (node:internal/modules/cjs/loader:1203:32)
+2025-12-14T15:13:41.577892750Z [inf]  Seeding Admin User...
+2025-12-14T15:13:41.577899588Z [err]      at Module._load (node:internal/modules/cjs/loader:1019:12)
+2025-12-14T15:13:41.577901722Z [inf]  Admin seeded.
+2025-12-14T15:13:41.577906270Z [err]      at Module.require (node:internal/modules/cjs/loader:1231:19)
+2025-12-14T15:13:41.577910515Z [inf]  Loading Credentials from Local Files...
+2025-12-14T15:13:41.577912780Z [err]      at require (node:internal/modules/helpers:177:18)
+2025-12-14T15:13:41.577917555Z [err]  Failed to initialize Drive with OAuth2: Error: Missing Credentials! Please check env vars or local files.
+2025-12-14T15:13:41.577919965Z [err]      at Object.<anonymous> (/app/server/index.js:9:22)
+2025-12-14T15:13:41.577924614Z [err]      at Object.<anonymous> (/app/server/driveService.js:36:15)
+2025-12-14T15:13:41.577930527Z [err]      at Module._compile (node:internal/modules/cjs/loader:1364:14)
+2025-12-14T15:13:41.577937193Z [err]      at Module._extensions..js (node:internal/modules/cjs/loader:1422:10)
+2025-12-14T15:13:41.577938879Z [err]  npm warn config production Use `--omit=dev` instead.
+2025-12-14T15:13:41.577945592Z [inf]  
+2025-12-14T15:13:41.815785143Z [inf]  Loading Credentials from Local Files...
+2025-12-14T15:13:41.818185183Z [err]  Failed to initialize Drive with OAuth2: Error: Missing Credentials! Please check env vars or local files.
+2025-12-14T15:13:41.818196304Z [err]      at Object.<anonymous> (/app/server/driveService.js:36:15)
+2025-12-14T15:13:41.818203636Z [err]      at Module._compile (node:internal/modules/cjs/loader:1364:14)
+2025-12-14T15:13:41.818213068Z [err]      at Module._extensions..js (node:internal/modules/cjs/loader:1422:10)
+2025-12-14T15:13:41.818219623Z [err]      at Module.load (node:internal/modules/cjs/loader:1203:32)
+2025-12-14T15:13:41.818225863Z [err]      at Module._load (node:internal/modules/cjs/loader:1019:12)
+2025-12-14T15:13:41.818232927Z [err]      at Module.require (node:internal/modules/cjs/loader:1231:19)
+2025-12-14T15:13:41.818239250Z [err]      at require (node:internal/modules/helpers:177:18)
+2025-12-14T15:13:41.818249276Z [err]      at Object.<anonymous> (/app/server/index.js:9:22)
+2025-12-14T15:13:41.818256026Z [err]      at Module._compile (node:internal/modules/cjs/loader:1364:14)
+2025-12-14T15:13:41.818263165Z [err]      at Module._extensions..js (node:internal/modules/cjs/loader:1422:10)
+2025-12-14T15:13:41.818269428Z [err]  Uploads will fail until this is fixed.
+2025-12-14T15:13:41.835385400Z [inf]  Server running on port 8080
+2025-12-14T15:13:43.000000000Z [inf]  Stopping Container
+2025-12-14T15:13:43.796760024Z [err]  npm error path /app
+2025-12-14T15:13:43.796765929Z [err]  npm error command failed
+2025-12-14T15:13:43.796771023Z [err]  npm error signal SIGTERM
+2025-12-14T15:13:43.796775511Z [err]  npm error command sh -c node server/index.js
+2025-12-14T15:13:43.796780362Z [err]  npm error A complete log of this run can be found in: /root/.npm/_logs/2025-12-14T15_13_40_528Z-debug-0.log
+2025-12-14T15:23:42.000000000Z [inf]  Starting Container
+2025-12-14T15:23:43.805685491Z [inf]  Server running on port 8080
+2025-12-14T15:23:43.805715460Z [err]  npm warn config production Use `--omit=dev` instead.
+2025-12-14T15:23:43.805721411Z [inf]  
+2025-12-14T15:23:43.805726453Z [inf]  > unreal-cyber-academy@1.0.0 start
+2025-12-14T15:23:43.805730718Z [inf]  > node server/index.js
+2025-12-14T15:23:43.805735439Z [inf]  
+2025-12-14T15:23:43.805740832Z [inf]  Seeding Admin User...
+2025-12-14T15:23:43.805745396Z [inf]  Admin seeded.
+2025-12-14T15:23:43.805750864Z [inf]  Loading Credentials from Environment Variables...
+2025-12-14T15:23:43.805754719Z [inf]  Drive Service Initialized with OAuth2
+2025-12-14T15:23:46.000000000Z [inf]  Stopping Container
+2025-12-14T15:23:49.989758422Z [err]  npm error path /app
+2025-12-14T15:23:49.989778491Z [err]  npm error command failed
+2025-12-14T15:23:49.989785300Z [err]  npm error signal SIGTERM
+2025-12-14T15:23:49.989791687Z [err]  npm error command sh -c node server/index.js
+2025-12-14T15:23:49.989796729Z [err]  npm error A complete log of this run can be found in: /root/.npm/_logs/2025-12-14T15_13_40_421Z-debug-0.log
+2025-12-14T15:26:03.000000000Z [inf]  Starting Container
+2025-12-14T15:26:03.786208327Z [err]  npm warn config production Use `--omit=dev` instead.
+2025-12-14T15:26:03.786218463Z [inf]  
+2025-12-14T15:26:03.786226796Z [inf]  > unreal-cyber-academy@1.0.0 start
+2025-12-14T15:26:03.786233541Z [inf]  > node server/index.js
+2025-12-14T15:26:03.786240638Z [inf]  
+2025-12-14T15:26:03.786250527Z [inf]  Seeding Admin User...
+2025-12-14T15:26:03.786256820Z [inf]  Admin seeded.
+2025-12-14T15:26:04.519706379Z [inf]  Loading Credentials from Environment Variables...
+2025-12-14T15:26:04.519716338Z [inf]  Drive Service Initialized with OAuth2
+2025-12-14T15:26:04.529984832Z [inf]  Server running on port 8080
+2025-12-14T15:26:07.000000000Z [inf]  Stopping Container
+2025-12-14T15:26:13.861429414Z [err]  npm error A complete log of this run can be found in: /root/.npm/_logs/2025-12-14T15_23_42_720Z-debug-0.log
+2025-12-14T15:26:13.861585392Z [err]  npm error path /app
+2025-12-14T15:26:13.861594225Z [err]  npm error command failed
+2025-12-14T15:26:13.861604672Z [err]  npm error signal SIGTERM
+2025-12-14T15:26:13.861612787Z [err]  npm error command sh -c node server/index.js
+2025-12-14T15:41:06.000000000Z [inf]  Starting Container
+2025-12-14T15:41:06.587758813Z [inf]  > node server/index.js
+2025-12-14T15:41:06.587769411Z [inf]  
+2025-12-14T15:41:06.587773605Z [err]  npm warn config production Use `--omit=dev` instead.
+2025-12-14T15:41:06.587778322Z [inf]  
+2025-12-14T15:41:06.587783733Z [inf]  > unreal-cyber-academy@1.0.0 start
+2025-12-14T15:41:06.733966241Z [inf]  Seeding Admin User...
+2025-12-14T15:41:06.829377681Z [inf]  Admin seeded.
+2025-12-14T15:41:07.697053590Z [inf]  Loading Credentials from Environment Variables...
+2025-12-14T15:41:07.697059569Z [inf]  Drive Service Initialized with OAuth2
+2025-12-14T15:41:07.703065951Z [inf]  Server running on port 8080 (Bound to 0.0.0.0 for Railway)
+2025-12-14T15:41:10.000000000Z [inf]  Stopping Container
+2025-12-14T15:41:18.769258874Z [err]  npm error path /app
+2025-12-14T15:41:18.769264580Z [err]  npm error command failed
+2025-12-14T15:41:18.769269261Z [err]  npm error signal SIGTERM
+2025-12-14T15:41:18.769274060Z [err]  npm error command sh -c node server/index.js
+2025-12-14T15:41:18.769281046Z [err]  npm error A complete log of this run can be found in: /root/.npm/_logs/2025-12-14T15_26_03_457Z-debug-0.log
+2025-12-14T15:50:09.000000000Z [inf]  Starting Container
+2025-12-14T15:50:09.909553182Z [err]  npm warn config production Use `--omit=dev` instead.
+2025-12-14T15:50:09.909562623Z [inf]  
+2025-12-14T15:50:09.909572073Z [inf]  > unreal-cyber-academy@1.0.0 start
+2025-12-14T15:50:09.909581426Z [inf]  > node server/index.js
+2025-12-14T15:50:09.909590990Z [inf]  
+2025-12-14T15:50:10.167709989Z [inf]  Seeding Admin User...
+2025-12-14T15:50:10.300343694Z [inf]  Admin seeded.
+2025-12-14T15:50:10.973802577Z [inf]  Loading Credentials from Environment Variables...
+2025-12-14T15:50:10.973810827Z [inf]  Drive Service Initialized with OAuth2
+2025-12-14T15:50:10.984508831Z [inf]  Health Check: Server is ready.
+2025-12-14T15:50:10.984518841Z [inf]  Server running on port 8080 (Bound to 0.0.0.0 for Railway)
+2025-12-14T15:50:10.984525174Z [inf]  Environment: production
+2025-12-14T15:50:14.000000000Z [inf]  Stopping Container
+2025-12-14T15:50:20.710872514Z [err]  npm error path /app
+2025-12-14T15:50:20.710879709Z [err]  npm error command failed
+2025-12-14T15:50:20.710886917Z [err]  npm error signal SIGTERM
+2025-12-14T15:50:20.710893050Z [err]  npm error command sh -c node server/index.js
+2025-12-14T15:50:20.710900262Z [err]  npm error A complete log of this run can be found in: /root/.npm/_logs/2025-12-14T15_41_06_446Z-debug-0.log
+2025-12-14T15:54:41.348567786Z [inf]  [Drive] Starting upload for test - Boot2Root
+2025-12-14T15:54:41.348574135Z [inf]  [Drive] Found existing student folder: 1YudVnXR3VhNN5eOmUPqk9X164ni_wTD5
+2025-12-14T15:54:41.348580023Z [inf]  [Drive] Creating task folder 'Boot2Root'...
+2025-12-14T15:54:41.404621066Z [inf]  [Drive] Task folder created: 11iEGB1_Ig2ws0E3O9OvTkTttKJZjuWaO
+2025-12-14T15:54:41.404626826Z [inf]  [Drive] Uploading file 'AI_Ml_Security.png' to folder 11iEGB1_Ig2ws0E3O9OvTkTttKJZjuWaO...
+2025-12-14T15:54:43.030382283Z [inf]  [Drive] Upload complete: 1w7T5W7dGtLwKh8_SsiuIbgRXSNn0OzYU
+2025-12-14T15:54:43.030391451Z [err]  Upload error: SqliteError: FOREIGN KEY constraint failed
+2025-12-14T15:54:43.030398131Z [err]      at /app/server/index.js:122:113
+2025-12-14T15:54:43.030404303Z [err]      at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+2025-12-14T15:54:43.030410303Z [err]    code: 'SQLITE_CONSTRAINT_FOREIGNKEY'
+2025-12-14T15:54:43.030416069Z [err]  }

@@ -82,8 +82,10 @@ const AdminPanel = () => {
                 <button
                     onClick={() => setActiveTab('users')}
                     className={clsx(
-                        "flex items-center space-x-2 px-6 py-3 rounded-xl font-bold transition-all",
-                        activeTab === 'users' ? "bg-purple-600 text-white shadow-lg shadow-purple-500/30" : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"
+                        "flex items-center space-x-2 px-6 py-3 rounded-xl font-bold transition-all relative overflow-hidden",
+                        activeTab === 'users'
+                            ? "bg-neon-purple text-white shadow-neon-pink"
+                            : "bg-glass-surface text-white/50 hover:bg-glass-hover hover:text-white border border-white/5"
                     )}
                 >
                     <Users size={20} />
@@ -92,8 +94,10 @@ const AdminPanel = () => {
                 <button
                     onClick={() => setActiveTab('submissions')}
                     className={clsx(
-                        "flex items-center space-x-2 px-6 py-3 rounded-xl font-bold transition-all",
-                        activeTab === 'submissions' ? "bg-cyan-600 text-white shadow-lg shadow-cyan-500/30" : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"
+                        "flex items-center space-x-2 px-6 py-3 rounded-xl font-bold transition-all relative overflow-hidden",
+                        activeTab === 'submissions'
+                            ? "bg-neon-cyan text-white shadow-neon"
+                            : "bg-glass-surface text-white/50 hover:bg-glass-hover hover:text-white border border-white/5"
                     )}
                 >
                     <FileCheck size={20} />
@@ -103,34 +107,34 @@ const AdminPanel = () => {
 
             {/* USERS TAB */}
             {activeTab === 'users' && (
-                <div className="glass-panel overflow-hidden">
-                    <table className="w-full text-left">
-                        <thead className="bg-slate-900/50 text-slate-400 uppercase text-xs">
+                <div className="glass-panel overflow-hidden border border-white/10">
+                    <table className="w-full text-left border-collapse">
+                        <thead className="bg-black/20 text-white/40 uppercase text-xs tracking-wider border-b border-white/5 backdrop-blur-md">
                             <tr>
-                                <th className="p-4">ID</th>
-                                <th className="p-4">Username</th>
-                                <th className="p-4">Role</th>
-                                <th className="p-4">Joined</th>
-                                <th className="p-4 text-right">Actions</th>
+                                <th className="p-5 font-bold">ID</th>
+                                <th className="p-5 font-bold">Username</th>
+                                <th className="p-5 font-bold">Role</th>
+                                <th className="p-5 font-bold">Joined</th>
+                                <th className="p-5 font-bold text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-700">
+                        <tbody className="divide-y divide-white/5">
                             {users.map((u) => (
-                                <tr key={u.id} className="hover:bg-slate-800/30 transition-colors">
-                                    <td className="p-4 font-mono text-slate-500">#{u.id}</td>
-                                    <td className="p-4 font-bold text-white">{u.username}</td>
-                                    <td className="p-4">
-                                        <span className={`px-2 py-1 rounded text-xs font-bold ${u.role === 'admin' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-green-500/20 text-green-300 border border-green-500/30'}`}>
-                                            {u.role.toUpperCase()}
+                                <tr key={u.id} className="hover:bg-white/5 transition-colors group">
+                                    <td className="p-5 font-mono text-white/30 group-hover:text-white/50">#{u.id}</td>
+                                    <td className="p-5 font-bold text-white text-lg">{u.username}</td>
+                                    <td className="p-5">
+                                        <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border ${u.role === 'admin' ? 'bg-neon-purple/20 text-neon-purple border-neon-purple/30' : 'bg-neon-accent/20 text-neon-accent border-neon-accent/30'}`}>
+                                            {u.role}
                                         </span>
                                     </td>
-                                    <td className="p-4 text-slate-400 text-sm">
+                                    <td className="p-5 text-white/40 text-sm">
                                         {new Date(u.created_at).toLocaleDateString()}
                                     </td>
-                                    <td className="p-4 text-right">
+                                    <td className="p-5 text-right">
                                         <button
                                             onClick={() => toggleRole(u.id, u.role)}
-                                            className="text-xs font-bold px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded text-white transition-colors"
+                                            className="text-xs font-bold px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-white/70 hover:text-white transition-colors border border-white/5"
                                             disabled={u.username === 'Lloyed'} // Protect main admin
                                         >
                                             {u.role === 'admin' ? 'Demote' : 'Promote'}
@@ -146,77 +150,85 @@ const AdminPanel = () => {
             {/* SUBMISSIONS TAB */}
             {activeTab === 'submissions' && (
                 <div className="grid grid-cols-1 gap-6">
-                    {submissions.length === 0 && <p className="text-slate-500 text-center py-10">No missions submitted for review.</p>}
+                    {submissions.length === 0 && <p className="text-white/30 text-center py-12 italic">No missions submitted for review.</p>}
                     {submissions.map((sub) => (
                         <motion.div
                             key={sub.id}
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            className="glass-panel p-6 border-l-4 border-l-cyan-500"
+                            className="glass-panel p-6 border-l-4 border-l-neon-cyan relative overflow-hidden group"
                         >
-                            <div className="flex justify-between items-start mb-4">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-neon-cyan/5 rounded-full blur-[40px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+
+                            <div className="flex justify-between items-start mb-6 relative z-10">
                                 <div>
-                                    <h3 className="font-bold text-lg text-white">{sub.task_title}</h3>
-                                    <p className="text-sm text-cyan-400">Agent: {sub.username}</p>
+                                    <h3 className="font-bold text-xl text-white mb-1 group-hover:text-neon-cyan transition-colors">{sub.task_title}</h3>
+                                    <p className="text-sm text-neon-cyan/80 flex items-center gap-2">
+                                        <span className="w-2 h-2 rounded-full bg-neon-cyan"></span>
+                                        Agent: {sub.username}
+                                    </p>
                                 </div>
                                 <div className="text-right flex flex-col items-end">
-                                    <span className="text-xs text-slate-500 mb-1">{new Date(sub.uploaded_at).toLocaleString()}</span>
+                                    <span className="text-xs text-white/30 mb-2 font-mono">{new Date(sub.uploaded_at).toLocaleString()}</span>
                                     <button
                                         onClick={() => handleDelete(sub.id)}
-                                        className="text-xs bg-red-500/10 text-red-400 border border-red-500/30 px-2 py-1 rounded hover:bg-red-500/20 transition-colors"
+                                        className="text-[10px] uppercase font-bold tracking-wider bg-red-500/10 text-red-400 border border-red-500/20 px-3 py-1.5 rounded hover:bg-red-500/20 transition-colors"
                                     >
                                         Remove Task
                                     </button>
                                 </div>
                             </div>
 
-                            <div className="bg-slate-900/50 p-4 rounded-lg mb-4 text-sm font-mono space-y-2">
-                                <p><span className="text-slate-500">Link:</span> <a href={sub.upload_link} target="_blank" className="text-blue-400 underline truncate block">{sub.upload_link}</a></p>
-                                <p><span className="text-slate-500">Notes:</span> <span className="text-slate-300">{sub.notes || 'None'}</span></p>
+                            <div className="bg-black/20 p-5 rounded-xl mb-6 text-sm border border-white/5 backdrop-blur-sm">
+                                <p className="mb-2"><span className="text-white/40 uppercase text-xs font-bold tracking-wider w-16 inline-block">Link:</span> <a href={sub.upload_link} target="_blank" className="text-neon-blue hover:text-white underline truncate inline-block align-bottom max-w-[300px] transition-colors">{sub.upload_link}</a></p>
+                                <p><span className="text-white/40 uppercase text-xs font-bold tracking-wider w-16 inline-block">Notes:</span> <span className="text-white/80">{sub.notes || 'None'}</span></p>
                             </div>
 
                             {grading.id === sub.id ? (
-                                <form onSubmit={submitGrade} className="bg-slate-800 p-4 rounded-lg animate-in fade-in">
-                                    <div className="flex space-x-4 mb-3">
+                                <form onSubmit={submitGrade} className="bg-white/5 p-5 rounded-xl animate-in fade-in border border-white/10">
+                                    <div className="flex space-x-4 mb-4">
                                         <div className="flex-1">
-                                            <label className="text-xs text-slate-400 block mb-1">Rating (1-5 Stars)</label>
+                                            <label className="text-xs text-white/50 uppercase font-bold mb-2 block">Rating</label>
                                             <StarRating
                                                 rating={grading.rating}
                                                 setRating={(r) => setGrading({ ...grading, rating: r })}
                                             />
                                         </div>
                                     </div>
-                                    <div className="mb-3">
-                                        <label className="text-xs text-slate-400 block mb-1">Feedback</label>
+                                    <div className="mb-4">
+                                        <label className="text-xs text-white/50 uppercase font-bold mb-2 block">Feedback</label>
                                         <input
                                             type="text"
                                             value={grading.admin_notes}
                                             onChange={e => setGrading({ ...grading, admin_notes: e.target.value })}
-                                            className="input-field py-1"
-                                            placeholder="Great work!"
+                                            className="input-field"
+                                            placeholder="Mission feedback..."
                                         />
                                     </div>
-                                    <div className="flex justify-end space-x-2">
-                                        <button type="button" onClick={() => setGrading({ id: null, rating: 0, admin_notes: '' })} className="px-3 py-1 text-sm bg-slate-700 rounded text-slate-300">Cancel</button>
-                                        <button type="submit" className="px-3 py-1 text-sm bg-green-600 rounded text-white">Save Evaluation</button>
+                                    <div className="flex justify-end space-x-3">
+                                        <button type="button" onClick={() => setGrading({ id: null, rating: 0, admin_notes: '' })} className="px-4 py-2 text-sm bg-white/5 hover:bg-white/10 rounded-lg text-white transition-colors">Cancel</button>
+                                        <button type="submit" className="px-4 py-2 text-sm bg-green-600 hover:bg-green-500 rounded-lg text-white font-bold shadow-lg">Save Evaluation</button>
                                     </div>
                                 </form>
                             ) : (
-                                <div className="flex justify-between items-center border-t border-slate-700 pt-4">
+                                <div className="flex justify-between items-center border-t border-white/5 pt-4">
                                     <div>
                                         {sub.rating ? (
-                                            <div className="flex items-center space-x-2 text-green-400 text-sm font-bold">
-                                                <Award size={16} />
+                                            <div className="flex items-center space-x-3 text-neon-green text-sm font-bold">
+                                                <Award size={18} />
                                                 <StarRating rating={sub.rating} readonly />
-                                                <span className="text-slate-500 font-normal ml-2">"{sub.admin_notes}"</span>
+                                                <span className="text-white/60 font-normal border-l border-white/10 pl-3">"{sub.admin_notes}"</span>
                                             </div>
                                         ) : (
-                                            <span className="text-yellow-500 text-sm italic">Pending Review</span>
+                                            <span className="text-yellow-500/80 text-sm font-medium flex items-center gap-2">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></div>
+                                                Pending Review
+                                            </span>
                                         )}
                                     </div>
                                     <button
                                         onClick={() => setGrading({ id: sub.id, rating: sub.rating || 0, admin_notes: sub.admin_notes || '' })}
-                                        className="text-sm text-cyan-400 hover:text-cyan-300 font-medium"
+                                        className="text-sm text-neon-cyan hover:text-white font-bold transition-colors uppercase tracking-wide text-[10px]"
                                     >
                                         Edit Evaluation
                                     </button>

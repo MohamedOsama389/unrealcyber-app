@@ -98,8 +98,8 @@ app.post('/api/tasks', authenticateToken, (req, res) => {
 app.delete('/api/tasks/:id', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
     const { id } = req.params;
+    db.prepare('DELETE FROM student_uploads WHERE task_id = ?').run(id); // Clean up uploads first
     db.prepare('DELETE FROM tasks WHERE id = ?').run(id);
-    db.prepare('DELETE FROM student_uploads WHERE task_id = ?').run(id); // Clean up uploads
     res.json({ success: true });
 });
 

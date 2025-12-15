@@ -85,7 +85,7 @@ const Dashboard = () => {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-12 relative"
+                className="mb-12 relative flex flex-col items-center text-center"
             >
                 {/* Header Glow */}
                 <div className="absolute -top-20 -left-20 w-64 h-64 bg-neon-cyan/20 rounded-full blur-[100px] pointer-events-none" />
@@ -93,7 +93,7 @@ const Dashboard = () => {
                 <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 drop-shadow-lg relative z-10">
                     Welcome to <span className="bg-gradient-to-r from-neon-cyan via-white to-neon-blue bg-clip-text text-transparent drop-shadow-neon">Unreal Cyber</span>
                 </h1>
-                <p className="text-xl text-glass-muted flex items-center gap-2 relative z-10">
+                <p className="text-xl text-glass-muted flex items-center justify-center gap-2 relative z-10">
                     Operated by <span className="text-neon-cyan font-bold tracking-wide">Mohamed Osama</span>
                     <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-white/50">SYSADMIN</span>
                 </p>

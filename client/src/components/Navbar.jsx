@@ -57,7 +57,7 @@ const Navbar = () => {
                         animate={{ x: 0, opacity: 1 }}
                         exit={{ x: -300, opacity: 0 }}
                         transition={{ type: "spring", stiffness: 200, damping: 25 }}
-                        className={`fixed top-4 left-4 h-[calc(100vh-2rem)] w-72 glass-panel flex flex-col z-40 ${isOpen ? 'block pt-20' : 'hidden md:block'}`}
+                        className={`fixed md:sticky top-4 left-4 md:left-0 md:ml-4 h-[calc(100vh-2rem)] w-72 glass-panel flex flex-col z-40 ${isOpen ? 'block pt-20' : 'hidden md:flex'}`}
                     >
                         <div className="mb-8 px-6 pt-6 hidden md:block">
                             <h1 className="text-3xl font-bold bg-gradient-to-r from-neon-cyan via-white to-neon-pink bg-clip-text text-transparent drop-shadow-lg">

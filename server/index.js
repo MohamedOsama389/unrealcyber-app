@@ -193,11 +193,14 @@ app.get('/api/videos', authenticateToken, async (req, res) => {
     try {
         const driveFiles = await driveService.listFiles(folderId, 'video');
         const insert = db.prepare('INSERT OR IGNORE INTO videos (title, drive_link, folder_id) VALUES (?, ?, ?)');
+        const update = db.prepare('UPDATE videos SET folder_id = ? WHERE drive_link = ?');
         const check = db.prepare('SELECT id FROM videos WHERE drive_link = ?');
 
         const tx = db.transaction((files) => {
             for (const f of files) {
-                if (!check.get(f.webViewLink)) {
+                if (check.get(f.webViewLink)) {
+                    update.run(folderId, f.webViewLink);
+                } else {
                     insert.run(f.name, f.webViewLink, folderId);
                 }
             }
@@ -250,11 +253,14 @@ app.get('/api/files', authenticateToken, async (req, res) => {
     try {
         const driveFiles = await driveService.listFiles(folderId, 'pdf');
         const insert = db.prepare('INSERT OR IGNORE INTO files (title, drive_link, folder_id) VALUES (?, ?, ?)');
+        const update = db.prepare('UPDATE files SET folder_id = ? WHERE drive_link = ?');
         const check = db.prepare('SELECT id FROM files WHERE drive_link = ?');
 
         const tx = db.transaction((files) => {
             for (const f of files) {
-                if (!check.get(f.webViewLink)) {
+                if (check.get(f.webViewLink)) {
+                    update.run(folderId, f.webViewLink);
+                } else {
                     insert.run(f.name, f.webViewLink, folderId);
                 }
             }

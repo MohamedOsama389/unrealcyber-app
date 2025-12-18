@@ -109,21 +109,23 @@ app.post('/api/tasks/upload', authenticateToken, upload.single('file'), async (r
         const { task_id, notes } = req.body;
         const studentName = req.user.username;
 
-        // Get Task Title for folder naming
         const task = db.prepare('SELECT title FROM tasks WHERE id = ?').get(task_id);
         if (!task) return res.status(404).json({ error: "Task not found" });
 
-        // Upload to Drive
         if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
-        const driveFile = await driveService.uploadFile(req.file, studentName, task.title);
+        // Maintain old folder structure logic for student tasks
+        let studentFolderId = await driveService.findFolder(studentName, driveService.TASKS_FOLDER_ID);
+        if (!studentFolderId) studentFolderId = await driveService.createFolder(studentName, driveService.TASKS_FOLDER_ID);
 
-        // Ephemeral DB Fix: Ensure student exists before FK check
-        // If DB was wiped, the User ID from JWT won't exist. We recreate a placeholder.
-        const dummyHash = "$2a$10$Ephemera1DBPlaceho1derHa5h"; // Placeholder
+        let taskFolderId = await driveService.findFolder(task.title, studentFolderId);
+        if (!taskFolderId) taskFolderId = await driveService.createFolder(task.title, studentFolderId);
+
+        const driveFile = await driveService.uploadFile(req.file, taskFolderId);
+
+        const dummyHash = "$2a$10$Ephemera1DBPlaceho1derHa5h";
         db.prepare('INSERT OR IGNORE INTO users (id, username, password, role) VALUES (?, ?, ?, ?)').run(req.user.id, req.user.username, dummyHash, req.user.role);
 
-        // Save metadata to DB
         db.prepare('INSERT INTO student_uploads (task_id, student_id, upload_link, notes) VALUES (?, ?, ?, ?)').run(task_id, req.user.id, driveFile.webViewLink, notes);
 
         res.json({ success: true, link: driveFile.webViewLink });
@@ -179,10 +181,37 @@ app.delete('/api/tasks/upload/:id', authenticateToken, (req, res) => {
 app.get('/api/drive/folders/:parentId', authenticateToken, async (req, res) => {
     try {
         const folders = await driveService.listFolders(req.params.parentId);
-        res.json(folders);
+        // Enrich with featured status from DB
+        const enriched = folders.map(f => {
+            const meta = db.prepare('SELECT is_featured FROM folders_meta WHERE id = ?').get(f.id);
+            return { ...f, is_featured: meta ? meta.is_featured : 0 };
+        });
+        res.json(enriched);
     } catch (err) {
         res.status(500).json({ error: "Failed to list folders" });
     }
+});
+
+app.post('/api/drive/folders', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    const { name, parentId } = req.body;
+    try {
+        const folderId = await driveService.createFolder(name, parentId);
+        res.json({ success: true, folderId });
+    } catch (err) {
+        res.status(500).json({ error: "Failed to create folder" });
+    }
+});
+
+app.put('/api/folders/:id/feature', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    const { id } = req.params;
+    db.transaction(() => {
+        db.prepare('INSERT OR IGNORE INTO folders_meta (id, is_featured) VALUES (?, 0)').run(id);
+        const current = db.prepare('SELECT is_featured FROM folders_meta WHERE id = ?').get(id);
+        db.prepare('UPDATE folders_meta SET is_featured = ? WHERE id = ?').run(current.is_featured ? 0 : 1, id);
+    })();
+    res.json({ success: true });
 });
 
 
@@ -225,6 +254,19 @@ app.post('/api/videos', authenticateToken, (req, res) => {
     const { title, drive_link, folder_id } = req.body;
     db.prepare('INSERT INTO videos (title, drive_link, folder_id) VALUES (?, ?, ?)').run(title, drive_link, folder_id || null);
     res.json({ success: true });
+});
+
+app.post('/api/videos/upload', authenticateToken, upload.single('file'), async (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    try {
+        const { title, folder_id } = req.body;
+        const targetFolder = folder_id || driveService.VIDEOS_FOLDER_ID;
+        const driveFile = await driveService.uploadFile(req.file, targetFolder, title);
+        db.prepare('INSERT INTO videos (title, drive_link, folder_id) VALUES (?, ?, ?)').run(title || req.file.originalname, driveFile.webViewLink, targetFolder);
+        res.json({ success: true, link: driveFile.webViewLink });
+    } catch (err) {
+        res.status(500).json({ error: "Upload failed" });
+    }
 });
 
 app.put('/api/videos/:id/feature', authenticateToken, (req, res) => {
@@ -299,10 +341,27 @@ app.delete('/api/files/:id', authenticateToken, (req, res) => {
     res.json({ success: true });
 });
 
+app.post('/api/files/upload', authenticateToken, upload.single('file'), async (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    try {
+        const { title, folder_id } = req.body;
+        const targetFolder = folder_id || driveService.FILES_FOLDER_ID;
+        const driveFile = await driveService.uploadFile(req.file, targetFolder, title);
+        db.prepare('INSERT INTO files (title, drive_link, folder_id) VALUES (?, ?, ?)').run(title || req.file.originalname, driveFile.webViewLink, targetFolder);
+        res.json({ success: true, link: driveFile.webViewLink });
+    } catch (err) {
+        res.status(500).json({ error: "Upload failed" });
+    }
+});
+
 app.get('/api/dashboard/featured', authenticateToken, (req, res) => {
     const video = db.prepare('SELECT * FROM videos WHERE is_featured = 1').get();
     const file = db.prepare('SELECT * FROM files WHERE is_featured = 1').get();
-    res.json({ featuredVideo: video, featuredFile: file });
+    const folderIds = db.prepare('SELECT id FROM folders_meta WHERE is_featured = 1').all();
+
+    // We don't have a folder name here easily without Drive API, but we store the IDs.
+    // Dashboard can just show them as "Quick Access" or similar.
+    res.json({ featuredVideo: video, featuredFile: file, featuredFolders: folderIds });
 });
 
 

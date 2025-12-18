@@ -58,32 +58,10 @@ try {
 
 // IDs loaded above
 
-const uploadFile = async (fileObject, studentName, taskTitle) => {
+const uploadFile = async (fileObject, parentId, fileName = null) => {
     try {
-        console.log(`[Drive] Starting upload for ${studentName} - ${taskTitle}`);
+        console.log(`[Drive] Starting upload to folder ${parentId}`);
 
-        // 1. Find or Create Student Folder under TASKS_FOLDER_ID
-        let studentFolderId = await findFolder(studentName, TASKS_FOLDER_ID);
-        if (!studentFolderId) {
-            console.log(`[Drive] Creating student folder '${studentName}'...`);
-            studentFolderId = await createFolder(studentName, TASKS_FOLDER_ID);
-            console.log(`[Drive] Student folder created: ${studentFolderId}`);
-        } else {
-            console.log(`[Drive] Found existing student folder: ${studentFolderId}`);
-        }
-
-        // 2. Find or Create Task Folder under StudentFolder
-        let taskFolderId = await findFolder(taskTitle, studentFolderId);
-        if (!taskFolderId) {
-            console.log(`[Drive] Creating task folder '${taskTitle}'...`);
-            taskFolderId = await createFolder(taskTitle, studentFolderId);
-            console.log(`[Drive] Task folder created: ${taskFolderId}`);
-        } else {
-            console.log(`[Drive] Found existing task folder: ${taskFolderId}`);
-        }
-
-        // 3. Upload File
-        console.log(`[Drive] Uploading file '${fileObject.originalname}' to folder ${taskFolderId}...`);
         const bufferStream = new stream.PassThrough();
         bufferStream.end(fileObject.buffer);
 
@@ -93,8 +71,8 @@ const uploadFile = async (fileObject, studentName, taskTitle) => {
                 body: bufferStream,
             },
             requestBody: {
-                name: fileObject.originalname,
-                parents: [taskFolderId],
+                name: fileName || fileObject.originalname,
+                parents: [parentId],
             },
             fields: 'id, name, webViewLink, webContentLink',
         });
@@ -103,12 +81,6 @@ const uploadFile = async (fileObject, studentName, taskTitle) => {
         return data;
     } catch (error) {
         console.error('Drive API Upload Error:', error);
-        if (error.response) {
-            console.error('Error Details:', JSON.stringify(error.response.data, null, 2));
-        }
-        if (error.code === 403 || (error.response && error.response.status === 403)) {
-            throw new Error("Google Drive Permission Denied. Please share the 'Unreal Cyber Academy' folder with the service account email.");
-        }
         throw error;
     }
 };

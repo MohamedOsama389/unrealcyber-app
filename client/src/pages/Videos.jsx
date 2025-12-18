@@ -14,6 +14,9 @@ const Videos = () => {
     const [message, setMessage] = useState('');
 
     const [newVideo, setNewVideo] = useState({ title: '', drive_link: '' });
+    const [uploadFile, setUploadFile] = useState(null);
+    const [newFolderName, setNewFolderName] = useState('');
+    const [showFolderForm, setShowFolderForm] = useState(false);
 
     useEffect(() => {
         fetchContent(currentFolderId);
@@ -32,6 +35,29 @@ const Videos = () => {
             console.error(err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleCreateFolder = async (e) => {
+        e.preventDefault();
+        try {
+            await axios.post('/api/drive/folders', { name: newFolderName, parentId: currentFolderId || '17a65IWgfvipnjSfKu6YYssCJwwUOOgvL' });
+            setNewFolderName('');
+            setShowFolderForm(false);
+            fetchContent(currentFolderId);
+            setMessage('Folder created successfully!');
+            setTimeout(() => setMessage(''), 3000);
+        } catch (err) {
+            setMessage('Failed to create folder');
+        }
+    };
+
+    const handleFolderFeature = async (id) => {
+        try {
+            await axios.put(`/api/folders/${id}/feature`);
+            fetchContent(currentFolderId);
+        } catch (err) {
+            console.error("Failed to feature folder");
         }
     };
 
@@ -70,13 +96,22 @@ const Videos = () => {
     const handleAddVideo = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('/api/videos', { ...newVideo, folder_id: currentFolderId });
-            setMessage('Video added successfully!');
+            const formData = new FormData();
+            if (uploadFile) {
+                formData.append('file', uploadFile);
+                formData.append('title', newVideo.title);
+                formData.append('folder_id', currentFolderId || '');
+                await axios.post('/api/videos/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+            } else {
+                await axios.post('/api/videos', { ...newVideo, folder_id: currentFolderId });
+            }
+            setMessage('Success!');
             setNewVideo({ title: '', drive_link: '' });
+            setUploadFile(null);
             fetchContent(currentFolderId);
             setTimeout(() => setMessage(''), 3000);
         } catch (err) {
-            setMessage('Failed to add video');
+            setMessage('Operation failed');
         }
     };
 
@@ -91,43 +126,97 @@ const Videos = () => {
                     <Video className="text-cyan-400" />
                     <span>Recorded Sessions</span>
                 </motion.h1>
-                {currentFolderId && (
-                    <button
-                        onClick={handleBack}
-                        className="flex items-center space-x-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm transition-colors"
-                    >
-                        <ChevronLeft size={16} />
-                        <span>Back</span>
-                    </button>
-                )}
+                <div className="flex space-x-3">
+                    {currentFolderId && (
+                        <button
+                            onClick={handleBack}
+                            className="flex items-center space-x-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm transition-colors"
+                        >
+                            <ChevronLeft size={16} />
+                            <span>Back</span>
+                        </button>
+                    )}
+                    {user.role === 'admin' && (
+                        <button
+                            onClick={() => setShowFolderForm(!showFolderForm)}
+                            className="flex items-center space-x-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 rounded-lg text-sm transition-colors text-white"
+                        >
+                            <Folder size={16} />
+                            <span>New Category</span>
+                        </button>
+                    )}
+                </div>
             </div>
 
-            {/* ADMIN ADD VIDEO (RESTORED FALLBACK) */}
+            {/* FOLDER CREATION FORM */}
+            <AnimatePresence>
+                {showFolderForm && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="bg-slate-900/50 border border-slate-800 p-6 mb-8 rounded-2xl overflow-hidden"
+                    >
+                        <form onSubmit={handleCreateFolder} className="flex gap-4">
+                            <input
+                                type="text"
+                                placeholder="New category name..."
+                                value={newFolderName}
+                                onChange={(e) => setNewFolderName(e.target.value)}
+                                className="input-field flex-1"
+                                required
+                            />
+                            <button type="submit" className="btn-primary">Create</button>
+                        </form>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* ADMIN ADD VIDEO (WITH UPLOAD) */}
             {user.role === 'admin' && (
                 <div className="bg-slate-900/50 border border-slate-800 p-6 mb-8 rounded-2xl border-l-4 border-l-cyan-500">
                     <h3 className="text-lg font-bold text-white mb-4 flex items-center">
-                        <Plus className="mr-2" /> Upload Recording Link
+                        <Plus className="mr-2" /> Add Session
                     </h3>
-                    <form onSubmit={handleAddVideo} className="flex flex-col md:flex-row gap-4">
-                        <input
-                            type="text"
-                            placeholder="Video Title"
-                            value={newVideo.title}
-                            onChange={(e) => setNewVideo({ ...newVideo, title: e.target.value })}
-                            className="input-field md:w-1/3"
-                            required
-                        />
-                        <input
-                            type="text"
-                            placeholder="Drive Link"
-                            value={newVideo.drive_link}
-                            onChange={(e) => setNewVideo({ ...newVideo, drive_link: e.target.value })}
-                            className="input-field flex-1"
-                            required
-                        />
-                        <button type="submit" className="btn-primary whitespace-nowrap">
-                            Add Session
-                        </button>
+                    <form onSubmit={handleAddVideo} className="flex flex-col gap-4">
+                        <div className="flex flex-col md:flex-row gap-4">
+                            <input
+                                type="text"
+                                placeholder="Video Title"
+                                value={newVideo.title}
+                                onChange={(e) => setNewVideo({ ...newVideo, title: e.target.value })}
+                                className="input-field md:w-1/2"
+                                required
+                            />
+                            {!uploadFile ? (
+                                <input
+                                    type="text"
+                                    placeholder="Drive Link (optional if uploading)"
+                                    value={newVideo.drive_link}
+                                    onChange={(e) => setNewVideo({ ...newVideo, drive_link: e.target.value })}
+                                    className="input-field flex-1"
+                                />
+                            ) : (
+                                <div className="flex-1 bg-slate-800 py-2 px-4 rounded-xl flex items-center text-cyan-400 font-mono text-sm">
+                                    <CheckCircle size={14} className="mr-2" /> {uploadFile.name}
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <label className="flex items-center space-x-2 cursor-pointer text-slate-400 hover:text-white transition-colors">
+                                <input
+                                    type="file"
+                                    accept="video/*"
+                                    className="hidden"
+                                    onChange={(e) => setUploadFile(e.target.files[0])}
+                                />
+                                <Plus size={18} />
+                                <span>{uploadFile ? 'Change File' : 'Upload Video File Instead'}</span>
+                            </label>
+                            <button type="submit" className="btn-primary px-8">
+                                {uploadFile ? 'Upload & Save' : 'Save Link'}
+                            </button>
+                        </div>
                     </form>
                     {message && <p className="text-cyan-400 mt-2 text-sm">{message}</p>}
                 </div>
@@ -145,14 +234,23 @@ const Videos = () => {
                             <h2 className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-4">Categories</h2>
                             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                                 {folders.map(folder => (
-                                    <button
-                                        key={folder.id}
-                                        onClick={() => handleFolderClick(folder)}
-                                        className="flex flex-col items-center p-4 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-all group"
-                                    >
-                                        <Folder size={40} className="text-cyan-500 group-hover:scale-110 transition-transform mb-2" />
-                                        <span className="text-xs font-medium text-slate-300 text-center truncate w-full">{folder.name}</span>
-                                    </button>
+                                    <div key={folder.id} className="relative group">
+                                        <button
+                                            onClick={() => handleFolderClick(folder)}
+                                            className="w-full flex flex-col items-center p-4 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-all"
+                                        >
+                                            <Folder size={40} className="text-cyan-500 mb-2 group-hover:scale-110 transition-transform" />
+                                            <span className="text-xs font-medium text-slate-300 text-center truncate w-full">{folder.name}</span>
+                                        </button>
+                                        {user.role === 'admin' && (
+                                            <button
+                                                onClick={() => handleFolderFeature(folder.id)}
+                                                className={`absolute -top-2 -right-2 p-1.5 rounded-full border border-slate-700 transition-all ${folder.is_featured ? 'bg-yellow-500 text-black border-yellow-600' : 'bg-slate-800 text-slate-500 opacity-0 group-hover:opacity-100 hover:text-yellow-500'}`}
+                                            >
+                                                <Star size={12} fill={folder.is_featured ? 'currentColor' : 'none'} />
+                                            </button>
+                                        )}
+                                    </div>
                                 ))}
                             </div>
                         </div>
@@ -206,7 +304,7 @@ const Videos = () => {
                                                 onClick={() => handleFeature(vid.id)}
                                                 className={`mt-2 w-full flex items-center justify-center py-2 rounded-lg text-sm font-bold transition-all ${vid.is_featured ? 'bg-yellow-500 text-black' : 'bg-slate-700 hover:bg-yellow-500/20 text-yellow-500'}`}
                                             >
-                                                <Star size={16} className={`mr-2 ${vid.is_featured ? 'fill-black' : ''}`} />
+                                                < Star size={16} className={`mr-2 ${vid.is_featured ? 'fill-black' : ''}`} />
                                                 {vid.is_featured ? 'Featured' : 'Feature on Dashboard'}
                                             </button>
                                         )}

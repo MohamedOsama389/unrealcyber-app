@@ -18,6 +18,7 @@ const Dashboard = () => {
     });
     const [featuredVideo, setFeaturedVideo] = useState(null);
     const [featuredFile, setFeaturedFile] = useState(null);
+    const [featuredFolders, setFeaturedFolders] = useState([]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -30,6 +31,7 @@ const Dashboard = () => {
                 const featuredRes = await axios.get('/api/dashboard/featured');
                 setFeaturedVideo(featuredRes.data.featuredVideo);
                 setFeaturedFile(featuredRes.data.featuredFile);
+                setFeaturedFolders(featuredRes.data.featuredFolders || []);
 
                 // Get VM Stats
                 const vmsRes = await axios.get('/api/vms');
@@ -163,6 +165,26 @@ const Dashboard = () => {
                         </a>
                     </div>
                 </motion.div>
+            )}
+
+            {featuredFolders.length > 0 && (
+                <div className="mb-12">
+                    <h2 className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-4 flex items-center">
+                        <Star size={12} className="mr-2 text-yellow-500" /> Featured Categories
+                    </h2>
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                        {featuredFolders.map(folder => (
+                            <a
+                                key={folder.id}
+                                href={`/videos?folderId=${folder.id}`}
+                                className="flex flex-col items-center p-4 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-all group border-l-2 border-l-yellow-500"
+                            >
+                                <Folder size={32} className="text-yellow-500 mb-2 group-hover:scale-110 transition-transform" />
+                                <span className="text-xs font-medium text-slate-300 text-center truncate w-full">Quick Access</span>
+                            </a>
+                        ))}
+                    </div>
+                </div>
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

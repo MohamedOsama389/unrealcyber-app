@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Video, Play, Plus, Star, Folder, ChevronLeft, Trash2 } from 'lucide-react';
+import { Video, Play, Plus, Star, Folder, ChevronLeft, Trash2, CheckCircle } from 'lucide-react';
 
 const Videos = () => {
     const { user } = useAuth();

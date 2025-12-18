@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileText, Folder, Star, ChevronLeft, Download, Eye, Trash2 } from 'lucide-react';
+import { FileText, Folder, Star, ChevronLeft, Download, Eye, Trash2, Plus, CheckCircle } from 'lucide-react';
 
 const Files = () => {
     const { user } = useAuth();

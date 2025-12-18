@@ -151,7 +151,7 @@ const createFolder = async (folderName, parentId) => {
 
 const listFiles = async (folderId, type = 'video') => {
     try {
-        const mimeTypeQuery = type === 'video' ? "(mimeType contains 'video/')" : "(mimeType = 'application/pdf')";
+        const mimeTypeQuery = type === 'video' ? "(mimeType contains 'video/' or mimeType = 'application/octet-stream')" : "(mimeType = 'application/pdf')";
         const query = `'${folderId}' in parents and ${mimeTypeQuery} and trashed=false`;
         const res = await drive.files.list({
             q: query,

@@ -222,8 +222,8 @@ app.get('/api/videos', authenticateToken, async (req, res) => {
 
 app.post('/api/videos', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
-    const { title, drive_link } = req.body;
-    db.prepare('INSERT INTO videos (title, drive_link) VALUES (?, ?)').run(title, drive_link);
+    const { title, drive_link, folder_id } = req.body;
+    db.prepare('INSERT INTO videos (title, drive_link, folder_id) VALUES (?, ?, ?)').run(title, drive_link, folder_id || null);
     res.json({ success: true });
 });
 

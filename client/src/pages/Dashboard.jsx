@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import StarRating from '../components/StarRating';
-import { Activity, Calendar, CheckCircle, Award, Server, Play, FileText, Eye, Star } from 'lucide-react';
+import { Activity, Calendar, CheckCircle, Award, Server, Play, FileText, Eye, Star, Folder } from 'lucide-react';
 import io from 'socket.io-client';
 
 const Dashboard = () => {

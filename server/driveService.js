@@ -8,6 +8,7 @@ const TOKENS_PATH = path.join(__dirname, 'final_tokens.json');
 
 const TASKS_FOLDER_ID = '1EzdCa49QHIUc7udBqqobuwMHcggSVTn2';
 const VIDEOS_FOLDER_ID = '17a65IWgfvipnjSfKu6YYssCJwwUOOgvL';
+const FILES_FOLDER_ID = '14nYLGu1H9eqQNCHxk2JXot2G42WY2xN_';
 
 try {
     let keys, tokens;
@@ -148,24 +149,41 @@ const createFolder = async (folderName, parentId) => {
     }
 };
 
-const listVideos = async () => {
+const listFiles = async (folderId, type = 'video') => {
     try {
-        // List video files from VIDEOS_FOLDER_ID
-        // You can adjust mimeType query to allow other types or all files
-        const query = `'${VIDEOS_FOLDER_ID}' in parents and (mimeType contains 'video/') and trashed=false`;
+        const mimeTypeQuery = type === 'video' ? "(mimeType contains 'video/')" : "(mimeType = 'application/pdf')";
+        const query = `'${folderId}' in parents and ${mimeTypeQuery} and trashed=false`;
         const res = await drive.files.list({
             q: query,
-            fields: 'files(id, name, webViewLink, webContentLink, thumbnailLink)',
-            orderBy: 'createdTime desc',
+            fields: 'files(id, name, webViewLink, webContentLink, thumbnailLink, size, modifiedTime)',
+            orderBy: 'name',
         });
         return res.data.files;
     } catch (err) {
-        console.error("Error listing videos:", err);
+        console.error(`Error listing files for folder ${folderId}:`, err);
+        return [];
+    }
+};
+
+const listFolders = async (parentId) => {
+    try {
+        const query = `'${parentId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed=false`;
+        const res = await drive.files.list({
+            q: query,
+            fields: 'files(id, name)',
+            orderBy: 'name',
+        });
+        return res.data.files;
+    } catch (err) {
+        console.error(`Error listing folders for parent ${parentId}:`, err);
         return [];
     }
 };
 
 module.exports = {
     uploadFile,
-    listVideos
+    listFiles,
+    listFolders,
+    VIDEOS_FOLDER_ID,
+    FILES_FOLDER_ID
 };

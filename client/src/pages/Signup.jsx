@@ -20,14 +20,14 @@ const Signup = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+        <div className="min-h-screen flex items-center justify-center bg-slate-900 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-                <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-neon-blue/20 rounded-full blur-[120px] animate-blob-pulse" />
-                <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-neon-pink/20 rounded-full blur-[120px] animate-blob-pulse" style={{ animationDelay: '2s' }} />
+                <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-cyan-500/10 rounded-full blur-[100px]" />
+                <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-purple-500/10 rounded-full blur-[100px]" />
             </div>
 
-            <div className="glass-panel p-10 w-full max-w-md relative z-10 mx-4 border-t border-white/20">
-                <h2 className="text-4xl font-bold text-center mb-2 bg-gradient-to-r from-neon-pink via-white to-neon-purple bg-clip-text text-transparent drop-shadow-neon-pink">
+            <div className="glass-panel p-8 w-full max-w-md relative z-10 mx-4">
+                <h2 className="text-3xl font-bold text-center mb-2 bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
                     New Recruit
                 </h2>
                 <p className="text-center text-slate-400 mb-8">Sign Up</p>

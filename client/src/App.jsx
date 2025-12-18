@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import Meetings from './pages/Meetings';
 import Tasks from './pages/Tasks';
 import Videos from './pages/Videos';
+import Files from './pages/Files';
 import VMRental from './pages/VMRental';
 import Chat from './pages/Chat';
 import AdminPanel from './pages/AdminPanel';
@@ -18,9 +19,9 @@ function App() {
     <BrowserRouter>
       <PageTitle />
       <AuthProvider>
-        <div className="flex min-h-screen text-white font-sans selection:bg-neon-cyan/30 bg-deep gap-0 md:gap-4 relative">
+        <div className="flex min-h-screen bg-slate-950 text-white font-sans selection:bg-cyan-500/30">
           <Navbar />
-          <div className="flex-1 min-w-0 pt-16 md:pt-4 pr-4 pl-4 md:pl-0 transition-all duration-300">
+          <div className="flex-1 ml-0 md:ml-72 pt-16 md:pt-0 transition-all duration-300">
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
@@ -31,6 +32,7 @@ function App() {
                 <Route path="/meetings" element={<Meetings />} />
                 <Route path="/tasks" element={<Tasks />} />
                 <Route path="/videos" element={<Videos />} />
+                <Route path="/files" element={<Files />} />
                 <Route path="/vm-rental" element={<VMRental />} />
                 <Route path="/chat" element={<Chat />} />
               </Route>

@@ -42,49 +42,47 @@ const AdminTaskReviews = ({ taskId }) => {
         } catch (err) { console.error(err); }
     };
 
-    if (submissions.length === 0) return <p className="text-xs text-white/30 italic">No submissions yet.</p>;
+    if (submissions.length === 0) return <p className="text-xs text-slate-500 italic">No submissions yet.</p>;
 
     return (
         <div className="space-y-3">
             {submissions.map(sub => (
-                <div key={sub.id} className="bg-black/20 p-4 rounded-xl border border-white/5 backdrop-blur-sm">
+                <div key={sub.id} className="bg-slate-900/80 p-3 rounded border border-slate-700">
                     <div className="flex justify-between text-xs mb-2">
-                        <span className="text-neon-cyan font-bold">{sub.username}</span>
+                        <span className="text-cyan-400 font-bold">{sub.username}</span>
                         <div className="flex space-x-2">
-                            <span className="text-white/40">{new Date(sub.uploaded_at).toLocaleDateString()}</span>
-                            <button onClick={() => handleDelete(sub.id)} className="text-red-400 hover:text-red-300 font-bold px-1">&times;</button>
+                            <span className="text-slate-500">{new Date(sub.uploaded_at).toLocaleDateString()}</span>
+                            <button onClick={() => handleDelete(sub.id)} className="text-red-400 hover:text-red-300 font-bold">&times;</button>
                         </div>
                     </div>
-                    <div className="text-xs text-white/50 mb-3 truncate">
-                        <a href={sub.upload_link} target="_blank" className="underline hover:text-white transition-colors">View Submission File</a>
+                    <div className="text-xs text-slate-300 mb-2 truncate">
+                        <a href={sub.upload_link} target="_blank" className="underline hover:text-cyan-300">View File</a>
                     </div>
 
                     {grading.id === sub.id ? (
-                        <form onSubmit={submitGrade} className="mt-2 bg-white/5 p-3 rounded-lg border border-white/10 animate-in fade-in">
-                            <div className="mb-2">
-                                <StarRating rating={grading.rating} setRating={r => setGrading({ ...grading, rating: r })} />
-                            </div>
+                        <form onSubmit={submitGrade} className="mt-2 bg-slate-800 p-2 rounded">
+                            <StarRating rating={grading.rating} setRating={r => setGrading({ ...grading, rating: r })} />
                             <input
-                                className="w-full input-field py-1 text-xs mb-2 bg-black/40"
+                                className="w-full bg-slate-700 text-white text-xs p-1 rounded mt-1 mb-1"
                                 value={grading.admin_notes}
                                 onChange={e => setGrading({ ...grading, admin_notes: e.target.value })}
                                 placeholder="Feedback..."
                             />
-                            <div className="flex justify-end space-x-2">
-                                <button type="button" onClick={() => setGrading({ id: null })} className="px-2 py-1 bg-white/10 text-[10px] rounded hover:bg-white/20 text-white">Cancel</button>
-                                <button type="submit" className="px-2 py-1 bg-green-600 text-[10px] rounded hover:bg-green-500 text-white font-bold">Save</button>
+                            <div className="flex justify-end space-x-1">
+                                <button type="button" onClick={() => setGrading({ id: null })} className="px-2 py-1 bg-slate-600 text-[10px] rounded">Cancel</button>
+                                <button type="submit" className="px-2 py-1 bg-green-600 text-[10px] rounded">Save</button>
                             </div>
                         </form>
                     ) : (
-                        <div className="flex justify-between items-center mt-2 border-t border-white/5 pt-2">
+                        <div className="flex justify-between items-center mt-2 border-t border-slate-800 pt-1">
                             <div>
                                 {sub.rating ? (
-                                    <div className="flex items-center space-x-2">
+                                    <div className="flex items-center space-x-1">
                                         <StarRating rating={sub.rating} readonly size={12} />
                                     </div>
                                 ) : <span className="text-[10px] text-yellow-500">Unrated</span>}
                             </div>
-                            <button onClick={() => setGrading({ id: sub.id, rating: sub.rating || 0, admin_notes: sub.admin_notes || '' })} className="text-[10px] text-neon-cyan hover:text-white uppercase font-bold tracking-wide">Rate/Edit</button>
+                            <button onClick={() => setGrading({ id: sub.id, rating: sub.rating || 0, admin_notes: sub.admin_notes || '' })} className="text-[10px] text-slate-400 hover:text-white">Rate/Edit</button>
                         </div>
                     )}
                 </div>
@@ -194,28 +192,25 @@ const Tasks = () => {
             <motion.h1
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="text-3xl font-bold mb-8 flex items-center space-x-3 text-white"
+                className="text-3xl font-bold mb-8 flex items-center space-x-3"
             >
-                <CheckSquare className="text-neon-cyan drop-shadow-neon" />
+                <CheckSquare className="text-cyan-400" />
                 <span>Mission Center</span>
             </motion.h1>
 
             {message && (
-                <div className="mb-6 p-4 bg-neon-cyan/10 border border-neon-cyan/30 rounded-xl text-neon-cyan shadow-neon flex items-center">
-                    <span className="w-2 h-2 rounded-full bg-neon-cyan mr-3 animate-pulse"></span>
+                <div className="mb-6 p-4 bg-cyan-500/10 border border-cyan-500/30 rounded-lg text-cyan-300">
                     {message}
                 </div>
             )}
 
             {/* ADMIN CREATE TASK */}
             {user.role === 'admin' && (
-                <div className="glass-panel p-6 mb-8 border-l-4 border-l-neon-purple relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-neon-purple/5 rounded-full blur-[80px] pointer-events-none" />
-
-                    <h3 className="text-lg font-bold text-white mb-6 flex items-center relative z-10">
-                        <Plus className="mr-2 text-neon-purple" /> Assign New Mission
+                <div className="glass-panel p-6 mb-8 border-l-4 border-l-purple-500">
+                    <h3 className="text-lg font-bold text-white mb-4 flex items-center">
+                        <Plus className="mr-2" /> Assign New Mission
                     </h3>
-                    <form onSubmit={handleCreateTask} className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
+                    <form onSubmit={handleCreateTask} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <input
                             type="text"
                             placeholder="Mission Title"
@@ -235,9 +230,9 @@ const Tasks = () => {
                             placeholder="Mission Brief / Notes"
                             value={newTask.notes}
                             onChange={(e) => setNewTask({ ...newTask, notes: e.target.value })}
-                            className="input-field md:col-span-2 h-24 pt-3"
+                            className="input-field md:col-span-2 h-24"
                         />
-                        <button type="submit" className="btn-primary md:col-span-2 shadow-neon bg-gradient-to-r from-neon-purple to-neon-blue">
+                        <button type="submit" className="btn-primary md:col-span-2">
                             Publish Mission
                         </button>
                     </form>
@@ -246,37 +241,36 @@ const Tasks = () => {
 
             {/* TASK LIST */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {tasks.map((task, idx) => (
+                {tasks.map((task) => (
                     <motion.div
                         key={task.id}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.05 }}
-                        className="glass-panel p-6 flex flex-col justify-between group hover:border-white/20 transition-all duration-300"
+                        className="glass-panel p-6 flex flex-col justify-between"
                     >
                         <div>
-                            <div className="flex justify-between items-start mb-4">
-                                <h3 className="text-xl font-bold text-white group-hover:text-neon-cyan transition-colors">{task.title}</h3>
+                            <div className="flex justify-between items-start mb-2">
+                                <h3 className="text-xl font-bold text-white">{task.title}</h3>
                                 {user.role === 'admin' && (
                                     <button
                                         onClick={() => handleDeleteTask(task.id)}
-                                        className="text-white/30 hover:text-red-500 transition-colors p-2 hover:bg-white/5 rounded-lg"
+                                        className="text-slate-600 hover:text-red-500 transition-colors p-1"
                                         title="Delete Mission"
                                     >
                                         <Trash2 size={18} />
                                     </button>
                                 )}
                             </div>
-                            <p className="text-glass-muted text-sm mb-6 whitespace-pre-wrap leading-relaxed">{task.notes}</p>
+                            <p className="text-slate-400 text-sm mb-4 whitespace-pre-wrap">{task.notes}</p>
 
                             {task.drive_link && (
                                 <a
                                     href={task.drive_link}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center text-neon-cyan hover:text-white mb-6 text-sm font-bold bg-neon-cyan/10 px-4 py-2 rounded-lg border border-neon-cyan/20 hover:bg-neon-cyan/20 transition-all"
+                                    className="inline-flex items-center text-cyan-400 hover:text-cyan-300 mb-6 text-sm"
                                 >
-                                    <ExternalLink size={14} className="mr-2" />
+                                    <ExternalLink size={14} className="mr-1" />
                                     Access Resources (GDrive)
                                 </a>
                             )}
@@ -284,74 +278,64 @@ const Tasks = () => {
 
                         {/* ADMIN REVIEW SECTION IN TASKS */}
                         {user.role === 'admin' && (
-                            <div className="mt-4 pt-4 border-t border-white/10">
-                                <h4 className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-4">Student Submissions</h4>
+                            <div className="mt-4 pt-4 border-t border-slate-700">
+                                <h4 className="text-xs font-bold text-slate-400 uppercase mb-3">Student Submissions</h4>
                                 <AdminTaskReviews taskId={task.id} />
                             </div>
                         )}
 
                         {user.role === 'student' && (
-                            <div className="mt-4 pt-4 border-t border-white/10">
+                            <div className="mt-4 pt-4 border-t border-slate-700">
                                 {getSubForTask(task.id) ? (
-                                    <div className="bg-black/20 p-5 rounded-xl border border-white/5 backdrop-blur-sm">
-                                        <div className="flex justify-between items-start mb-3">
-                                            <span className="text-neon-green text-sm font-bold flex items-center shadow-neon-green">
+                                    <div className="bg-slate-900/50 p-4 rounded-lg">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <span className="text-green-400 text-sm font-bold flex items-center">
                                                 <CheckSquare size={16} className="mr-2" /> Mission Submitted
                                             </span>
                                             <div className="flex items-center space-x-3">
-                                                <span className="text-xs text-white/40 font-mono">{new Date(getSubForTask(task.id).uploaded_at).toLocaleDateString()}</span>
+                                                <span className="text-xs text-slate-500">{new Date(getSubForTask(task.id).uploaded_at).toLocaleDateString()}</span>
                                                 <button
                                                     onClick={() => handleDelete(getSubForTask(task.id).id)}
-                                                    className="w-6 h-6 flex items-center justify-center rounded-full bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white transition-all border border-red-500/20"
+                                                    className="w-6 h-6 flex items-center justify-center rounded-full bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all"
                                                     title="Retract Submission"
                                                 >
                                                     &times;
                                                 </button>
                                             </div>
                                         </div>
-                                        <div className="text-[10px] text-white/30 mb-2 italic text-right">Delete to upload a new file</div>
-                                        <p className="text-xs text-white/60 mb-3 truncate flex items-center gap-2">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-neon-blue"></span>
-                                            Link: <span className="text-white/80">{getSubForTask(task.id).upload_link}</span>
-                                        </p>
+                                        <div className="text-[10px] text-slate-500 mb-2 italic text-right">Delete to upload a new file</div>
+                                        <p className="text-xs text-slate-400 mb-2 truncate">Link: {getSubForTask(task.id).upload_link}</p>
 
                                         {getSubForTask(task.id).rating ? (
-                                            <div className="mt-3 pt-3 border-t border-white/5">
-                                                <div className="flex items-center space-x-2 text-neon-green text-sm font-bold mb-1">
+                                            <div className="mt-3 pt-3 border-t border-slate-800">
+                                                <div className="flex items-center space-x-2 text-yellow-400 text-sm font-bold mb-1">
                                                     <span>Performance Rating:</span>
                                                     <StarRating rating={getSubForTask(task.id).rating} readonly />
                                                 </div>
-                                                <p className="text-sm text-white/70 italic border-l-2 border-white/10 pl-3">"{getSubForTask(task.id).admin_notes}"</p>
+                                                <p className="text-sm text-slate-300 italic">"{getSubForTask(task.id).admin_notes}"</p>
                                             </div>
                                         ) : (
-                                            <p className="text-xs text-yellow-500/80 italic mt-3 flex items-center gap-2">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-yellow-500 animate-pulse"></div>
-                                                Pending Commander Review...
-                                            </p>
+                                            <p className="text-xs text-yellow-500 italic mt-2">Pending Commander Review...</p>
                                         )}
                                     </div>
                                 ) : (
                                     uploadData.task_id === task.id ? (
-                                        <form onSubmit={handleUpload} className="space-y-4 animate-in fade-in">
-                                            <div className="border-2 border-dashed border-white/20 rounded-xl p-8 text-center hover:border-neon-cyan hover:bg-neon-cyan/5 transition-all cursor-pointer relative group">
+                                        <form onSubmit={handleUpload} className="space-y-3">
+                                            <div className="border-2 border-dashed border-slate-700 rounded-lg p-6 text-center hover:border-cyan-500 transition-colors cursor-pointer relative">
                                                 <input
                                                     type="file"
                                                     onChange={(e) => setUploadData({ ...uploadData, file: e.target.files[0] })}
-                                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                                                     required
                                                 />
-                                                <div className="text-white/50 group-hover:text-white transition-colors">
+                                                <div className="text-slate-400">
                                                     {uploadData.file ? (
-                                                        <span className="text-neon-cyan font-bold flex flex-col items-center">
-                                                            <FileText size={32} className="mb-2" />
-                                                            {uploadData.file.name}
-                                                        </span>
+                                                        <span className="text-cyan-400 font-bold">{uploadData.file.name}</span>
                                                     ) : (
-                                                        <div className="flex flex-col items-center">
-                                                            <Upload className="mb-3 text-neon-cyan/50 group-hover:text-neon-cyan transition-colors" size={32} />
-                                                            <span className="text-sm font-bold">Drop Mission File</span>
-                                                            <span className="text-xs text-white/30 mt-1">or Click to Upload</span>
-                                                        </div>
+                                                        <>
+                                                            <Upload className="mx-auto mb-2 text-slate-500" />
+                                                            <span>Drop Mission File or Click to Upload</span>
+                                                        </>
                                                     )}
                                                 </div>
                                             </div>
@@ -359,16 +343,16 @@ const Tasks = () => {
                                                 placeholder="Notes for instructor..."
                                                 value={uploadData.notes}
                                                 onChange={(e) => setUploadData({ ...uploadData, notes: e.target.value })}
-                                                className="input-field py-3 text-sm h-20"
+                                                className="input-field py-2 text-sm h-16"
                                             />
                                             <div className="flex space-x-2">
-                                                <button type="submit" className="flex-1 px-4 py-2 bg-gradient-to-r from-green-600 to-green-500 rounded-lg text-sm font-bold text-white hover:shadow-lg hover:from-green-500 hover:to-green-400 transition-all">
+                                                <button type="submit" className="px-4 py-2 bg-green-600 rounded-lg text-sm font-bold hover:bg-green-500">
                                                     Submit
                                                 </button>
                                                 <button
                                                     type="button"
                                                     onClick={() => setUploadData({ task_id: null, file: null, notes: '' })}
-                                                    className="px-4 py-2 bg-white/10 rounded-lg text-sm font-bold hover:bg-white/20 text-white transition-colors"
+                                                    className="px-4 py-2 bg-slate-700 rounded-lg text-sm font-bold hover:bg-slate-600"
                                                 >
                                                     Cancel
                                                 </button>
@@ -377,9 +361,9 @@ const Tasks = () => {
                                     ) : (
                                         <button
                                             onClick={() => setUploadData({ ...uploadData, task_id: task.id })}
-                                            className="w-full py-3 bg-white/5 hover:bg-white/10 border border-dashed border-white/20 hover:border-neon-cyan/50 rounded-xl flex items-center justify-center text-white/60 hover:text-neon-cyan transition-all group"
+                                            className="w-full py-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg flex items-center justify-center text-slate-300 transition-colors"
                                         >
-                                            <Upload size={18} className="mr-2 group-hover:scale-110 transition-transform" />
+                                            <Upload size={16} className="mr-2" />
                                             Upload Solution
                                         </button>
                                     )
@@ -390,8 +374,8 @@ const Tasks = () => {
                 ))}
 
                 {tasks.length === 0 && (
-                    <div className="col-span-full text-center py-16 text-white/30 italic glass-panel border-dashed border-2 border-white/10">
-                        No active missions assigned yet. Standby for directives.
+                    <div className="col-span-full text-center py-12 text-slate-500">
+                        No active missions assigned yet.
                     </div>
                 )}
             </div>

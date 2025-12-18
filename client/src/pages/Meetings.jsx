@@ -60,20 +60,17 @@ const Meetings = () => {
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className={`glass-panel flex items-center justify-center p-12 transition-all duration-500 relative overflow-hidden group ${meeting.is_active
-                    ? 'border-neon-accent/50 shadow-[0_0_60px_rgba(66,255,213,0.15)]'
-                    : 'border-red-500/20'
+                className={`flex items-center justify-center p-12 rounded-3xl mb-8 border transition-all duration-500 ${meeting.is_active
+                    ? 'bg-green-500/10 border-green-500/30 shadow-[0_0_50px_rgba(34,197,94,0.2)]'
+                    : 'bg-red-500/10 border-red-500/30'
                     }`}
             >
-                {/* Background Decor */}
-                <div className={`absolute inset-0 opacity-20 transition-opacity duration-1000 ${meeting.is_active ? 'bg-neon-accent/10' : 'bg-transparent'}`} />
-
-                <div className="text-center relative z-10">
-                    <div className={`mx-auto w-24 h-24 rounded-full flex items-center justify-center mb-6 shadow-2xl transition-all duration-500 ${meeting.is_active ? 'bg-neon-accent text-black animate-pulse shadow-neon' : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                <div className="text-center">
+                    <div className={`mx-auto w-24 h-24 rounded-full flex items-center justify-center mb-4 ${meeting.is_active ? 'bg-green-500 text-white animate-pulse' : 'bg-red-500 text-white'
                         }`}>
                         {meeting.is_active ? <Wifi size={48} /> : <WifiOff size={48} />}
                     </div>
-                    <h2 className={`text-3xl font-bold mb-2 tracking-wide ${meeting.is_active ? 'text-white drop-shadow-neon' : 'text-white/50'}`}>
+                    <h2 className="text-2xl font-bold text-white mb-2">
                         {meeting.is_active ? 'MEETING IN PROGRESS' : 'NO ACTIVE SESSION'}
                     </h2>
 
@@ -82,7 +79,7 @@ const Meetings = () => {
                             href={meeting.link}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="mt-8 inline-flex items-center px-10 py-4 bg-neon-accent hover:bg-white text-black rounded-full font-bold shadow-[0_0_30px_rgba(66,255,213,0.4)] transition-all hover:scale-105 hover:shadow-[0_0_50px_rgba(66,255,213,0.6)]"
+                            className="mt-6 inline-flex items-center px-8 py-3 bg-green-600 hover:bg-green-500 text-white rounded-full font-bold shadow-lg shadow-green-600/30 transition-all hover:scale-105"
                         >
                             JOIN NOW
                         </a>
@@ -92,40 +89,40 @@ const Meetings = () => {
 
             {/* ADMIN CONTROLS */}
             {user.role === 'admin' && (
-                <div className="glass-panel p-8 mt-8 border-t border-white/10">
-                    <h3 className="text-xl font-bold text-neon-cyan mb-6 border-b border-white/10 pb-4">Admin Controls</h3>
-                    <form onSubmit={handleUpdate} className="space-y-6">
+                <div className="glass-panel p-6">
+                    <h3 className="text-lg font-bold text-cyan-400 mb-4 border-b border-slate-700 pb-2">Admin Controls</h3>
+                    <form onSubmit={handleUpdate} className="space-y-4">
                         <div>
-                            <label className="block text-sm text-white/60 mb-2">Meeting Link</label>
+                            <label className="block text-sm text-slate-400 mb-2">Meeting Link (Google Meet/Zoom)</label>
                             <div className="relative">
-                                <LinkIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white/40" size={18} />
+                                <LinkIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500" size={16} />
                                 <input
                                     type="text"
                                     value={meeting.link || ''}
                                     onChange={(e) => setMeeting({ ...meeting, link: e.target.value })}
-                                    className="input-field pl-12"
-                                    placeholder="https://"
+                                    className="input-field pl-10"
+                                    placeholder="https://meet.google.com/..."
                                 />
                             </div>
                         </div>
 
-                        <div className="flex items-center space-x-3 p-4 bg-white/5 rounded-xl border border-white/5">
+                        <div className="flex items-center space-x-3">
                             <input
                                 type="checkbox"
                                 id="status"
                                 checked={meeting.is_active}
                                 onChange={(e) => setMeeting({ ...meeting, is_active: e.target.checked })}
-                                className="w-5 h-5 rounded border-white/20 bg-black/20 text-neon-cyan focus:ring-neon-cyan"
+                                className="w-5 h-5 rounded border-slate-600 bg-slate-700 text-cyan-500 focus:ring-cyan-500"
                             />
-                            <label htmlFor="status" className="text-white font-medium cursor-pointer">Set Status to Active</label>
+                            <label htmlFor="status" className="text-white font-medium">Set Status to Active</label>
                         </div>
 
-                        <button type="submit" className="flex items-center space-x-2 btn-primary px-8">
+                        <button type="submit" className="btn-primary flex items-center space-x-2">
                             <Save size={18} />
                             <span>Update Status</span>
                         </button>
 
-                        {message && <p className="text-neon-cyan text-sm mt-2">{message}</p>}
+                        {message && <p className="text-cyan-400 text-sm mt-2">{message}</p>}
                     </form>
                 </div>
             )}

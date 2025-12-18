@@ -175,41 +175,47 @@ app.delete('/api/tasks/upload/:id', authenticateToken, (req, res) => {
     res.json({ success: true });
 });
 
+// --- DRIVE FOLDERS ---
+app.get('/api/drive/folders/:parentId', authenticateToken, async (req, res) => {
+    try {
+        const folders = await driveService.listFolders(req.params.parentId);
+        res.json(folders);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to list folders" });
+    }
+});
+
+
 // --- VIDEOS ---
 // --- VIDEOS ---
 app.get('/api/videos', authenticateToken, async (req, res) => {
+    const folderId = req.query.folderId || driveService.VIDEOS_FOLDER_ID;
     try {
-        // Auto-Sync: Fetch from Drive and populate DB if missing
-        // This ensures videos persist across Railway restarts and have IDs for specific features
-        const driveVideos = await driveService.listVideos();
-
-        const insert = db.prepare('INSERT OR IGNORE INTO videos (title, drive_link) VALUES (?, ?)');
-        // Note: We use drive_link as a pseudo-unique check if we had a constraint, 
-        // but since we don't enforce unique links in schema, we'll check existence manually or rely on title.
-        // Better: Check if link exists to avoid duplicates
+        const driveFiles = await driveService.listFiles(folderId, 'video');
+        const insert = db.prepare('INSERT OR IGNORE INTO videos (title, drive_link, folder_id) VALUES (?, ?, ?)');
         const check = db.prepare('SELECT id FROM videos WHERE drive_link = ?');
 
-        const tx = db.transaction((videos) => {
-            for (const v of videos) {
-                const exists = check.get(v.webViewLink);
-                if (!exists) {
-                    insert.run(v.name, v.webViewLink);
+        const tx = db.transaction((files) => {
+            for (const f of files) {
+                if (!check.get(f.webViewLink)) {
+                    insert.run(f.name, f.webViewLink, folderId);
                 }
             }
         });
 
-        if (driveVideos.length > 0) {
-            tx(driveVideos);
-        }
-
+        if (driveFiles.length > 0) tx(driveFiles);
     } catch (err) {
-        console.error("Auto-Sync Drive Videos failed:", err);
+        console.error("Video sync failed:", err);
     }
 
-    // Return DB videos (now synced)
-    const videos = db.prepare('SELECT * FROM videos ORDER BY created_at DESC').all();
+    const query = req.query.folderId
+        ? 'SELECT * FROM videos WHERE folder_id = ? ORDER BY created_at DESC'
+        : 'SELECT * FROM videos WHERE folder_id IS NULL OR folder_id = ? ORDER BY created_at DESC';
+
+    const videos = db.prepare(query).all(folderId);
     res.json(videos);
 });
+
 
 app.post('/api/videos', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
@@ -222,22 +228,77 @@ app.put('/api/videos/:id/feature', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
     const { id } = req.params;
 
-    const update = db.transaction(() => {
-        // Check current status
+    db.transaction(() => {
         const current = db.prepare('SELECT is_featured FROM videos WHERE id = ?').get(id);
-
-        // Reset ALL videos to 0
         db.prepare('UPDATE videos SET is_featured = 0').run();
-
-        // If it wasn't featured before, feature it now.
-        // If it WAS featured, we just leave it as 0 (effectively unselecting it).
         if (!current || current.is_featured === 0) {
             db.prepare('UPDATE videos SET is_featured = 1 WHERE id = ?').run(id);
         }
-    });
-    update();
+    })();
     res.json({ success: true });
 });
+
+app.delete('/api/videos/:id', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    db.prepare('DELETE FROM videos WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
+});
+
+// --- FILES ---
+app.get('/api/files', authenticateToken, async (req, res) => {
+    const folderId = req.query.folderId || driveService.FILES_FOLDER_ID;
+    try {
+        const driveFiles = await driveService.listFiles(folderId, 'pdf');
+        const insert = db.prepare('INSERT OR IGNORE INTO files (title, drive_link, folder_id) VALUES (?, ?, ?)');
+        const check = db.prepare('SELECT id FROM files WHERE drive_link = ?');
+
+        const tx = db.transaction((files) => {
+            for (const f of files) {
+                if (!check.get(f.webViewLink)) {
+                    insert.run(f.name, f.webViewLink, folderId);
+                }
+            }
+        });
+
+        if (driveFiles.length > 0) tx(driveFiles);
+    } catch (err) {
+        console.error("Files sync failed:", err);
+    }
+
+    const query = req.query.folderId
+        ? 'SELECT * FROM files WHERE folder_id = ? ORDER BY created_at DESC'
+        : 'SELECT * FROM files WHERE folder_id IS NULL OR folder_id = ? ORDER BY created_at DESC';
+
+    const files = db.prepare(query).all(folderId);
+    res.json(files);
+});
+
+app.put('/api/files/:id/feature', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    const { id } = req.params;
+
+    db.transaction(() => {
+        const current = db.prepare('SELECT is_featured FROM files WHERE id = ?').get(id);
+        db.prepare('UPDATE files SET is_featured = 0').run();
+        if (!current || current.is_featured === 0) {
+            db.prepare('UPDATE files SET is_featured = 1 WHERE id = ?').run(id);
+        }
+    })();
+    res.json({ success: true });
+});
+
+app.delete('/api/files/:id', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    db.prepare('DELETE FROM files WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
+});
+
+app.get('/api/dashboard/featured', authenticateToken, (req, res) => {
+    const video = db.prepare('SELECT * FROM videos WHERE is_featured = 1').get();
+    const file = db.prepare('SELECT * FROM files WHERE is_featured = 1').get();
+    res.json({ featuredVideo: video, featuredFile: file });
+});
+
 
 // --- VMs ---
 app.get('/api/vms', authenticateToken, (req, res) => {

@@ -1,0 +1,29 @@
+2025-12-15T15:06:51.018546176Z [inf]  [Drive] Starting upload for test - 10 simple network devices
+2025-12-15T15:06:51.018552206Z [inf]  [Drive] Creating student folder 'test'...
+2025-12-15T15:06:51.018557690Z [inf]  [Drive] Student folder created: 1S7Ag14HYywNi_otC83j1HTDZiNXUSFZK
+2025-12-15T15:06:51.018563033Z [inf]  [Drive] Creating task folder '10 simple network devices'...
+2025-12-15T15:06:51.018568312Z [inf]  [Drive] Task folder created: 18rU7DoICUXfXt9HqGHQ8B7pYTnz9UDqm
+2025-12-15T15:06:51.018573658Z [inf]  [Drive] Uploading file 'AI_Ml_Security.png' to folder 18rU7DoICUXfXt9HqGHQ8B7pYTnz9UDqm...
+2025-12-15T15:06:51.018578833Z [inf]  [Drive] Upload complete: 1pILwuoF0a9C5sWVy0k35pPgWBTFYr6DW
+2025-12-15T15:40:39.158191417Z [err]      at next (/app/server/node_modules/router/lib/route.js:157:13)
+2025-12-15T15:40:39.158201535Z [err]      at /app/server/index.js:43:9
+2025-12-15T15:40:39.158207862Z [err]      at /app/server/node_modules/jsonwebtoken/verify.js:261:12
+2025-12-15T15:40:39.158213158Z [err]      at getSecret (/app/server/node_modules/jsonwebtoken/verify.js:97:14)
+2025-12-15T15:40:39.158218085Z [err]      at module.exports [as verify] (/app/server/node_modules/jsonwebtoken/verify.js:101:10)
+2025-12-15T15:40:39.158223327Z [err]      at authenticateToken (/app/server/index.js:40:9)
+2025-12-15T15:40:39.158228254Z [err]      at Layer.handleRequest (/app/server/node_modules/router/lib/layer.js:152:17)
+2025-12-15T15:40:39.158232556Z [err]      at next (/app/server/node_modules/router/lib/route.js:157:13)
+2025-12-15T15:40:39.158319497Z [err]  SqliteError: FOREIGN KEY constraint failed
+2025-12-15T15:40:39.158327846Z [err]      at /app/server/index.js:101:50
+2025-12-15T15:40:39.158334448Z [err]      at Layer.handleRequest (/app/server/node_modules/router/lib/layer.js:152:17)
+2025-12-15T15:40:43.258112815Z [err]      at Layer.handleRequest (/app/server/node_modules/router/lib/layer.js:152:17)
+2025-12-15T15:40:43.258126453Z [err]      at next (/app/server/node_modules/router/lib/route.js:157:13)
+2025-12-15T15:40:43.258390088Z [err]  SqliteError: FOREIGN KEY constraint failed
+2025-12-15T15:40:43.258395274Z [err]      at /app/server/index.js:101:50
+2025-12-15T15:40:43.258401073Z [err]      at Layer.handleRequest (/app/server/node_modules/router/lib/layer.js:152:17)
+2025-12-15T15:40:43.258406251Z [err]      at next (/app/server/node_modules/router/lib/route.js:157:13)
+2025-12-15T15:40:43.258411540Z [err]      at /app/server/index.js:43:9
+2025-12-15T15:40:43.258417672Z [err]      at /app/server/node_modules/jsonwebtoken/verify.js:261:12
+2025-12-15T15:40:43.258423769Z [err]      at getSecret (/app/server/node_modules/jsonwebtoken/verify.js:97:14)
+2025-12-15T15:40:43.258429982Z [err]      at module.exports [as verify] (/app/server/node_modules/jsonwebtoken/verify.js:101:10)
+2025-12-15T15:40:43.258437192Z [err]      at authenticateToken (/app/server/index.js:40:9)

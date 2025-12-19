@@ -248,12 +248,13 @@ const Files = () => {
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
+                                                    console.log("Star clicked for folder:", folder.id);
                                                     handleFolderFeature(folder.id);
                                                 }}
-                                                className={`absolute top-2 right-2 p-2 rounded-full border border-slate-700 transition-all z-50 ${folder.is_featured ? 'bg-yellow-500 text-black border-yellow-600 shadow-lg shadow-yellow-500/20' : 'bg-slate-800 text-slate-400 opacity-0 group-hover:opacity-100 hover:text-yellow-500 hover:scale-110'}`}
+                                                className={`absolute top-2 right-2 p-2.5 rounded-full border border-slate-700 shadow-2xl transition-all z-[100] cursor-pointer pointer-events-auto ${folder.is_featured ? 'bg-yellow-500 text-black border-yellow-600 scale-110' : 'bg-slate-800 text-slate-400 hover:text-yellow-500 hover:scale-125'}`}
                                                 title="Feature on Dashboard"
                                             >
-                                                <Star size={18} fill={folder.is_featured ? 'currentColor' : 'none'} />
+                                                <Star size={20} fill={folder.is_featured ? 'currentColor' : 'none'} className="drop-shadow-sm" />
                                             </button>
                                         )}
                                     </div>

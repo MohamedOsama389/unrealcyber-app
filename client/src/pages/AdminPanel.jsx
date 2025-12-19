@@ -160,7 +160,7 @@ const AdminPanel = () => {
                                         <button
                                             onClick={() => handleResetPassword(u.id, u.username)}
                                             className="p-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-400 rounded-lg transition-colors"
-                                            title="Reset Password"
+                                            title="Change Password"
                                         >
                                             <Key size={14} />
                                         </button>
@@ -177,6 +177,11 @@ const AdminPanel = () => {
                             ))}
                         </tbody>
                     </table>
+                    <div className="p-4 bg-slate-900/30 border-t border-slate-700">
+                        <p className="text-[10px] text-slate-500 flex items-center">
+                            <Shield size={10} className="mr-1" /> Passwords are cryptographically hashed and cannot be retrieved. Use the key icon to set a new password.
+                        </p>
+                    </div>
                 </div>
             )}
 

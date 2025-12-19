@@ -244,8 +244,11 @@ const Videos = () => {
                                         </button>
                                         {user.role === 'admin' && (
                                             <button
-                                                onClick={() => handleFolderFeature(folder.id)}
-                                                className={`absolute -top-2 -right-2 p-1.5 rounded-full border border-slate-700 transition-all ${folder.is_featured ? 'bg-yellow-500 text-black border-yellow-600' : 'bg-slate-800 text-slate-500 opacity-0 group-hover:opacity-100 hover:text-yellow-500'}`}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleFolderFeature(folder.id);
+                                                }}
+                                                className={`absolute -top-2 -right-2 p-1.5 rounded-full border border-slate-700 transition-all z-10 ${folder.is_featured ? 'bg-yellow-500 text-black border-yellow-600' : 'bg-slate-800 text-slate-500 opacity-0 group-hover:opacity-100 hover:text-yellow-500'}`}
                                             >
                                                 <Star size={12} fill={folder.is_featured ? 'currentColor' : 'none'} />
                                             </button>

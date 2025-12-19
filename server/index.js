@@ -207,10 +207,13 @@ app.put('/api/folders/:id/feature', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
     const { id } = req.params;
     const { parentId } = req.body;
+    console.log(`[Feature] Folder ${id} toggle. Target Parent: ${parentId}`);
     db.transaction(() => {
         db.prepare('INSERT OR IGNORE INTO folders_meta (id, is_featured, parent_id) VALUES (?, 0, ?)').run(id, parentId || null);
         const current = db.prepare('SELECT is_featured FROM folders_meta WHERE id = ?').get(id);
-        db.prepare('UPDATE folders_meta SET is_featured = ?, parent_id = ? WHERE id = ?').run(current.is_featured ? 0 : 1, parentId || null, id);
+        const next = current.is_featured ? 0 : 1;
+        console.log(`[Feature] Folder ${id} current: ${current.is_featured}, next: ${next}`);
+        db.prepare('UPDATE folders_meta SET is_featured = ?, parent_id = ? WHERE id = ?').run(next, parentId || null, id);
     })();
     res.json({ success: true });
 });
@@ -325,12 +328,15 @@ app.get('/api/files', authenticateToken, async (req, res) => {
 app.put('/api/files/:id/feature', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
     const { id } = req.params;
-
+    console.log(`[Feature] File ${id} toggle.`);
     db.transaction(() => {
         const current = db.prepare('SELECT is_featured FROM files WHERE id = ?').get(id);
         db.prepare('UPDATE files SET is_featured = 0').run();
         if (!current || current.is_featured === 0) {
             db.prepare('UPDATE files SET is_featured = 1 WHERE id = ?').run(id);
+            console.log(`[Feature] File ${id} now featured.`);
+        } else {
+            console.log(`[Feature] File ${id} now unfeatured.`);
         }
     })();
     res.json({ success: true });

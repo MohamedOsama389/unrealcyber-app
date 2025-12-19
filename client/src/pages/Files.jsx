@@ -54,10 +54,11 @@ const Files = () => {
 
     const handleFolderFeature = async (id) => {
         try {
+            console.log(`Toggling feature for folder ${id}`);
             await axios.put(`/api/folders/${id}/feature`, { parentId: '14nYLGu1H9eqQNCHxk2JXot2G42WY2xN_' });
             fetchContent(currentFolderId);
         } catch (err) {
-            console.error("Failed to feature folder");
+            console.error("Failed to feature folder", err);
         }
     };
 
@@ -240,7 +241,7 @@ const Files = () => {
                                             onClick={() => handleFolderClick(folder)}
                                             className="w-full flex flex-col items-center p-4 bg-slate-900/50 border border-slate-800 rounded-xl hover:bg-slate-800 hover:border-slate-700 transition-all"
                                         >
-                                            <Folder size={40} className="text-cyan-500 mb-2 group-hover:scale-110 transition-transform" />
+                                            <Folder size={40} className="text-purple-400 mb-2 group-hover:scale-110 transition-transform" />
                                             <span className="text-xs font-medium text-slate-300 text-center truncate w-full">{folder.name}</span>
                                         </button>
                                         {user.role === 'admin' && (

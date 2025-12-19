@@ -418,6 +418,18 @@ app.get('/api/users', authenticateToken, (req, res) => {
     res.json(users);
 });
 
+app.post('/api/users', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    const { username, password, role } = req.body;
+    try {
+        const hash = bcrypt.hashSync(password, 10);
+        db.prepare('INSERT INTO users (username, password, role) VALUES (?, ?, ?)').run(username, hash, role || 'student');
+        res.json({ success: true });
+    } catch (err) {
+        res.status(400).json({ error: "Username already exists" });
+    }
+});
+
 app.post('/api/users/promote', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
     const { id, role } = req.body;

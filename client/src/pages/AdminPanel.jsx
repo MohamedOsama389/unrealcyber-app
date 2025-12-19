@@ -12,6 +12,8 @@ const AdminPanel = () => {
     const [users, setUsers] = useState([]);
     const [submissions, setSubmissions] = useState([]);
     const [grading, setGrading] = useState({ id: null, rating: 0, admin_notes: '' });
+    const [newUser, setNewUser] = useState({ username: '', password: '', role: 'student' });
+    const [showCreateForm, setShowCreateForm] = useState(false);
 
     useEffect(() => {
         fetchUsers();
@@ -89,6 +91,19 @@ const AdminPanel = () => {
         }
     };
 
+    const handleCreateUser = async (e) => {
+        e.preventDefault();
+        try {
+            await axios.post('/api/users', newUser);
+            setNewUser({ username: '', password: '', role: 'student' });
+            setShowCreateForm(false);
+            fetchUsers();
+            alert("User created successfully!");
+        } catch (err) {
+            alert(err.response?.data?.error || "Failed to create user");
+        }
+    };
+
     return (
         <div className="p-8 max-w-6xl mx-auto">
             <motion.h1
@@ -125,62 +140,117 @@ const AdminPanel = () => {
 
             {/* USERS TAB */}
             {activeTab === 'users' && (
-                <div className="glass-panel overflow-hidden">
-                    <table className="w-full text-left">
-                        <thead className="bg-slate-900/50 text-slate-400 uppercase text-xs">
-                            <tr>
-                                <th className="p-4">ID</th>
-                                <th className="p-4">Username</th>
-                                <th className="p-4">Role</th>
-                                <th className="p-4">Joined</th>
-                                <th className="p-4 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-700">
-                            {users.map((u) => (
-                                <tr key={u.id} className="hover:bg-slate-800/30 transition-colors">
-                                    <td className="p-4 font-mono text-slate-500">#{u.id}</td>
-                                    <td className="p-4 font-bold text-white">{u.username}</td>
-                                    <td className="p-4">
-                                        <span className={`px-2 py-1 rounded text-xs font-bold ${u.role === 'admin' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-green-500/20 text-green-300 border border-green-500/30'}`}>
-                                            {u.role.toUpperCase()}
-                                        </span>
-                                    </td>
-                                    <td className="p-4 text-slate-400 text-sm">
-                                        {new Date(u.created_at).toLocaleDateString()}
-                                    </td>
-                                    <td className="p-4 text-right flex items-center justify-end space-x-2">
-                                        <button
-                                            onClick={() => toggleRole(u.id, u.role)}
-                                            className="text-xs font-bold px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded text-white transition-colors"
-                                            disabled={u.username === 'Lloyed'} // Protect main admin
-                                        >
-                                            {u.role === 'admin' ? 'Demote' : 'Promote'}
-                                        </button>
-                                        <button
-                                            onClick={() => handleResetPassword(u.id, u.username)}
-                                            className="p-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-400 rounded-lg transition-colors"
-                                            title="Change Password"
-                                        >
-                                            <Key size={14} />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDeleteUser(u.id, u.username)}
-                                            className="p-1.5 bg-slate-800 hover:bg-red-500/20 text-red-500 rounded-lg transition-colors"
-                                            title="Delete User"
-                                            disabled={u.username === 'Lloyed'}
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    <div className="p-4 bg-slate-900/30 border-t border-slate-700">
-                        <p className="text-[10px] text-slate-500 flex items-center">
-                            <Shield size={10} className="mr-1" /> Passwords are cryptographically hashed and cannot be retrieved. Use the key icon to set a new password.
-                        </p>
+                <div className="space-y-6">
+                    {/* Create User Button/Form */}
+                    <div className="glass-panel p-6 border-l-4 border-l-cyan-500">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-bold text-white flex items-center">
+                                <Users size={20} className="mr-2 text-cyan-400" /> Administrative Access
+                            </h3>
+                            <button
+                                onClick={() => setShowCreateForm(!showCreateForm)}
+                                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-bold transition-colors"
+                            >
+                                {showCreateForm ? 'Cancel' : 'Create New Recruit'}
+                            </button>
+                        </div>
+
+                        <AnimatePresence>
+                            {showCreateForm && (
+                                <motion.form
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    onSubmit={handleCreateUser}
+                                    className="overflow-hidden bg-slate-900/50 p-6 rounded-2xl border border-slate-800 flex flex-col md:flex-row gap-4 mb-4"
+                                >
+                                    <input
+                                        type="text"
+                                        placeholder="Username"
+                                        value={newUser.username}
+                                        onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
+                                        className="input-field flex-1"
+                                        required
+                                    />
+                                    <input
+                                        type="password"
+                                        placeholder="Password"
+                                        value={newUser.password}
+                                        onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                                        className="input-field flex-1"
+                                        required
+                                    />
+                                    <select
+                                        value={newUser.role}
+                                        onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+                                        className="input-field bg-slate-800"
+                                    >
+                                        <option value="student">Recruit (Student)</option>
+                                        <option value="admin">Admin</option>
+                                    </select>
+                                    <button type="submit" className="btn-primary px-8">Add Account</button>
+                                </motion.form>
+                            )}
+                        </AnimatePresence>
+
+                        <div className="overflow-hidden rounded-xl border border-slate-800">
+                            <table className="w-full text-left">
+                                <thead className="bg-slate-900/50 text-slate-400 uppercase text-xs">
+                                    <tr>
+                                        <th className="p-4">ID</th>
+                                        <th className="p-4">Username</th>
+                                        <th className="p-4">Role</th>
+                                        <th className="p-4">Joined</th>
+                                        <th className="p-4 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-700">
+                                    {users.map((u) => (
+                                        <tr key={u.id} className="hover:bg-slate-800/30 transition-colors">
+                                            <td className="p-4 font-mono text-slate-500">#{u.id}</td>
+                                            <td className="p-4 font-bold text-white">{u.username}</td>
+                                            <td className="p-4">
+                                                <span className={`px-2 py-1 rounded text-xs font-bold ${u.role === 'admin' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-green-500/20 text-green-300 border border-green-500/30'}`}>
+                                                    {u.role.toUpperCase()}
+                                                </span>
+                                            </td>
+                                            <td className="p-4 text-slate-400 text-sm">
+                                                {new Date(u.created_at).toLocaleDateString()}
+                                            </td>
+                                            <td className="p-4 text-right flex items-center justify-end space-x-2">
+                                                <button
+                                                    onClick={() => toggleRole(u.id, u.role)}
+                                                    className="text-xs font-bold px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded text-white transition-colors"
+                                                    disabled={u.username === 'Lloyed'} // Protect main admin
+                                                >
+                                                    {u.role === 'admin' ? 'Demote' : 'Promote'}
+                                                </button>
+                                                <button
+                                                    onClick={() => handleResetPassword(u.id, u.username)}
+                                                    className="p-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-400 rounded-lg transition-colors"
+                                                    title="Change Password"
+                                                >
+                                                    <Key size={14} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteUser(u.id, u.username)}
+                                                    className="p-1.5 bg-slate-800 hover:bg-red-500/20 text-red-500 rounded-lg transition-colors"
+                                                    title="Delete User"
+                                                    disabled={u.username === 'Lloyed'}
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            <div className="p-4 bg-slate-900/30 border-t border-slate-700">
+                                <p className="text-[10px] text-slate-500 flex items-center">
+                                    <Shield size={10} className="mr-1" /> Passwords are cryptographically hashed and cannot be retrieved. Use the key icon to set a new password.
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

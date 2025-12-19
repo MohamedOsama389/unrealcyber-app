@@ -176,7 +176,7 @@ const Dashboard = () => {
                         {featuredFolders.map(folder => (
                             <a
                                 key={folder.id}
-                                href={`/videos?folderId=${folder.id}`}
+                                href={folder.parent_id === '14nYLGu1H9eqQNCHxk2JXot2G42WY2xN_' ? `/files?folderId=${folder.id}` : `/videos?folderId=${folder.id}`}
                                 className="flex flex-col items-center p-4 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-all group border-l-2 border-l-yellow-500"
                             >
                                 <Folder size={32} className="text-yellow-500 mb-2 group-hover:scale-110 transition-transform" />

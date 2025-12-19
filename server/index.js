@@ -206,10 +206,11 @@ app.post('/api/drive/folders', authenticateToken, async (req, res) => {
 app.put('/api/folders/:id/feature', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
     const { id } = req.params;
+    const { parentId } = req.body;
     db.transaction(() => {
-        db.prepare('INSERT OR IGNORE INTO folders_meta (id, is_featured) VALUES (?, 0)').run(id);
+        db.prepare('INSERT OR IGNORE INTO folders_meta (id, is_featured, parent_id) VALUES (?, 0, ?)').run(id, parentId || null);
         const current = db.prepare('SELECT is_featured FROM folders_meta WHERE id = ?').get(id);
-        db.prepare('UPDATE folders_meta SET is_featured = ? WHERE id = ?').run(current.is_featured ? 0 : 1, id);
+        db.prepare('UPDATE folders_meta SET is_featured = ?, parent_id = ? WHERE id = ?').run(current.is_featured ? 0 : 1, parentId || null, id);
     })();
     res.json({ success: true });
 });
@@ -357,7 +358,7 @@ app.post('/api/files/upload', authenticateToken, upload.single('file'), async (r
 app.get('/api/dashboard/featured', authenticateToken, (req, res) => {
     const video = db.prepare('SELECT * FROM videos WHERE is_featured = 1').get();
     const file = db.prepare('SELECT * FROM files WHERE is_featured = 1').get();
-    const folderIds = db.prepare('SELECT id FROM folders_meta WHERE is_featured = 1').all();
+    const folderIds = db.prepare('SELECT * FROM folders_meta WHERE is_featured = 1').all();
 
     // We don't have a folder name here easily without Drive API, but we store the IDs.
     // Dashboard can just show them as "Quick Access" or similar.
@@ -415,6 +416,33 @@ app.post('/api/users/promote', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
     const { id, role } = req.body;
     db.prepare('UPDATE users SET role = ? WHERE id = ?').run(role, id);
+    res.json({ success: true });
+});
+
+app.put('/api/users/:id/password', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    const { id } = req.params;
+    const { password } = req.body;
+    const hash = bcrypt.hashSync(password, 10);
+    db.prepare('UPDATE users SET password = ? WHERE id = ?').run(hash, id);
+    res.json({ success: true });
+});
+
+app.delete('/api/users/:id', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    const { id } = req.params;
+
+    // Protect 'Lloyed'
+    const targetUser = db.prepare('SELECT username FROM users WHERE id = ?').get(id);
+    if (targetUser && targetUser.username === 'Lloyed') {
+        return res.status(403).json({ error: "Main admin cannot be deleted." });
+    }
+
+    db.transaction(() => {
+        // Delete uploads first
+        db.prepare('DELETE FROM student_uploads WHERE student_id = ?').run(id);
+        db.prepare('DELETE FROM users WHERE id = ?').run(id);
+    })();
     res.json({ success: true });
 });
 

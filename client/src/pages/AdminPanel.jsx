@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
-import { Shield, Users, FileCheck, Search, Award } from 'lucide-react';
+import { Shield, Users, FileCheck, Search, Award, Trash2, Key } from 'lucide-react';
 import clsx from 'clsx';
 import StarRating from '../components/StarRating';
 
@@ -57,13 +57,35 @@ const AdminPanel = () => {
         }
     };
 
-    const handleDelete = async (id) => {
+    const handleDeleteTask = async (id) => {
         if (!confirm("Confirm removal of student mission data?")) return;
         try {
             await axios.delete(`/api/tasks/upload/${id}`);
             fetchSubmissions();
         } catch (err) {
-            console.error("Failed to delete");
+            console.error("Failed to delete mission");
+        }
+    };
+
+    const handleDeleteUser = async (id, username) => {
+        if (username === 'Lloyed') return alert("Cannot delete main admin.");
+        if (!confirm(`Are you sure you want to delete user ${username}? All their mission data will be lost.`)) return;
+        try {
+            await axios.delete(`/api/users/${id}`);
+            fetchUsers();
+        } catch (err) {
+            alert("Failed to delete user");
+        }
+    };
+
+    const handleResetPassword = async (id, username) => {
+        const newPassword = prompt(`Enter new password for ${username}:`);
+        if (!newPassword) return;
+        try {
+            await axios.put(`/api/users/${id}/password`, { password: newPassword });
+            alert("Password updated successfully.");
+        } catch (err) {
+            alert("Failed to update password");
         }
     };
 
@@ -127,13 +149,28 @@ const AdminPanel = () => {
                                     <td className="p-4 text-slate-400 text-sm">
                                         {new Date(u.created_at).toLocaleDateString()}
                                     </td>
-                                    <td className="p-4 text-right">
+                                    <td className="p-4 text-right flex items-center justify-end space-x-2">
                                         <button
                                             onClick={() => toggleRole(u.id, u.role)}
                                             className="text-xs font-bold px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded text-white transition-colors"
                                             disabled={u.username === 'Lloyed'} // Protect main admin
                                         >
                                             {u.role === 'admin' ? 'Demote' : 'Promote'}
+                                        </button>
+                                        <button
+                                            onClick={() => handleResetPassword(u.id, u.username)}
+                                            className="p-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-400 rounded-lg transition-colors"
+                                            title="Reset Password"
+                                        >
+                                            <Key size={14} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteUser(u.id, u.username)}
+                                            className="p-1.5 bg-slate-800 hover:bg-red-500/20 text-red-500 rounded-lg transition-colors"
+                                            title="Delete User"
+                                            disabled={u.username === 'Lloyed'}
+                                        >
+                                            <Trash2 size={14} />
                                         </button>
                                     </td>
                                 </tr>
@@ -162,7 +199,7 @@ const AdminPanel = () => {
                                 <div className="text-right flex flex-col items-end">
                                     <span className="text-xs text-slate-500 mb-1">{new Date(sub.uploaded_at).toLocaleString()}</span>
                                     <button
-                                        onClick={() => handleDelete(sub.id)}
+                                        onClick={() => handleDeleteTask(sub.id)}
                                         className="text-xs bg-red-500/10 text-red-400 border border-red-500/30 px-2 py-1 rounded hover:bg-red-500/20 transition-colors"
                                     >
                                         Remove Task

@@ -235,23 +235,23 @@ const Videos = () => {
                             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                                 {folders.map(folder => (
                                     <div key={folder.id} className="relative group">
-                                        <button
+                                        <div
                                             onClick={() => handleFolderClick(folder)}
-                                            className="w-full flex flex-col items-center p-4 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-all"
+                                            className="w-full h-full flex flex-col items-center p-4 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-all cursor-pointer"
                                         >
                                             <Folder size={40} className="text-cyan-500 mb-2 group-hover:scale-110 transition-transform" />
                                             <span className="text-xs font-medium text-slate-300 text-center truncate w-full">{folder.name}</span>
-                                        </button>
+                                        </div>
                                         {user.role === 'admin' && (
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     handleFolderFeature(folder.id);
                                                 }}
-                                                className={`absolute top-2 right-2 p-2 rounded-full border border-slate-700 transition-all z-50 ${folder.is_featured ? 'bg-yellow-500 text-black border-yellow-600' : 'bg-slate-800 text-slate-400 opacity-0 group-hover:opacity-100 hover:text-yellow-500 hover:scale-110 shadow-xl'}`}
+                                                className={`absolute top-2 right-2 p-2 rounded-full border border-slate-700 transition-all z-50 ${folder.is_featured ? 'bg-yellow-500 text-black border-yellow-600 shadow-lg shadow-yellow-500/20' : 'bg-slate-800 text-slate-400 opacity-0 group-hover:opacity-100 hover:text-yellow-500 hover:scale-110'}`}
                                                 title="Feature on Dashboard"
                                             >
-                                                <Star size={20} fill={folder.is_featured ? 'currentColor' : 'none'} />
+                                                <Star size={18} fill={folder.is_featured ? 'currentColor' : 'none'} />
                                             </button>
                                         )}
                                     </div>

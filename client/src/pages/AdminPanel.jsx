@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Shield, Users, FileCheck, Search, Award, Trash2, Key } from 'lucide-react';
 import clsx from 'clsx';
 import StarRating from '../components/StarRating';

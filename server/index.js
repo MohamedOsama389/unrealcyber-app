@@ -3,6 +3,18 @@ const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
 const db = require('./database');
+
+// Ensure database schema is up to date
+try {
+    const info = db.prepare("PRAGMA table_info(folders_meta)").all();
+    const hasParentId = info.some(col => col.name === 'parent_id');
+    if (!hasParentId) {
+        console.log("Adding missing parent_id to folders_meta...");
+        db.prepare("ALTER TABLE folders_meta ADD COLUMN parent_id TEXT").run();
+    }
+} catch (e) {
+    console.error("Database migration check failed", e);
+}
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');

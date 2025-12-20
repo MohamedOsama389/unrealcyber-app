@@ -55,7 +55,7 @@ const Files = () => {
     const handleFolderFeature = async (id) => {
         try {
             console.log(`Toggling feature for folder ${id}`);
-            await axios.put(`/api/folders/${id}/feature`, { parentId: '14nYLGu1H9eqQNCHxk2JXot2G42WY2xN_' });
+            await axios.post(`/api/folders/${id}/feature`, { parentId: '14nYLGu1H9eqQNCHxk2JXot2G42WY2xN_' });
             fetchContent(currentFolderId);
         } catch (err) {
             console.error("Failed to feature folder", err);

@@ -54,7 +54,7 @@ const Videos = () => {
 
     const handleFolderFeature = async (id) => {
         try {
-            await axios.put(`/api/folders/${id}/feature`, { parentId: '17a65IWgfvipnjSfKu6YYssCJwwUOOgvL' });
+            await axios.post(`/api/folders/${id}/feature`, { parentId: '17a65IWgfvipnjSfKu6YYssCJwwUOOgvL' });
             fetchContent(currentFolderId);
         } catch (err) {
             console.error("Failed to feature folder");

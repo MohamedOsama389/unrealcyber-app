@@ -215,19 +215,29 @@ app.post('/api/drive/folders', authenticateToken, async (req, res) => {
     }
 });
 
-app.put('/api/folders/:id/feature', authenticateToken, (req, res) => {
+app.post('/api/folders/:id/feature', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
     const { id } = req.params;
     const { parentId } = req.body;
-    console.log(`[Feature] Folder ${id} toggle. Target Parent: ${parentId}`);
-    db.transaction(() => {
-        db.prepare('INSERT OR IGNORE INTO folders_meta (id, is_featured, parent_id) VALUES (?, 0, ?)').run(id, parentId || null);
-        const current = db.prepare('SELECT is_featured FROM folders_meta WHERE id = ?').get(id);
-        const next = current.is_featured ? 0 : 1;
-        console.log(`[Feature] Folder ${id} current: ${current.is_featured}, next: ${next}`);
-        db.prepare('UPDATE folders_meta SET is_featured = ?, parent_id = ? WHERE id = ?').run(next, parentId || null, id);
-    })();
-    res.json({ success: true });
+    console.log(`[FeatureToggle] Folder: ${id}, Parent: ${parentId}`);
+
+    try {
+        db.transaction(() => {
+            // First ensure a record exists
+            db.prepare('INSERT OR IGNORE INTO folders_meta (id, is_featured, parent_id) VALUES (?, 0, ?)').run(id, parentId || null);
+
+            // Get current and toggle
+            const current = db.prepare('SELECT is_featured FROM folders_meta WHERE id = ?').get(id);
+            const next = current.is_featured ? 0 : 1;
+
+            db.prepare('UPDATE folders_meta SET is_featured = ?, parent_id = ? WHERE id = ?').run(next, parentId || null, id);
+            console.log(`[FeatureToggle] Folder ${id} is now ${next ? 'Featured' : 'Unfeatured'}`);
+        })();
+        res.json({ success: true });
+    } catch (err) {
+        console.error("[FeatureToggle Error] Folder:", err);
+        res.status(500).json({ error: err.message });
+    }
 });
 
 
@@ -285,18 +295,23 @@ app.post('/api/videos/upload', authenticateToken, upload.single('file'), async (
     }
 });
 
-app.put('/api/videos/:id/feature', authenticateToken, (req, res) => {
+app.post('/api/videos/:id/feature', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
     const { id } = req.params;
 
-    db.transaction(() => {
-        const current = db.prepare('SELECT is_featured FROM videos WHERE id = ?').get(id);
-        db.prepare('UPDATE videos SET is_featured = 0').run();
-        if (!current || current.is_featured === 0) {
-            db.prepare('UPDATE videos SET is_featured = 1 WHERE id = ?').run(id);
-        }
-    })();
-    res.json({ success: true });
+    try {
+        db.transaction(() => {
+            const current = db.prepare('SELECT is_featured FROM videos WHERE id = ?').get(id);
+            db.prepare('UPDATE videos SET is_featured = 0').run();
+            if (!current || current.is_featured === 0) {
+                db.prepare('UPDATE videos SET is_featured = 1 WHERE id = ?').run(id);
+            }
+        })();
+        res.json({ success: true });
+    } catch (err) {
+        console.error("[FeatureToggle Error] Video:", err);
+        res.status(500).json({ error: err.message });
+    }
 });
 
 app.delete('/api/videos/:id', authenticateToken, (req, res) => {

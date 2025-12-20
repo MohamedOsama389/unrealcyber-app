@@ -76,6 +76,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS folders_meta (
     id TEXT PRIMARY KEY,
     is_featured BOOLEAN DEFAULT 0,
+    parent_id TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );
 

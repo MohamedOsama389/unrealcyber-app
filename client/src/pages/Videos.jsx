@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Video, Play, Plus, Star, Folder, ChevronLeft, Trash2, CheckCircle } from 'lucide-react';
 
 const Videos = () => {
     const { user } = useAuth();
+    const [searchParams] = useSearchParams();
     const [videos, setVideos] = useState([]);
     const [folders, setFolders] = useState([]);
-    const [currentFolderId, setCurrentFolderId] = useState(null);
+    const [currentFolderId, setCurrentFolderId] = useState(searchParams.get('folderId') || null);
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
@@ -54,7 +56,11 @@ const Videos = () => {
 
     const handleFolderFeature = async (id) => {
         try {
-            await axios.post(`/api/folders/${id}/feature`, { parentId: '17a65IWgfvipnjSfKu6YYssCJwwUOOgvL' });
+            const folder = folders.find(f => f.id === id);
+            await axios.post(`/api/folders/${id}/feature`, {
+                parentId: '17a65IWgfvipnjSfKu6YYssCJwwUOOgvL',
+                name: folder ? folder.name : 'Unknown Folder'
+            });
             fetchContent(currentFolderId);
         } catch (err) {
             console.error("Failed to feature folder");

@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, Folder, Star, ChevronLeft, Download, Eye, Trash2, Plus, CheckCircle } from 'lucide-react';
 
 const Files = () => {
     const { user } = useAuth();
+    const [searchParams] = useSearchParams();
     const [files, setFiles] = useState([]);
     const [folders, setFolders] = useState([]);
-    const [currentFolderId, setCurrentFolderId] = useState(null);
+    const [currentFolderId, setCurrentFolderId] = useState(searchParams.get('folderId') || null);
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
@@ -54,8 +56,12 @@ const Files = () => {
 
     const handleFolderFeature = async (id) => {
         try {
+            const folder = folders.find(f => f.id === id);
             console.log(`Toggling feature for folder ${id}`);
-            await axios.post(`/api/folders/${id}/feature`, { parentId: '14nYLGu1H9eqQNCHxk2JXot2G42WY2xN_' });
+            await axios.post(`/api/folders/${id}/feature`, {
+                parentId: '14nYLGu1H9eqQNCHxk2JXot2G42WY2xN_',
+                name: folder ? folder.name : 'Unknown Folder'
+            });
             fetchContent(currentFolderId);
         } catch (err) {
             console.error("Failed to feature folder", err);

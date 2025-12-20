@@ -8,9 +8,14 @@ const db = require('./database');
 try {
     const info = db.prepare("PRAGMA table_info(folders_meta)").all();
     const hasParentId = info.some(col => col.name === 'parent_id');
+    const hasName = info.some(col => col.name === 'name');
     if (!hasParentId) {
         console.log("Adding missing parent_id to folders_meta...");
-        db.prepare("ALTER TABLE folders_meta ADD COLUMN parent_id TEXT").run();
+        db.prepare('ALTER TABLE folders_meta ADD COLUMN parent_id TEXT').run();
+    }
+    if (!hasName) {
+        console.log("Adding missing name to folders_meta...");
+        db.prepare('ALTER TABLE folders_meta ADD COLUMN name TEXT').run();
     }
 } catch (e) {
     console.error("Database migration check failed", e);
@@ -218,19 +223,19 @@ app.post('/api/drive/folders', authenticateToken, async (req, res) => {
 app.post('/api/folders/:id/feature', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
     const { id } = req.params;
-    const { parentId } = req.body;
-    console.log(`[FeatureToggle] Folder: ${id}, Parent: ${parentId}`);
+    const { parentId, name } = req.body;
+    console.log(`[FeatureToggle] Folder: ${id}, Name: ${name}, Parent: ${parentId}`);
 
     try {
         db.transaction(() => {
             // First ensure a record exists
-            db.prepare('INSERT OR IGNORE INTO folders_meta (id, is_featured, parent_id) VALUES (?, 0, ?)').run(id, parentId || null);
+            db.prepare('INSERT OR IGNORE INTO folders_meta (id, is_featured, parent_id, name) VALUES (?, 0, ?, ?)').run(id, parentId || null, name || null);
 
             // Get current and toggle
             const current = db.prepare('SELECT is_featured FROM folders_meta WHERE id = ?').get(id);
             const next = current.is_featured ? 0 : 1;
 
-            db.prepare('UPDATE folders_meta SET is_featured = ?, parent_id = ? WHERE id = ?').run(next, parentId || null, id);
+            db.prepare('UPDATE folders_meta SET is_featured = ?, parent_id = ?, name = ? WHERE id = ?').run(next, parentId || null, name || null, id);
             console.log(`[FeatureToggle] Folder ${id} is now ${next ? 'Featured' : 'Unfeatured'}`);
         })();
         res.json({ success: true });

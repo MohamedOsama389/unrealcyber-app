@@ -9,9 +9,13 @@ try {
     if (!hasParentId) {
         console.log("Adding parent_id column to folders_meta...");
         db.prepare("ALTER TABLE folders_meta ADD COLUMN parent_id TEXT").run();
-        console.log("Column added successfully.");
-    } else {
-        console.log("parent_id already exists.");
+        console.log("parent_id Column added successfully.");
+    }
+    const hasName = info.some(col => col.name === 'name');
+    if (!hasName) {
+        console.log("Adding name column to folders_meta...");
+        db.prepare("ALTER TABLE folders_meta ADD COLUMN name TEXT").run();
+        console.log("name Column added successfully.");
     }
 } catch (err) {
     console.error("Migration failed:", err.message);

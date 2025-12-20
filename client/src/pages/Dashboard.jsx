@@ -180,7 +180,7 @@ const Dashboard = () => {
                                 className="flex flex-col items-center p-4 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-all group border-l-2 border-l-yellow-500"
                             >
                                 <Folder size={32} className="text-yellow-500 mb-2 group-hover:scale-110 transition-transform" />
-                                <span className="text-xs font-medium text-slate-300 text-center truncate w-full">Quick Access</span>
+                                <span className="text-xs font-medium text-slate-300 text-center truncate w-full">{folder.name || 'Quick Access'}</span>
                             </a>
                         ))}
                     </div>

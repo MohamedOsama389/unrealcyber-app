@@ -81,7 +81,7 @@ const Files = () => {
 
     const handleFeature = async (id) => {
         try {
-            await axios.put(`/api/files/${id}/feature`);
+            await axios.post(`/api/files/${id}/feature`);
             fetchContent(currentFolderId);
             setMessage('File featured on Dashboard!');
             setTimeout(() => setMessage(''), 3000);

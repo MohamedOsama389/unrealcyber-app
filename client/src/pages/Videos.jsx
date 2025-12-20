@@ -80,7 +80,7 @@ const Videos = () => {
 
     const handleFeature = async (id) => {
         try {
-            await axios.put(`/api/videos/${id}/feature`);
+            await axios.post(`/api/videos/${id}/feature`);
             fetchContent(currentFolderId);
             setMessage('Video featured on Dashboard!');
             setTimeout(() => setMessage(''), 3000);

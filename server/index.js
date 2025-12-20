@@ -306,10 +306,16 @@ app.post('/api/videos/:id/feature', authenticateToken, (req, res) => {
 
     try {
         db.transaction(() => {
-            const current = db.prepare('SELECT is_featured FROM videos WHERE id = ?').get(id);
+            const videoId = parseInt(id);
+            const current = db.prepare('SELECT is_featured FROM videos WHERE id = ?').get(videoId);
+
+            // Toggle logic: Only one video can be featured at a time
             db.prepare('UPDATE videos SET is_featured = 0').run();
             if (!current || current.is_featured === 0) {
-                db.prepare('UPDATE videos SET is_featured = 1 WHERE id = ?').run(id);
+                db.prepare('UPDATE videos SET is_featured = 1 WHERE id = ?').run(videoId);
+                console.log(`[FeatureToggle] Video ${id} now featured.`);
+            } else {
+                console.log(`[FeatureToggle] Video ${id} now unfeatured.`);
             }
         })();
         res.json({ success: true });
@@ -357,21 +363,30 @@ app.get('/api/files', authenticateToken, async (req, res) => {
     res.json(files);
 });
 
-app.put('/api/files/:id/feature', authenticateToken, (req, res) => {
+app.post('/api/files/:id/feature', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
     const { id } = req.params;
-    console.log(`[Feature] File ${id} toggle.`);
-    db.transaction(() => {
-        const current = db.prepare('SELECT is_featured FROM files WHERE id = ?').get(id);
-        db.prepare('UPDATE files SET is_featured = 0').run();
-        if (!current || current.is_featured === 0) {
-            db.prepare('UPDATE files SET is_featured = 1 WHERE id = ?').run(id);
-            console.log(`[Feature] File ${id} now featured.`);
-        } else {
-            console.log(`[Feature] File ${id} now unfeatured.`);
-        }
-    })();
-    res.json({ success: true });
+    console.log(`[FeatureToggle] File: ${id}`);
+
+    try {
+        db.transaction(() => {
+            const fileId = parseInt(id);
+            const current = db.prepare('SELECT is_featured FROM files WHERE id = ?').get(fileId);
+
+            // Toggle logic: Only one file can be featured at a time
+            db.prepare('UPDATE files SET is_featured = 0').run();
+            if (!current || current.is_featured === 0) {
+                db.prepare('UPDATE files SET is_featured = 1 WHERE id = ?').run(fileId);
+                console.log(`[FeatureToggle] File ${id} now featured.`);
+            } else {
+                console.log(`[FeatureToggle] File ${id} now unfeatured.`);
+            }
+        })();
+        res.json({ success: true });
+    } catch (err) {
+        console.error("[FeatureToggle Error] File:", err);
+        res.status(500).json({ error: err.message });
+    }
 });
 
 app.delete('/api/files/:id', authenticateToken, (req, res) => {

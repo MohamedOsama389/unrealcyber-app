@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import StarRating from '../components/StarRating';
-import { Activity, Calendar, CheckCircle, Award, Server, Play, FileText, Eye, Star, Folder } from 'lucide-react';
+import { Activity, Calendar, CheckCircle, Award, Server, Play, FileText, Eye, Star, Folder, Layout } from 'lucide-react';
 import io from 'socket.io-client';
 
 const Dashboard = () => {
@@ -153,15 +153,22 @@ const Dashboard = () => {
                             <p className="text-slate-400">Important PDF available for review.</p>
                         </div>
                     </div>
-                    <div className="mt-6 md:mt-0 flex space-x-4 w-full md:w-auto">
+                    <div className="mt-6 md:mt-0 flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4 w-full md:w-auto">
+                        <a
+                            href={featuredFile.folder_id ? `/files?folderId=${featuredFile.folder_id}&highlightId=${featuredFile.id}` : `/files?highlightId=${featuredFile.id}`}
+                            className="flex-1 md:flex-none flex items-center justify-center space-x-2 px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-purple-500/20"
+                        >
+                            <Layout size={18} />
+                            <span>View in App</span>
+                        </a>
                         <a
                             href={featuredFile.drive_link}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex-1 md:flex-none flex items-center justify-center space-x-2 px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-all"
+                            className="flex-1 md:flex-none flex items-center justify-center space-x-2 px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-all border border-slate-700"
                         >
                             <Eye size={18} />
-                            <span>View PDF</span>
+                            <span>Open Drive</span>
                         </a>
                     </div>
                 </motion.div>

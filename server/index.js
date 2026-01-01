@@ -198,6 +198,8 @@ app.delete('/api/tasks/upload/:id', authenticateToken, (req, res) => {
 app.get('/api/drive/folders/:parentId', authenticateToken, async (req, res) => {
     try {
         const folders = await driveService.listFolders(req.params.parentId);
+        if (!folders || !Array.isArray(folders)) return res.json([]);
+
         // Enrich with featured status from DB
         const enriched = folders.map(f => {
             const meta = db.prepare('SELECT is_featured FROM folders_meta WHERE id = ?').get(f.id);

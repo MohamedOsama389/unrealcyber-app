@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileText, Folder, Star, ChevronLeft, Download, Eye, Trash2, Plus, CheckCircle } from 'lucide-react';
+import { FileText, Folder, Star, ChevronLeft, Download, Eye, Trash2, Plus, CheckCircle, Layout } from 'lucide-react';
 
 const Files = () => {
     const { user } = useAuth();
@@ -22,6 +22,22 @@ const Files = () => {
     useEffect(() => {
         fetchContent(currentFolderId);
     }, [currentFolderId]);
+
+    useEffect(() => {
+        const highlightId = searchParams.get('highlightId');
+        if (highlightId && files.length > 0) {
+            setTimeout(() => {
+                const el = document.getElementById(`file-${highlightId}`);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    el.classList.add('ring-4', 'ring-purple-500', 'ring-opacity-50', 'scale-105');
+                    setTimeout(() => {
+                        el.classList.remove('scale-105');
+                    }, 500);
+                }
+            }, 500);
+        }
+    }, [files, searchParams]);
 
     const fetchContent = async (folderId) => {
         setLoading(true);
@@ -57,7 +73,6 @@ const Files = () => {
     const handleFolderFeature = async (id) => {
         try {
             const folder = folders.find(f => f.id === id);
-            console.log(`Toggling feature for folder ${id}`);
             await axios.post(`/api/folders/${id}/feature`, {
                 parentId: '14nYLGu1H9eqQNCHxk2JXot2G42WY2xN_',
                 name: folder ? folder.name : 'Unknown Folder'
@@ -280,10 +295,11 @@ const Files = () => {
                             {files.map((file) => (
                                 <motion.div
                                     key={file.id}
+                                    id={`file-${file.id}`}
                                     layout
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
-                                    className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden group hover:border-purple-500/30 transition-all shadow-lg"
+                                    className={`bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden group hover:border-purple-500/30 transition-all shadow-lg ${searchParams.get('highlightId') === String(file.id) ? 'border-purple-500 border-2 shadow-purple-500/20' : ''}`}
                                 >
                                     <div className="p-6">
                                         <div className="flex items-start justify-between mb-4">

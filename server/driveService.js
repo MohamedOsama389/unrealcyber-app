@@ -130,7 +130,7 @@ const listFiles = async (folderId, type = 'video') => {
             fields: 'files(id, name, webViewLink, webContentLink, thumbnailLink, size, modifiedTime)',
             orderBy: 'name',
         });
-        return res.data.files;
+        return res.data.files || [];
     } catch (err) {
         console.error(`Error listing files for folder ${folderId}:`, err);
         return [];
@@ -145,7 +145,7 @@ const listFolders = async (parentId) => {
             fields: 'files(id, name)',
             orderBy: 'name',
         });
-        return res.data.files;
+        return res.data.files || [];
     } catch (err) {
         console.error(`Error listing folders for parent ${parentId}:`, err);
         return [];

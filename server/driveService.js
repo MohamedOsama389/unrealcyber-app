@@ -10,6 +10,8 @@ const TASKS_FOLDER_ID = '1EzdCa49QHIUc7udBqqobuwMHcggSVTn2';
 const VIDEOS_FOLDER_ID = '17a65IWgfvipnjSfKu6YYssCJwwUOOgvL';
 const FILES_FOLDER_ID = '14nYLGu1H9eqQNCHxk2JXot2G42WY2xN_';
 
+let drive;
+
 try {
     let keys, tokens;
 
@@ -139,6 +141,10 @@ const listFiles = async (folderId, type = 'video') => {
 
 const listFolders = async (parentId) => {
     try {
+        if (!drive) {
+            console.error("Drive not initialized");
+            return [];
+        }
         const query = `'${parentId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed=false`;
         const res = await drive.files.list({
             q: query,

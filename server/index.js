@@ -61,6 +61,13 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
+app.get('/api/health', (req, res) => {
+    res.json({
+        database: "OK",
+        drive: driveService.isInitialized() ? "OK" : "Error: Not initialized"
+    });
+});
+
 // --- AUTH ---
 app.post('/api/auth/register', (req, res) => {
     const { username, password } = req.body;
@@ -207,7 +214,8 @@ app.get('/api/drive/folders/:parentId', authenticateToken, async (req, res) => {
         });
         res.json(enriched);
     } catch (err) {
-        res.status(500).json({ error: "Failed to list folders" });
+        console.error("[API Error] Failed to list folders:", err);
+        res.status(500).json({ error: "Failed to list folders", details: err.message });
     }
 });
 

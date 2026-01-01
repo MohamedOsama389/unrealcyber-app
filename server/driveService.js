@@ -60,40 +60,42 @@ try {
 
 // IDs loaded above
 
-const uploadFile = async (fileObject, parentId, fileName = null) => {
+const uploadFile = async (fileObject, parentId) => {
     try {
-        console.log(`[Drive] Starting upload to folder ${parentId}`);
-
+        if (!drive) throw new Error("Google Drive Service not initialized");
         const bufferStream = new stream.PassThrough();
         bufferStream.end(fileObject.buffer);
 
-        const { data } = await drive.files.create({
-            media: {
-                mimeType: fileObject.mimetype,
-                body: bufferStream,
-            },
-            requestBody: {
-                name: fileName || fileObject.originalname,
-                parents: [parentId],
-            },
-            fields: 'id, name, webViewLink, webContentLink',
-        });
-        console.log(`[Drive] Upload complete: ${data.id}`);
+        const fileMetadata = {
+            name: fileObject.originalname,
+            parents: [parentId],
+        };
 
-        return data;
-    } catch (error) {
-        console.error('Drive API Upload Error:', error);
-        throw error;
+        const media = {
+            mimeType: fileObject.mimetype,
+            body: bufferStream,
+        };
+
+        const res = await drive.files.create({
+            resource: fileMetadata,
+            media: media,
+            fields: 'id, webViewLink',
+        });
+
+        return res.data;
+    } catch (err) {
+        console.error("Error uploading to Drive:", err);
+        throw err;
     }
 };
 
 const findFolder = async (folderName, parentId) => {
     try {
-        const query = `mimeType='application/vnd.google-apps.folder' and name='${folderName}' and '${parentId}' in parents and trashed=false`;
+        if (!drive) return null;
+        const query = `'${parentId}' in parents and name = '${folderName}' and mimeType = 'application/vnd.google-apps.folder' and trashed=false`;
         const res = await drive.files.list({
             q: query,
-            fields: 'files(id, name)',
-            spaces: 'drive',
+            fields: 'files(id)',
         });
         if (res.data.files.length > 0) {
             return res.data.files[0].id;
@@ -107,6 +109,7 @@ const findFolder = async (folderName, parentId) => {
 
 const createFolder = async (folderName, parentId) => {
     try {
+        if (!drive) throw new Error("Google Drive Service not initialized");
         const fileMetadata = {
             name: folderName,
             mimeType: 'application/vnd.google-apps.folder',
@@ -118,13 +121,17 @@ const createFolder = async (folderName, parentId) => {
         });
         return file.data.id;
     } catch (err) {
-        console.error("Error creating folder:", err);
+        console.error("[DriveService] Error creating folder:", err);
         throw err;
     }
 };
 
 const listFiles = async (folderId, type = 'video') => {
     try {
+        if (!drive) {
+            console.error("[DriveService] Drive not initialized");
+            return [];
+        }
         const mimeTypeQuery = type === 'video' ? "(mimeType contains 'video/' or mimeType = 'application/octet-stream')" : "(mimeType = 'application/pdf')";
         const query = `'${folderId}' in parents and ${mimeTypeQuery} and trashed=false`;
         const res = await drive.files.list({
@@ -134,7 +141,7 @@ const listFiles = async (folderId, type = 'video') => {
         });
         return res.data.files || [];
     } catch (err) {
-        console.error(`Error listing files for folder ${folderId}:`, err);
+        console.error(`[DriveService] Error listing files for folder ${folderId}:`, err);
         return [];
     }
 };
@@ -158,10 +165,15 @@ const listFolders = async (parentId) => {
     }
 };
 
+const isInitialized = () => !!drive;
+
 module.exports = {
     uploadFile,
     listFiles,
     listFolders,
+    findFolder,
+    createFolder,
+    isInitialized,
     VIDEOS_FOLDER_ID,
     FILES_FOLDER_ID
 };

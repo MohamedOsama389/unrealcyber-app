@@ -397,6 +397,13 @@ app.delete('/api/files/:id', authenticateToken, (req, res) => {
     res.json({ success: true });
 });
 
+app.post('/api/files', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    const { title, drive_link, folder_id } = req.body;
+    db.prepare('INSERT OR IGNORE INTO files (title, drive_link, folder_id) VALUES (?, ?, ?)').run(title, drive_link, folder_id);
+    res.json({ success: true });
+});
+
 app.post('/api/files/upload', authenticateToken, upload.single('file'), async (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
     try {

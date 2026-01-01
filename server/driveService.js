@@ -11,11 +11,12 @@ const VIDEOS_FOLDER_ID = '17a65IWgfvipnjSfKu6YYssCJwwUOOgvL';
 const FILES_FOLDER_ID = '14nYLGu1H9eqQNCHxk2JXot2G42WY2xN_';
 
 let drive;
+let oauth2Client;
 
 try {
     let keys, tokens;
 
-    // 1. Try Environment Variables (Production / Render)
+    // 1. Try Environment Variables
     if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_TOKENS) {
         console.log("Loading Credentials from Environment Variables...");
         keys = {
@@ -24,11 +25,12 @@ try {
         };
         tokens = JSON.parse(process.env.GOOGLE_TOKENS);
     }
-    // 2. Fallback to Local Files (Development)
+    // 2. Fallback to Local Files
     else {
         console.log("Loading Credentials from Local Files...");
         if (fs.existsSync(CREDENTIALS_PATH)) {
-            keys = JSON.parse(fs.readFileSync(CREDENTIALS_PATH)).web;
+            const creds = JSON.parse(fs.readFileSync(CREDENTIALS_PATH));
+            keys = creds.web || creds.installed;
         }
         if (fs.existsSync(TOKENS_PATH)) {
             tokens = JSON.parse(fs.readFileSync(TOKENS_PATH));
@@ -39,26 +41,44 @@ try {
         throw new Error("Missing Credentials! Please check env vars or local files.");
     }
 
-    const redirectUri = process.env.NODE_ENV === 'production'
-        ? (process.env.RENDER_EXTERNAL_URL || 'https://unrealcyber-app.onrender.com')
-        : 'http://localhost:3000';
+    // CONSISTENT REDIRECT URI
+    const redirectUri = process.env.GOOGLE_REDIRECT_URI || "http://localhost:3000";
 
-    const oauth2Client = new google.auth.OAuth2(
+    oauth2Client = new google.auth.OAuth2(
         keys.client_id,
         keys.client_secret,
         redirectUri
     );
     oauth2Client.setCredentials(tokens);
 
+    // TOKEN REFRESH PERSISTENCE
+    oauth2Client.on('tokens', (newTokens) => {
+        if (!newTokens) return;
+        console.log("✅ Google tokens refreshed.");
+
+        const updated = {
+            ...oauth2Client.credentials,
+            ...newTokens,
+        };
+
+        // Persist to local file (Dev)
+        try {
+            fs.writeFileSync(TOKENS_PATH, JSON.stringify(updated, null, 2));
+            console.log("Tokens saved to local file.");
+        } catch (e) {
+            console.error("Failed to save tokens to file:", e.message);
+        }
+
+        // For Production (Railway logs)
+        console.log("📢 Update Railway GOOGLE_TOKENS env var with this JSON:\n", JSON.stringify(updated));
+    });
+
     drive = google.drive({ version: 'v3', auth: oauth2Client });
-    console.log("Drive Service Initialized with OAuth2");
+    console.log(`Drive Service Initialized with Redirect URI: ${redirectUri}`);
 
 } catch (err) {
-    console.error("Failed to initialize Drive with OAuth2:", err);
-    console.error("Uploads will fail until this is fixed.");
+    console.error("Failed to initialize Drive with OAuth2:", err.message);
 }
-
-// IDs loaded above
 
 const uploadFile = async (fileObject, parentId) => {
     try {
@@ -167,6 +187,16 @@ const listFolders = async (parentId) => {
 
 const isInitialized = () => !!drive;
 
+const getLiveStatus = async () => {
+    if (!drive) return "NOT_INITIALIZED";
+    try {
+        await drive.about.get({ fields: "user" });
+        return "OK";
+    } catch (err) {
+        return err?.response?.data?.error || err.message || "ERROR";
+    }
+};
+
 module.exports = {
     uploadFile,
     listFiles,
@@ -174,6 +204,7 @@ module.exports = {
     findFolder,
     createFolder,
     isInitialized,
+    getLiveStatus,
     VIDEOS_FOLDER_ID,
     FILES_FOLDER_ID
 };

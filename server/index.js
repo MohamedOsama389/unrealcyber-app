@@ -61,10 +61,11 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
-app.get('/api/health', (req, res) => {
+app.get('/api/health', async (req, res) => {
+    const driveStatus = await driveService.getLiveStatus();
     res.json({
         database: "OK",
-        drive: driveService.isInitialized() ? "OK" : "Error: Not initialized"
+        drive: driveStatus
     });
 });
 

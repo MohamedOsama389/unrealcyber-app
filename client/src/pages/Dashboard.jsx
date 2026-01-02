@@ -83,6 +83,16 @@ const Dashboard = () => {
         return () => socket.disconnect();
     }, [user.role]);
 
+    const getVideoEmbedUrl = (link) => {
+        if (!link) return '';
+        const ytMatch = link.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/(?:watch\?v=)?(.+)/);
+        if (ytMatch) {
+            const id = ytMatch[1].split('&')[0];
+            return `https://www.youtube.com/embed/${id}`;
+        }
+        return link.replace('/view', '/preview');
+    };
+
     return (
         <div className="p-8 max-w-7xl mx-auto">
             <motion.div
@@ -111,9 +121,9 @@ const Dashboard = () => {
                     <div className="flex flex-col md:flex-row">
                         <div className="w-full md:w-2/3 aspect-video bg-slate-900">
                             <iframe
-                                src={featuredVideo.drive_link.replace('/view', '/preview')}
+                                src={getVideoEmbedUrl(featuredVideo.drive_link)}
                                 className="w-full h-full"
-                                allow="autoplay; fullscreen"
+                                allow="autoplay; fullscreen; picture-in-picture"
                                 allowFullScreen
                                 title={featuredVideo.title}
                             ></iframe>

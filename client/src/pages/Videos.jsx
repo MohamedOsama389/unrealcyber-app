@@ -24,6 +24,20 @@ const Videos = () => {
         fetchContent(currentFolderId);
     }, [currentFolderId]);
 
+    const getVideoEmbedUrl = (link) => {
+        if (!link) return '';
+
+        // Handle YouTube
+        const ytMatch = link.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/(?:watch\?v=)?(.+)/);
+        if (ytMatch) {
+            const id = ytMatch[1].split('&')[0];
+            return `https://www.youtube.com/embed/${id}`;
+        }
+
+        // Handle Google Drive
+        return link.replace('/view', '/preview');
+    };
+
     const fetchContent = async (folderId) => {
         setLoading(true);
         try {
@@ -197,7 +211,7 @@ const Videos = () => {
                             {!uploadFile ? (
                                 <input
                                     type="text"
-                                    placeholder="Drive Link (optional if uploading)"
+                                    placeholder="Drive Link or YouTube URL"
                                     value={newVideo.drive_link}
                                     onChange={(e) => setNewVideo({ ...newVideo, drive_link: e.target.value })}
                                     className="input-field flex-1"
@@ -283,9 +297,9 @@ const Videos = () => {
                                 >
                                     <div className="aspect-video bg-slate-900 relative">
                                         <iframe
-                                            src={vid.drive_link.replace('/view', '/preview')}
+                                            src={getVideoEmbedUrl(vid.drive_link)}
                                             className="w-full h-full border-0"
-                                            allow="autoplay; fullscreen"
+                                            allow="autoplay; fullscreen; picture-in-picture"
                                             allowFullScreen
                                             title={vid.title}
                                         ></iframe>

@@ -17,6 +17,12 @@ try {
         console.log("Adding missing name to folders_meta...");
         db.prepare('ALTER TABLE folders_meta ADD COLUMN name TEXT').run();
     }
+    const videoInfo = db.prepare("PRAGMA table_info(videos)").all();
+    const hasResources = videoInfo.some(col => col.name === 'resources');
+    if (!hasResources) {
+        console.log("Adding missing resources to videos...");
+        db.prepare('ALTER TABLE videos ADD COLUMN resources TEXT').run();
+    }
 } catch (e) {
     console.error("Database migration check failed", e);
 }
@@ -75,6 +81,7 @@ app.post('/api/auth/register', (req, res) => {
     try {
         const hash = bcrypt.hashSync(password, 10);
         const result = db.prepare('INSERT INTO users (username, password, role) VALUES (?, ?, ?)').run(username, hash, 'student');
+        driveService.backupDatabase(); // Persist new user immediately
         res.json({ success: true, userId: result.lastInsertRowid });
     } catch (err) {
         res.status(400).json({ error: "Username already exists" });
@@ -138,6 +145,7 @@ app.post('/api/profile/upload-avatar', authenticateToken, upload.single('avatar'
         const avatarId = await driveService.uploadAvatar(req.file.buffer, req.file.originalname, req.file.mimetype);
         console.log(`[AvatarUpload] Drive upload successful. ID: ${avatarId}`);
         db.prepare('UPDATE users SET avatar_id = ? WHERE id = ?').run(avatarId, req.user.id);
+        driveService.backupDatabase(); // Persist avatar change immediately
         res.json({ success: true, avatar_id: avatarId });
     } catch (err) {
         console.error("[AvatarUpload] Error:", err);
@@ -422,24 +430,42 @@ app.get('/api/videos', authenticateToken, async (req, res) => {
         : 'SELECT * FROM videos WHERE folder_id IS NULL OR folder_id = ? ORDER BY created_at DESC';
 
     const videos = db.prepare(query).all(folderId);
-    res.json(videos);
+
+    // Parse resources JSON
+    const videosWithResources = videos.map(v => {
+        try {
+            return { ...v, resources: v.resources ? JSON.parse(v.resources) : [] };
+        } catch (e) {
+            return { ...v, resources: [] };
+        }
+    });
+
+    res.json(videosWithResources);
 });
 
 
 app.post('/api/videos', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
-    const { title, drive_link, folder_id } = req.body;
-    db.prepare('INSERT INTO videos (title, drive_link, folder_id) VALUES (?, ?, ?)').run(title, drive_link, folder_id || null);
+    const { title, drive_link, folder_id, resources } = req.body;
+    db.prepare('INSERT INTO videos (title, drive_link, folder_id, resources) VALUES (?, ?, ?, ?)').run(title, drive_link, folder_id || null, JSON.stringify(resources || []));
+    driveService.backupDatabase();
     res.json({ success: true });
 });
 
 app.post('/api/videos/upload', authenticateToken, upload.single('file'), async (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
     try {
-        const { title, folder_id } = req.body;
+        const { title, folder_id, resources } = req.body;
         const targetFolder = folder_id || driveService.VIDEOS_FOLDER_ID;
         const driveFile = await driveService.uploadFile(req.file, targetFolder, title);
-        db.prepare('INSERT INTO videos (title, drive_link, folder_id) VALUES (?, ?, ?)').run(title || req.file.originalname, driveFile.webViewLink, targetFolder);
+
+        let parsedResources = [];
+        try {
+            parsedResources = JSON.parse(resources || '[]');
+        } catch (e) { }
+
+        db.prepare('INSERT INTO videos (title, drive_link, folder_id, resources) VALUES (?, ?, ?, ?)').run(title || req.file.originalname, driveFile.webViewLink, targetFolder, JSON.stringify(parsedResources));
+        driveService.backupDatabase();
         res.json({ success: true, link: driveFile.webViewLink });
     } catch (err) {
         res.status(500).json({ error: "Upload failed" });

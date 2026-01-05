@@ -16,6 +16,8 @@ const Videos = () => {
     const [message, setMessage] = useState('');
 
     const [newVideo, setNewVideo] = useState({ title: '', drive_link: '' });
+    const [resources, setResources] = useState([]);
+    const [resInput, setResInput] = useState({ title: '', url: '' });
     const [uploadFile, setUploadFile] = useState(null);
     const [newFolderName, setNewFolderName] = useState('');
     const [showFolderForm, setShowFolderForm] = useState(false);
@@ -121,18 +123,31 @@ const Videos = () => {
                 formData.append('file', uploadFile);
                 formData.append('title', newVideo.title);
                 formData.append('folder_id', currentFolderId || '');
+                formData.append('resources', JSON.stringify(resources));
                 await axios.post('/api/videos/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
             } else {
-                await axios.post('/api/videos', { ...newVideo, folder_id: currentFolderId });
+                await axios.post('/api/videos', { ...newVideo, folder_id: currentFolderId, resources });
             }
             setMessage('Success!');
             setNewVideo({ title: '', drive_link: '' });
+            setResources([]);
             setUploadFile(null);
             fetchContent(currentFolderId);
             setTimeout(() => setMessage(''), 3000);
         } catch (err) {
             setMessage('Operation failed');
         }
+    };
+
+    const addResource = (e) => {
+        e.preventDefault();
+        if (!resInput.title || !resInput.url) return;
+        setResources([...resources, resInput]);
+        setResInput({ title: '', url: '' });
+    };
+
+    const removeResource = (idx) => {
+        setResources(resources.filter((_, i) => i !== idx));
     };
 
     return (
@@ -222,6 +237,38 @@ const Videos = () => {
                                 </div>
                             )}
                         </div>
+
+                        {/* Resource Addition */}
+                        <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Attached Resources</h4>
+                            <div className="flex gap-2 mb-2">
+                                <input
+                                    type="text"
+                                    placeholder="Resource Title (e.g. GitHub)"
+                                    className="input-field flex-1 text-sm"
+                                    value={resInput.title}
+                                    onChange={(e) => setResInput({ ...resInput, title: e.target.value })}
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="URL"
+                                    className="input-field flex-1 text-sm"
+                                    value={resInput.url}
+                                    onChange={(e) => setResInput({ ...resInput, url: e.target.value })}
+                                />
+                                <button onClick={addResource} className="px-3 bg-cyan-600 hover:bg-cyan-500 rounded-lg text-white font-bold text-sm">Add</button>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {resources.map((res, idx) => (
+                                    <div key={idx} className="flex items-center bg-slate-700 px-3 py-1 rounded-full text-xs text-white">
+                                        <span className="font-bold mr-2 text-cyan-400">{res.title}</span>
+                                        <span className="opacity-50 truncate max-w-[100px]">{res.url}</span>
+                                        <button onClick={(e) => { e.preventDefault(); removeResource(idx); }} className="ml-2 text-red-400 hover:text-white"><Trash2 size={12} /></button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
                         <div className="flex items-center justify-between">
                             <label className="flex items-center space-x-2 cursor-pointer text-slate-400 hover:text-white transition-colors">
                                 <input
@@ -332,6 +379,27 @@ const Videos = () => {
                                                 < Star size={16} className={`mr-2 ${vid.is_featured ? 'fill-black' : ''}`} />
                                                 {vid.is_featured ? 'Featured' : 'Feature on Dashboard'}
                                             </button>
+                                        )}
+
+                                        {vid.resources && vid.resources.length > 0 && (
+                                            <div className="mt-4 pt-3 border-t border-slate-700">
+                                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2 flex items-center">
+                                                    <Folder size={10} className="mr-1" /> Resources
+                                                </p>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {vid.resources.map((res, idx) => (
+                                                        <a
+                                                            key={idx}
+                                                            href={res.url}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-xs px-2 py-1 bg-cyan-900/30 text-cyan-400 border border-cyan-500/30 rounded hover:bg-cyan-500/20 transition-colors"
+                                                        >
+                                                            {res.title}
+                                                        </a>
+                                                    ))}
+                                                </div>
+                                            </div>
                                         )}
                                     </div>
                                 </motion.div>

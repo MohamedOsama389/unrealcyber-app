@@ -297,7 +297,24 @@ const uploadAvatar = async (fileBuffer, fileName, mimeType) => {
             },
             fields: 'id',
         });
-        return res.data.id;
+
+        const avatarId = res.data.id;
+
+        // CRITICAL: Make the file public so it can be viewed via the uc?id= link
+        try {
+            await drive.permissions.create({
+                fileId: avatarId,
+                requestBody: {
+                    role: 'reader',
+                    type: 'anyone',
+                },
+            });
+            console.log(`[DriveService] Permissions set to public for avatar: ${avatarId}`);
+        } catch (perr) {
+            console.warn(`[DriveService] Failed to set permissions for avatar ${avatarId}. It might not be visible.`, perr.message);
+        }
+
+        return avatarId;
     } catch (err) {
         console.error("[DriveService] Avatar upload failed:", err);
         throw err;

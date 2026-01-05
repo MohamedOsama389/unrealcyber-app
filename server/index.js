@@ -119,9 +119,98 @@ app.post('/api/auth/login', (req, res) => {
             avatar_id: user.avatar_id,
             streak_count: newStreak
         });
-    } else {
-        res.status(400).json({ error: "Invalid credentials" });
     }
+});
+
+// --- PROFILE ---
+app.get('/api/profile/me', authenticateToken, (req, res) => {
+    const user = db.prepare('SELECT id, username, role, avatar_id, streak_count, last_activity_date FROM users WHERE id = ?').get(req.user.id);
+    res.json(user);
+});
+
+app.post('/api/profile/upload-avatar', authenticateToken, upload.single('avatar'), async (req, res) => {
+    try {
+        if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+        const avatarId = await driveService.uploadAvatar(req.file.buffer, req.file.originalname, req.file.mimetype);
+        db.prepare('UPDATE users SET avatar_id = ? WHERE id = ?').run(avatarId, req.user.id);
+        res.json({ success: true, avatar_id: avatarId });
+    } catch (err) {
+        res.status(500).json({ error: "Avatar upload failed" });
+    }
+});
+
+// --- VOTING SYSTEM ---
+app.get('/api/votes/active', authenticateToken, (req, res) => {
+    const votes = db.prepare('SELECT * FROM votes WHERE is_active = 1').all();
+    // Parse options string back to array
+    const votesWithParsedOptions = votes.map(v => ({
+        ...v,
+        options: JSON.parse(v.options)
+    }));
+    res.json(votesWithParsedOptions);
+});
+
+app.get('/api/votes', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    const votes = db.prepare('SELECT * FROM votes ORDER BY created_at DESC').all();
+    const results = db.prepare(`
+        SELECT vote_id, option_index, COUNT(*) as count 
+        FROM vote_results 
+        GROUP BY vote_id, option_index
+    `).all();
+
+    const votesWithData = votes.map(v => {
+        const voteOptions = JSON.parse(v.options);
+        const voteResults = results.filter(r => r.vote_id === v.id);
+        const resultsMap = {};
+        voteOptions.forEach((_, idx) => {
+            const found = voteResults.find(r => r.option_index === idx);
+            resultsMap[idx] = found ? found.count : 0;
+        });
+
+        return {
+            ...v,
+            options: voteOptions,
+            results: resultsMap
+        };
+    });
+
+    res.json(votesWithData);
+});
+
+app.post('/api/votes', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    const { title, options } = req.body;
+    db.prepare('INSERT INTO votes (title, options) VALUES (?, ?)').run(title, JSON.stringify(options));
+    res.json({ success: true });
+});
+
+app.post('/api/votes/:id/vote', authenticateToken, (req, res) => {
+    const { id } = req.params;
+    const { optionIndex } = req.body;
+    try {
+        db.prepare('INSERT OR REPLACE INTO vote_results (vote_id, user_id, option_index) VALUES (?, ?, ?)').run(id, req.user.id, optionIndex);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: "Voting failed" });
+    }
+});
+
+app.post('/api/votes/:id/toggle', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    const { id } = req.params;
+    const vote = db.prepare('SELECT is_active FROM votes WHERE id = ?').get(id);
+    if (!vote) return res.status(404).json({ error: "Poll not found" });
+    db.prepare('UPDATE votes SET is_active = ? WHERE id = ?').run(vote.is_active ? 0 : 1, id);
+    res.json({ success: true });
+});
+
+app.delete('/api/votes/:id', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    const { id } = req.params;
+    db.prepare('DELETE FROM vote_results WHERE vote_id = ?').run(id);
+    db.prepare('DELETE FROM votes WHERE id = ?').run(id);
+    res.json({ success: true });
 });
 
 // --- MEETINGS ---

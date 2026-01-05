@@ -91,6 +91,25 @@ db.exec(`
     content TEXT NOT NULL,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );
+
+  CREATE TABLE IF NOT EXISTS votes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    options TEXT NOT NULL,
+    is_active BOOLEAN DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS vote_results (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    vote_id INTEGER,
+    user_id INTEGER,
+    option_index INTEGER,
+    voted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(vote_id) REFERENCES votes(id),
+    FOREIGN KEY(user_id) REFERENCES users(id),
+    UNIQUE(vote_id, user_id)
+  );
 `);
 
 // Seed Admin using PREPARED STATEMENTS to avoid syntax errors with special chars

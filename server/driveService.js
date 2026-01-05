@@ -199,6 +199,107 @@ const getLiveStatus = async () => {
     }
 };
 
+const backupDatabase = async () => {
+    try {
+        if (!drive) return;
+        const DB_PATH = path.join(__dirname, '../database.db');
+        if (!fs.existsSync(DB_PATH)) return;
+
+        console.log("[DriveService] Starting database backup...");
+
+        const fileMetadata = {
+            name: `database_backup_${new Date().toISOString().split('T')[0]}.db`,
+            parents: [DB_FOLDER_ID],
+        };
+        const media = {
+            mimeType: 'application/x-sqlite3',
+            body: fs.createReadStream(DB_PATH),
+        };
+
+        const res = await drive.files.create({
+            resource: fileMetadata,
+            media: media,
+            fields: 'id',
+        });
+        console.log("[DriveService] Database backup successful:", res.data.id);
+        return res.data.id;
+    } catch (err) {
+        console.error("[DriveService] Database backup failed:", err.message);
+    }
+};
+
+const restoreDatabase = async () => {
+    try {
+        if (!drive) return;
+        const DB_PATH = path.join(__dirname, '../database.db');
+        if (fs.existsSync(DB_PATH)) {
+            console.log("[DriveService] Local database exists, skipping restore.");
+            return;
+        }
+
+        console.log("[DriveService] Local database missing, attempting restore from Drive...");
+        const res = await drive.files.list({
+            q: `'${DB_FOLDER_ID}' in parents and trashed=false`,
+            fields: 'files(id, name, createdTime)',
+            orderBy: 'createdTime desc',
+            pageSize: 1
+        });
+
+        if (res.data.files.length === 0) {
+            console.log("[DriveService] No backups found on Drive.");
+            return;
+        }
+
+        const latestFile = res.data.files[0];
+        console.log(`[DriveService] Downloading latest backup: ${latestFile.name} (${latestFile.id})`);
+
+        const dest = fs.createWriteStream(DB_PATH);
+        const response = await drive.files.get(
+            { fileId: latestFile.id, alt: 'media' },
+            { responseType: 'stream' }
+        );
+
+        return new Promise((resolve, reject) => {
+            response.data
+                .on('end', () => {
+                    console.log("[DriveService] Database restoration complete.");
+                    resolve();
+                })
+                .on('error', err => {
+                    console.error("[DriveService] Error downloading database:", err);
+                    reject(err);
+                })
+                .pipe(dest);
+        });
+    } catch (err) {
+        console.error("[DriveService] Database restore failed:", err.message);
+    }
+};
+
+const uploadAvatar = async (fileBuffer, fileName, mimeType) => {
+    try {
+        if (!drive) throw new Error("Drive not initialized");
+        const bufferStream = new stream.PassThrough();
+        bufferStream.end(fileBuffer);
+
+        const res = await drive.files.create({
+            resource: {
+                name: `avatar_${Date.now()}_${fileName}`,
+                parents: [AVATAR_FOLDER_ID],
+            },
+            media: {
+                mimeType: mimeType,
+                body: bufferStream,
+            },
+            fields: 'id',
+        });
+        return res.data.id;
+    } catch (err) {
+        console.error("[DriveService] Avatar upload failed:", err);
+        throw err;
+    }
+};
+
 module.exports = {
     uploadFile,
     listFiles,

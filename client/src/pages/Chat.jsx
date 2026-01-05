@@ -74,7 +74,7 @@ const Chat = () => {
                                 className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}
                             >
                                 <div className={`flex items-center space-x-2 mb-1 ${isMe ? 'flex-row-reverse space-x-reverse' : ''}`}>
-                                    <div className="w-6 h-6 rounded-full bg-slate-800 overflow-hidden border border-slate-700 shrink-0">
+                                    <div className="w-6 h-6 rounded-full bg-panel border border-border overflow-hidden shrink-0">
                                         {msg.avatar_id ? (
                                             <img
                                                 src={`https://drive.google.com/uc?id=${msg.avatar_id}&v=${msg.avatar_version || 0}`}

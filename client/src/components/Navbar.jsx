@@ -25,13 +25,6 @@ const Navbar = () => {
     const { theme, toggleTheme } = useTheme();
     const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
-    const [profile, setProfile] = useState(null);
-
-    useEffect(() => {
-        if (user) {
-            axios.get('/api/profile/me').then(res => setProfile(res.data)).catch(() => { });
-        }
-    }, [user]);
 
     if (!user) return null;
 
@@ -104,9 +97,9 @@ const Navbar = () => {
                         <div className="mt-8 pt-6 border-t border-border">
                             <div className="flex items-center space-x-3 px-4 mb-4">
                                 <div className="w-10 h-10 rounded-full bg-panel overflow-hidden shadow-lg border border-border">
-                                    {profile?.avatar_id ? (
+                                    {user?.avatar_id ? (
                                         <img
-                                            src={`https://drive.google.com/uc?id=${profile.avatar_id}&v=${profile.avatar_version || 0}`}
+                                            src={`https://drive.google.com/uc?id=${user.avatar_id}&v=${user.avatar_version || 0}`}
                                             className="w-full h-full object-cover"
                                             alt="Nav Avatar"
                                             onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${user.username}&background=22d3ee&color=fff`; }}

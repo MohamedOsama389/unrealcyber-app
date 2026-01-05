@@ -185,9 +185,9 @@ const Dashboard = () => {
                 <div className="flex items-center gap-6">
                     <div className="relative group">
                         <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 p-1 shadow-2xl">
-                            {profile?.avatar_id ? (
+                            {user?.avatar_id ? (
                                 <img
-                                    src={`https://drive.google.com/uc?id=${profile.avatar_id}&v=${profile.avatar_version || 0}`}
+                                    src={`https://drive.google.com/uc?id=${user.avatar_id}&v=${user.avatar_version || 0}`}
                                     className="w-full h-full rounded-full object-cover border-4 border-app"
                                     alt="Avatar"
                                     onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${user.username}&background=22d3ee&color=fff`; }}
@@ -217,7 +217,7 @@ const Dashboard = () => {
                 <div className="flex gap-4">
                     <div className="glass-panel px-6 py-4 flex flex-col items-center">
                         <div className="text-orange-500 font-bold text-2xl flex items-center gap-2">
-                            🔥 {profile?.streak_count || 0}
+                            🔥 {user?.streak_count || 0}
                         </div>
                         <div className="text-[10px] text-secondary uppercase tracking-widest font-bold">Day Streak</div>
                     </div>

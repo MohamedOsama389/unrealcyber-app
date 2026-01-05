@@ -77,7 +77,7 @@ const Chat = () => {
                                     <div className="w-6 h-6 rounded-full bg-slate-800 overflow-hidden border border-slate-700 shrink-0">
                                         {msg.avatar_id ? (
                                             <img
-                                                src={`https://lh3.googleusercontent.com/u/0/d/${msg.avatar_id}=w50-h50-p-k-no`}
+                                                src={`https://lh3.googleusercontent.com/u/0/d/${msg.avatar_id}=w50-h50-p-k-no?v=${msg.avatar_version || 0}`}
                                                 className="w-full h-full object-cover"
                                                 alt=""
                                                 onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${msg.username}&background=22d3ee&color=fff`; }}

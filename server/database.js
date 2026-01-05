@@ -14,6 +14,7 @@ db.exec(`
     password TEXT NOT NULL,
     role TEXT CHECK(role IN ('admin', 'student')) DEFAULT 'student',
     avatar_id TEXT,
+    avatar_version INTEGER DEFAULT 0,
     streak_count INTEGER DEFAULT 0,
     last_activity_date TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

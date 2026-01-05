@@ -2,30 +2,10 @@ const express = require('express');
 const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
-const db = require('./database');
+// Removed top-level db require
+let db;
 
-// Ensure database schema is up to date
-try {
-    const info = db.prepare("PRAGMA table_info(folders_meta)").all();
-    const hasParentId = info.some(col => col.name === 'parent_id');
-    const hasName = info.some(col => col.name === 'name');
-    if (!hasParentId) {
-        console.log("Adding missing parent_id to folders_meta...");
-        db.prepare('ALTER TABLE folders_meta ADD COLUMN parent_id TEXT').run();
-    }
-    if (!hasName) {
-        console.log("Adding missing name to folders_meta...");
-        db.prepare('ALTER TABLE folders_meta ADD COLUMN name TEXT').run();
-    }
-    const videoInfo = db.prepare("PRAGMA table_info(videos)").all();
-    const hasResources = videoInfo.some(col => col.name === 'resources');
-    if (!hasResources) {
-        console.log("Adding missing resources to videos...");
-        db.prepare('ALTER TABLE videos ADD COLUMN resources TEXT').run();
-    }
-} catch (e) {
-    console.error("Database migration check failed", e);
-}
+// Schema check moved to startServer function
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
@@ -123,7 +103,9 @@ app.post('/api/auth/login', (req, res) => {
             token,
             role: user.role,
             username: user.username,
+            username: user.username,
             avatar_id: user.avatar_id,
+            avatar_version: user.avatar_version,
             streak_count: newStreak
         });
     }
@@ -131,7 +113,7 @@ app.post('/api/auth/login', (req, res) => {
 
 // --- PROFILE ---
 app.get('/api/profile/me', authenticateToken, (req, res) => {
-    const user = db.prepare('SELECT id, username, role, avatar_id, streak_count, last_activity_date FROM users WHERE id = ?').get(req.user.id);
+    const user = db.prepare('SELECT id, username, role, avatar_id, avatar_version, streak_count, last_activity_date FROM users WHERE id = ?').get(req.user.id);
     res.json(user);
 });
 
@@ -144,9 +126,10 @@ app.post('/api/profile/upload-avatar', authenticateToken, upload.single('avatar'
         console.log(`[AvatarUpload] Processing file: ${req.file.originalname} (${req.file.size} bytes)`);
         const avatarId = await driveService.uploadAvatar(req.file.buffer, req.file.originalname, req.file.mimetype);
         console.log(`[AvatarUpload] Drive upload successful. ID: ${avatarId}`);
-        db.prepare('UPDATE users SET avatar_id = ? WHERE id = ?').run(avatarId, req.user.id);
+        const version = Date.now();
+        db.prepare('UPDATE users SET avatar_id = ?, avatar_version = ? WHERE id = ?').run(avatarId, version, req.user.id);
         driveService.backupDatabase(); // Persist avatar change immediately
-        res.json({ success: true, avatar_id: avatarId });
+        res.json({ success: true, avatar_id: avatarId, avatar_version: version });
     } catch (err) {
         console.error("[AvatarUpload] Error:", err);
         res.status(500).json({ error: "Avatar upload failed", details: err.message });
@@ -695,7 +678,7 @@ app.delete('/api/users/:id', authenticateToken, (req, res) => {
 io.on('connection', (socket) => {
     // Send recent messages
     const recent = db.prepare(`
-        SELECT m.*, u.avatar_id 
+        SELECT m.*, u.avatar_id, u.avatar_version 
         FROM messages m 
         LEFT JOIN users u ON m.username = u.username 
         ORDER BY m.timestamp DESC 
@@ -706,13 +689,14 @@ io.on('connection', (socket) => {
     socket.on('send_message', (data) => {
         // data: { username, content }
         const result = db.prepare('INSERT INTO messages (username, content) VALUES (?, ?)').run(data.username, data.content);
-        const user = db.prepare('SELECT avatar_id FROM users WHERE username = ?').get(data.username);
+        const user = db.prepare('SELECT avatar_id, avatar_version FROM users WHERE username = ?').get(data.username);
         const msg = {
             id: result.lastInsertRowid,
             username: data.username,
             content: data.content,
             timestamp: new Date(),
-            avatar_id: user?.avatar_id
+            avatar_id: user?.avatar_id,
+            avatar_version: user?.avatar_version
         };
         io.emit('new_message', msg);
     });
@@ -730,17 +714,66 @@ app.get(/.*/, (req, res) => {
 
 const PORT = Number(process.env.PORT) || 8080;
 
-server.listen(PORT, '0.0.0.0', async () => {
-    console.log(`Server running on port ${PORT} (Bound to 0.0.0.0 for Railway)`);
+const startServer = async () => {
+    try {
+        // Restore DB logic
+        if (driveService.isInitialized()) {
+            console.log("Drive initialized, attempting to restore database...");
+            await driveService.restoreDatabase();
+        } else {
+            console.log("Drive NOT initialized, skipping restore.");
+        }
 
-    // RESTORE DATABASE ON STARTUP
-    await driveService.restoreDatabase();
+        // Initialize DB AFTER restore
+        db = require('./database');
 
-    // SCHEDULE BACKUPS (Every 12 hours)
-    setInterval(() => {
-        driveService.backupDatabase();
-    }, 12 * 60 * 60 * 1000);
+        // Check for avatar_version column
+        try {
+            const userInfo = db.prepare("PRAGMA table_info(users)").all();
+            const hasVersion = userInfo.some(col => col.name === 'avatar_version');
+            if (!hasVersion) {
+                console.log("Adding missing avatar_version to users...");
+                db.prepare('ALTER TABLE users ADD COLUMN avatar_version INTEGER DEFAULT 0').run();
+            }
+        } catch (e) { console.error("Avatar version migration failed", e); }
 
-    console.log(`Environment: ${process.env.NODE_ENV}`);
-    console.log(`Health Check: Server is ready.`);
-});
+        // Run migrations
+        try {
+            const info = db.prepare("PRAGMA table_info(folders_meta)").all();
+            const hasParentId = info.some(col => col.name === 'parent_id');
+            const hasName = info.some(col => col.name === 'name');
+            if (!hasParentId) {
+                console.log("Adding missing parent_id to folders_meta...");
+                db.prepare('ALTER TABLE folders_meta ADD COLUMN parent_id TEXT').run();
+            }
+            if (!hasName) {
+                console.log("Adding missing name to folders_meta...");
+                db.prepare('ALTER TABLE folders_meta ADD COLUMN name TEXT').run();
+            }
+            const videoInfo = db.prepare("PRAGMA table_info(videos)").all();
+            const hasResources = videoInfo.some(col => col.name === 'resources');
+            if (!hasResources) {
+                console.log("Adding missing resources to videos...");
+                db.prepare('ALTER TABLE videos ADD COLUMN resources TEXT').run();
+            }
+        } catch (e) {
+            console.error("Database migration check failed", e);
+        }
+
+        server.listen(PORT, '0.0.0.0', () => {
+            console.log(`Server running on port ${PORT} (Bound to 0.0.0.0 for Railway)`);
+
+            // SCHEDULE BACKUPS (Every 12 hours)
+            setInterval(() => {
+                driveService.backupDatabase();
+            }, 12 * 60 * 60 * 1000);
+
+            console.log(`Environment: ${process.env.NODE_ENV}`);
+            console.log(`Health Check: Server is ready.`);
+        });
+    } catch (e) {
+        console.error("FATAL: Server startup failed", e);
+    }
+};
+
+startServer();

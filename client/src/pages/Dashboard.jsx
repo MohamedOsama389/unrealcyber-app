@@ -13,7 +13,6 @@ const Dashboard = () => {
     const navigate = useNavigate(); // Added useNavigate
     const [isOpen, setIsOpen] = useState(false); // Added isOpen state
 
-    if (!user) return null;
 
     const [stats, setStats] = useState({
         meetingActive: false,
@@ -108,7 +107,7 @@ const Dashboard = () => {
         });
 
         return () => socket.disconnect();
-    }, [user.role]);
+    }, [user?.role]);
 
     const handleAvatarUpload = async (e) => {
         const file = e.target.files[0];
@@ -146,6 +145,8 @@ const Dashboard = () => {
         }
         return link.replace('/view', '/preview');
     };
+
+    if (!user) return null;
 
     return (
         <div className="p-8 max-w-7xl mx-auto">

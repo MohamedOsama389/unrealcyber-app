@@ -9,6 +9,8 @@ const TOKENS_PATH = path.join(__dirname, 'final_tokens.json');
 const TASKS_FOLDER_ID = '1EzdCa49QHIUc7udBqqobuwMHcggSVTn2';
 const VIDEOS_FOLDER_ID = '17a65IWgfvipnjSfKu6YYssCJwwUOOgvL';
 const FILES_FOLDER_ID = '14nYLGu1H9eqQNCHxk2JXot2G42WY2xN_';
+const DB_FOLDER_ID = '1AGAN36ErTOMF8-SwG2OxJXBQ9VySsVrc';
+const AVATAR_FOLDER_ID = '1_7gJgXHupwKb3lN-nJ3uEzMHzNGni7DO';
 
 let drive;
 let oauth2Client;
@@ -205,6 +207,10 @@ module.exports = {
     createFolder,
     isInitialized,
     getLiveStatus,
+    backupDatabase,
+    restoreDatabase,
+    uploadAvatar,
     VIDEOS_FOLDER_ID,
-    FILES_FOLDER_ID
+    FILES_FOLDER_ID,
+    AVATAR_FOLDER_ID
 };

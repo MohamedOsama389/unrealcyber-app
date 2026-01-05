@@ -84,9 +84,41 @@ app.post('/api/auth/register', (req, res) => {
 app.post('/api/auth/login', (req, res) => {
     const { username, password } = req.body;
     const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+
     if (user && bcrypt.compareSync(password, user.password)) {
+        // --- STREAK LOGIC ---
+        const today = new Date().toISOString().split('T')[0];
+        const lastDate = user.last_activity_date;
+        let newStreak = user.streak_count || 0;
+
+        if (!lastDate) {
+            newStreak = 1;
+        } else if (lastDate !== today) {
+            const last = new Date(lastDate);
+            const t = new Date(today);
+            const diffDays = Math.floor((t - last) / (1000 * 60 * 60 * 24));
+
+            if (diffDays === 1) {
+                newStreak += 1;
+            } else {
+                newStreak = 1;
+            }
+        }
+
+        db.prepare('UPDATE users SET streak_count = ?, last_activity_date = ? WHERE id = ?').run(newStreak, today, user.id);
+
+        // Trigger a backup if critical data changed or just periodically?
+        // For now, let's keep it in login to ensure student progress is backed up
+        driveService.backupDatabase();
+
         const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, SECRET_KEY);
-        res.json({ token, role: user.role, username: user.username });
+        res.json({
+            token,
+            role: user.role,
+            username: user.username,
+            avatar_id: user.avatar_id,
+            streak_count: newStreak
+        });
     } else {
         res.status(400).json({ error: "Invalid credentials" });
     }
@@ -556,8 +588,17 @@ app.get(/.*/, (req, res) => {
 
 const PORT = Number(process.env.PORT) || 8080;
 
-server.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, '0.0.0.0', async () => {
     console.log(`Server running on port ${PORT} (Bound to 0.0.0.0 for Railway)`);
+
+    // RESTORE DATABASE ON STARTUP
+    await driveService.restoreDatabase();
+
+    // SCHEDULE BACKUPS (Every 12 hours)
+    setInterval(() => {
+        driveService.backupDatabase();
+    }, 12 * 60 * 60 * 1000);
+
     console.log(`Environment: ${process.env.NODE_ENV}`);
     console.log(`Health Check: Server is ready.`);
 });

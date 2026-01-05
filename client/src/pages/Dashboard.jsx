@@ -5,9 +5,13 @@ import axios from 'axios';
 import StarRating from '../components/StarRating';
 import { Activity, Calendar, CheckCircle, Award, Server, Play, FileText, Eye, Star, Folder, Layout } from 'lucide-react';
 import io from 'socket.io-client';
+import { useNavigate } from 'react-router-dom'; // Added import for useNavigate
+import clsx from 'clsx'; // Added import for clsx
 
 const Dashboard = () => {
-    const { user } = useAuth();
+    const { user, logout } = useAuth(); // Added logout
+    const navigate = useNavigate(); // Added useNavigate
+    const [isOpen, setIsOpen] = useState(false); // Added isOpen state
     const [stats, setStats] = useState({
         meetingActive: false,
         tasksTotal: 0,
@@ -19,6 +23,10 @@ const Dashboard = () => {
     const [featuredVideo, setFeaturedVideo] = useState(null);
     const [featuredFile, setFeaturedFile] = useState(null);
     const [featuredFolders, setFeaturedFolders] = useState([]);
+    const [activeVotes, setActiveVotes] = useState([]);
+    const [myVotes, setMyVotes] = useState({}); // { voteId: optionIndex }
+    const [profile, setProfile] = useState(null);
+    const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -59,9 +67,25 @@ const Dashboard = () => {
                     }
                 }
 
-                setStats({ meetingActive, tasksTotal, tasksCompleted, averageRating, vmOnlineCount, vmTotalCount });
-            } catch (err) {
-                console.error("Dashboard data fetch error", err);
+                setStats(prevStats => ({
+                    ...prevStats,
+                    meetingActive,
+                    tasksTotal,
+                    tasksCompleted,
+                    averageRating,
+                    vmOnlineCount,
+                    vmTotalCount
+                }));
+
+                // Get Profile & Streak
+                const profileRes = await axios.get('/api/profile/me');
+                setProfile(profileRes.data);
+
+                // Get Active Votes
+                const votesRes = await axios.get('/api/votes/active');
+                setActiveVotes(votesRes.data);
+            } catch (error) {
+                console.error("Error fetching dashboard data:", error);
             }
         };
 
@@ -83,6 +107,33 @@ const Dashboard = () => {
         return () => socket.disconnect();
     }, [user.role]);
 
+    const handleAvatarUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setUploadingAvatar(true);
+        const formData = new FormData();
+        formData.append('image', file);
+        try {
+            const res = await axios.post('/api/profile/upload', formData);
+            setProfile({ ...profile, avatar_id: res.data.avatar_id });
+            alert("Profile picture updated!");
+        } catch (err) {
+            alert("Upload failed");
+        } finally {
+            setUploadingAvatar(false);
+        }
+    };
+
+    const handleVote = async (voteId, optionIndex) => {
+        try {
+            await axios.post(`/api/votes/${voteId}/vote`, { option_index: optionIndex });
+            setMyVotes({ ...myVotes, [voteId]: optionIndex });
+            alert("Vote submitted!");
+        } catch (err) {
+            alert(err.response?.data?.error || "Vote failed");
+        }
+    };
+
     const getVideoEmbedUrl = (link) => {
         if (!link) return '';
         const ytMatch = link.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/(?:watch\?v=)?(.+)/);
@@ -98,14 +149,54 @@ const Dashboard = () => {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-12"
+                className="mb-12 flex flex-col md:flex-row items-center justify-between gap-6"
             >
-                <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-                    Welcome to <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Unreal Cyber Academy</span>
-                </h1>
-                <p className="text-xl text-slate-400">
-                    Operated by <span className="text-cyan-400 font-semibold">Mohamed Osama</span>
-                </p>
+                <div className="flex items-center gap-6">
+                    <div className="relative group">
+                        <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 p-1 shadow-2xl">
+                            {profile?.avatar_id ? (
+                                <img
+                                    src={`https://lh3.googleusercontent.com/u/0/d/${profile.avatar_id}=w200-h200-p-k-no`}
+                                    className="w-full h-full rounded-full object-cover border-4 border-slate-950"
+                                    alt="Avatar"
+                                    onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${user.username}&background=22d3ee&color=fff`; }}
+                                />
+                            ) : (
+                                <div className="w-full h-full rounded-full flex items-center justify-center bg-slate-800 text-3xl font-bold border-4 border-slate-950">
+                                    {user.username[0].toUpperCase()}
+                                </div>
+                            )}
+                        </div>
+                        <label className="absolute bottom-0 right-0 p-2 bg-cyan-500 rounded-full cursor-pointer hover:scale-110 transition-all shadow-lg border-2 border-slate-950 group-hover:bg-cyan-400">
+                            <input type="file" className="hidden" onChange={handleAvatarUpload} accept="image/*" disabled={uploadingAvatar} />
+                            <Award size={14} className="text-white" />
+                        </label>
+                    </div>
+                    <div>
+                        <h1 className="text-4xl md:text-5xl font-bold text-white mb-1">
+                            Welcome, <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">{user.username}</span>
+                        </h1>
+                        <p className="text-lg text-slate-400 flex items-center">
+                            <Award className="mr-2 text-yellow-500" size={18} />
+                            Academy Member • <span className="text-cyan-400 ml-1">v2.0</span>
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex gap-4">
+                    <div className="glass-panel px-6 py-4 flex flex-col items-center">
+                        <div className="text-orange-500 font-bold text-2xl flex items-center gap-2">
+                            🔥 {profile?.streak_count || 0}
+                        </div>
+                        <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Day Streak</div>
+                    </div>
+                    <div className="glass-panel px-6 py-4 flex flex-col items-center">
+                        <div className="text-green-500 font-bold text-2xl">
+                            {stats.tasksCompleted}/{stats.tasksTotal}
+                        </div>
+                        <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Goals Met</div>
+                    </div>
+                </div>
             </motion.div>
 
             {/* FEATURED VIDEO SECTION */}
@@ -142,6 +233,46 @@ const Dashboard = () => {
                         </div>
                     </div>
                 </motion.div>
+            )}
+
+            {/* ACTIVE POLLS SECTION */}
+            {activeVotes.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                    {activeVotes.map(vote => (
+                        <motion.div
+                            key={vote.id}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="glass-panel p-6 border-l-4 border-l-yellow-500"
+                        >
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-xl font-bold text-white flex items-center">
+                                    <Star className="mr-2 text-yellow-500 fill-yellow-500" size={20} />
+                                    Academy Poll
+                                </h3>
+                                <span className="text-xs bg-yellow-500/20 text-yellow-500 px-2 py-1 rounded-full font-bold">ACTIVE</span>
+                            </div>
+                            <h4 className="text-lg text-slate-200 mb-6">{vote.title}</h4>
+                            <div className="space-y-3">
+                                {vote.options.map((opt, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => handleVote(vote.id, idx)}
+                                        className={clsx(
+                                            "w-full p-4 rounded-xl border flex justify-between items-center transition-all",
+                                            myVotes[vote.id] === idx
+                                                ? "bg-cyan-500/20 border-cyan-500 text-cyan-400 shadow-lg shadow-cyan-500/10"
+                                                : "bg-slate-800/50 border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-white"
+                                        )}
+                                    >
+                                        <span className="font-bold">{opt}</span>
+                                        {myVotes[vote.id] === idx && <CheckCircle size={18} />}
+                                    </button>
+                                ))}
+                            </div>
+                        </motion.div>
+                    ))}
+                </div>
             )}
 
             {featuredFile && (

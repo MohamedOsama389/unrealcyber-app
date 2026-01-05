@@ -20,6 +20,13 @@ const Navbar = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
+    const [profile, setProfile] = useState(null);
+
+    useEffect(() => {
+        if (user) {
+            axios.get('/api/profile/me').then(res => setProfile(res.data)).catch(() => { });
+        }
+    }, [user]);
 
     if (!user) return null;
 
@@ -91,8 +98,19 @@ const Navbar = () => {
 
                         <div className="mt-8 pt-6 border-t border-slate-800">
                             <div className="flex items-center space-x-3 px-4 mb-4">
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center font-bold text-white shadow-lg">
-                                    {user.username[0].toUpperCase()}
+                                <div className="w-10 h-10 rounded-full bg-slate-800 overflow-hidden shadow-lg border border-slate-700">
+                                    {profile?.avatar_id ? (
+                                        <img
+                                            src={`https://lh3.googleusercontent.com/u/0/d/${profile.avatar_id}=w100-h100-p-k-no`}
+                                            className="w-full h-full object-cover"
+                                            alt="Nav Avatar"
+                                            onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${user.username}&background=22d3ee&color=fff`; }}
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center font-bold text-white bg-gradient-to-tr from-cyan-500 to-blue-600">
+                                            {user.username[0].toUpperCase()}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="overflow-hidden">
                                     <p className="text-white font-bold truncate">{user.username}</p>

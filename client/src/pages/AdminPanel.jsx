@@ -2,23 +2,52 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Users, FileCheck, Search, Award, Trash2, Key } from 'lucide-react';
+import { Shield, Users, FileCheck, Search, Award, Trash2, Key, Star } from 'lucide-react';
 import clsx from 'clsx';
 import StarRating from '../components/StarRating';
 
 const AdminPanel = () => {
     const { user } = useAuth();
-    const [activeTab, setActiveTab] = useState('users'); // 'users' or 'submissions'
+    const [activeTab, setActiveTab] = useState('users'); // 'users', 'submissions', 'votes'
     const [users, setUsers] = useState([]);
     const [submissions, setSubmissions] = useState([]);
+    const [votes, setVotes] = useState([]);
     const [grading, setGrading] = useState({ id: null, rating: 0, admin_notes: '' });
     const [newUser, setNewUser] = useState({ username: '', password: '', role: 'student' });
     const [showCreateForm, setShowCreateForm] = useState(false);
+    const [newVote, setNewVote] = useState({ title: '', options: ['', ''] });
 
     useEffect(() => {
         fetchUsers();
         fetchSubmissions();
+        fetchVotes();
     }, []);
+
+    const fetchVotes = async () => {
+        try {
+            const res = await axios.get('/api/votes/active'); // Note: Adjust if you want list of ALL votes
+            setVotes(res.data);
+        } catch (err) { }
+    };
+
+    const handleCreateVote = async (e) => {
+        e.preventDefault();
+        try {
+            await axios.post('/api/votes', newVote);
+            setNewVote({ title: '', options: ['', ''] });
+            fetchVotes();
+            alert("Poll created!");
+        } catch (err) {
+            alert("Failed to create poll");
+        }
+    };
+
+    const toggleVoteStatus = async (id) => {
+        try {
+            await axios.post(`/api/votes/${id}/toggle`);
+            fetchVotes();
+        } catch (err) { }
+    };
 
     const fetchUsers = async () => {
         try {
@@ -136,6 +165,16 @@ const AdminPanel = () => {
                     <FileCheck size={20} />
                     <span>Mission Reviews</span>
                 </button>
+                <button
+                    onClick={() => setActiveTab('votes')}
+                    className={clsx(
+                        "flex items-center space-x-2 px-6 py-3 rounded-xl font-bold transition-all",
+                        activeTab === 'votes' ? "bg-yellow-600 text-white shadow-lg shadow-yellow-500/30" : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"
+                    )}
+                >
+                    <Star size={20} />
+                    <span>Poll Management</span>
+                </button>
             </div>
 
             {/* USERS TAB */}
@@ -162,33 +201,41 @@ const AdminPanel = () => {
                                     animate={{ height: 'auto', opacity: 1 }}
                                     exit={{ height: 0, opacity: 0 }}
                                     onSubmit={handleCreateUser}
-                                    className="overflow-hidden bg-slate-900/50 p-6 rounded-2xl border border-slate-800 flex flex-col md:flex-row gap-4 mb-4"
+                                    className="overflow-hidden bg-slate-900/50 p-6 rounded-2xl border border-slate-800 flex flex-col md:flex-row gap-4 mb-4 items-center"
                                 >
-                                    <input
-                                        type="text"
-                                        placeholder="Username"
-                                        value={newUser.username}
-                                        onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
-                                        className="input-field flex-1"
-                                        required
-                                    />
-                                    <input
-                                        type="password"
-                                        placeholder="Password"
-                                        value={newUser.password}
-                                        onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                                        className="input-field flex-1"
-                                        required
-                                    />
-                                    <select
-                                        value={newUser.role}
-                                        onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
-                                        className="input-field bg-slate-800"
-                                    >
-                                        <option value="student">Recruit (Student)</option>
-                                        <option value="admin">Admin</option>
-                                    </select>
-                                    <button type="submit" className="btn-primary px-8">Add Account</button>
+                                    <div className="flex-1 w-full">
+                                        <input
+                                            type="text"
+                                            placeholder="Username"
+                                            value={newUser.username}
+                                            onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
+                                            className="input-field w-full h-[48px]"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="flex-1 w-full">
+                                        <input
+                                            type="password"
+                                            placeholder="Password"
+                                            value={newUser.password}
+                                            onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                                            className="input-field w-full h-[48px]"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="w-full md:w-auto">
+                                        <select
+                                            value={newUser.role}
+                                            onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
+                                            className="input-field bg-slate-800 h-[48px] min-w-[160px]"
+                                        >
+                                            <option value="student">Recruit (Student)</option>
+                                            <option value="admin">Admin</option>
+                                        </select>
+                                    </div>
+                                    <button type="submit" className="btn-primary px-8 h-[48px] w-full md:w-auto whitespace-nowrap">
+                                        Add Account
+                                    </button>
                                 </motion.form>
                             )}
                         </AnimatePresence>
@@ -336,6 +383,89 @@ const AdminPanel = () => {
                             )}
                         </motion.div>
                     ))}
+                </div>
+            )}
+            {/* VOTES TAB */}
+            {activeTab === 'votes' && (
+                <div className="space-y-6">
+                    <form onSubmit={handleCreateVote} className="glass-panel p-6 border-l-4 border-l-yellow-500 space-y-4">
+                        <h3 className="text-lg font-bold text-white flex items-center">
+                            <Star className="mr-2 text-yellow-500" size={20} />
+                            Create New Academy Poll
+                        </h3>
+                        <input
+                            type="text"
+                            placeholder="Poll Question"
+                            value={newVote.title}
+                            onChange={(e) => setNewVote({ ...newVote, title: e.target.value })}
+                            className="input-field h-[48px]"
+                            required
+                        />
+                        <div className="space-y-3">
+                            {newVote.options.map((opt, idx) => (
+                                <div key={idx} className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        placeholder={`Option ${idx + 1}`}
+                                        value={opt}
+                                        onChange={(e) => {
+                                            const next = [...newVote.options];
+                                            next[idx] = e.target.value;
+                                            setNewVote({ ...newVote, options: next });
+                                        }}
+                                        className="input-field h-[48px]"
+                                        required
+                                    />
+                                    {newVote.options.length > 2 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const next = newVote.options.filter((_, i) => i !== idx);
+                                                setNewVote({ ...newVote, options: next });
+                                            }}
+                                            className="p-2 text-red-400 hover:bg-red-500/10 rounded h-[48px]"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                        <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
+                            <button
+                                type="button"
+                                onClick={() => setNewVote({ ...newVote, options: [...newVote.options, ''] })}
+                                className="text-xs font-bold text-yellow-500 hover:text-yellow-400 p-2"
+                            >
+                                + Add Another Option
+                            </button>
+                            <button type="submit" className="btn-primary px-8 h-[48px] w-full md:w-auto">Launch Poll to Dashboard</button>
+                        </div>
+                    </form>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {votes.map(v => (
+                            <div key={v.id} className="glass-panel p-6 border border-slate-800">
+                                <div className="flex justify-between items-start mb-4">
+                                    <h4 className="font-bold text-white">{v.title}</h4>
+                                    <button
+                                        onClick={() => toggleVoteStatus(v.id)}
+                                        className={`px-3 py-1 rounded text-[10px] font-bold ${v.is_active ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-slate-700 text-slate-400'}`}
+                                    >
+                                        {v.is_active ? 'ACTIVE' : 'INACTIVE'}
+                                    </button>
+                                </div>
+                                <div className="space-y-2">
+                                    {v.options.map((opt, idx) => (
+                                        <div key={idx} className="text-sm text-slate-400 flex justify-between p-2 bg-slate-900/50 rounded">
+                                            <span>{opt}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                        {votes.length === 0 && <p className="text-slate-500 text-center py-10 col-span-full">No polls created yet.</p>}
+                    </div>
                 </div>
             )}
         </div>

@@ -9,11 +9,12 @@ export default {
         extend: {
             colors: {
                 // Semantic Tokens (Mapped to CSS Variables)
-                app: 'var(--bg-app)',
-                panel: 'var(--bg-panel)',
-                primary: 'var(--text-primary)',
-                secondary: 'var(--text-secondary)',
-                border: 'var(--border-panel)',
+                app: 'var(--bg)',
+                panel: 'var(--card)',
+                primary: 'var(--text)',
+                secondary: 'var(--muted)',
+                border: 'var(--border)',
+                accent: 'var(--accent)',
 
                 // Legacy / Brand Colors
                 cyber: {

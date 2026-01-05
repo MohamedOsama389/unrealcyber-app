@@ -230,14 +230,13 @@ const backupDatabase = async () => {
 
 const restoreDatabase = async () => {
     try {
-        if (!drive) return;
-        const DB_PATH = path.join(__dirname, '../database.db');
-        if (fs.existsSync(DB_PATH)) {
-            console.log("[DriveService] Local database exists, skipping restore.");
+        if (!drive) {
+            console.warn("[DriveService] Drive not initialized, cannot restore. Falling back to local DB.");
             return;
         }
+        const DB_PATH = path.join(__dirname, '../database.db');
 
-        console.log("[DriveService] Local database missing, attempting restore from Drive...");
+        console.log("[DriveService] Checking for latest database backup in Drive...");
         const res = await drive.files.list({
             q: `'${DB_FOLDER_ID}' in parents and trashed=false`,
             fields: 'files(id, name, modifiedTime)',
@@ -246,12 +245,16 @@ const restoreDatabase = async () => {
         });
 
         if (res.data.files.length === 0) {
-            console.log("[DriveService] No backups found on Drive.");
+            console.log("[DriveService] No backups found on Drive. Using local database.");
             return;
         }
 
         const latestFile = res.data.files[0];
-        console.log(`[DriveService] Downloading latest backup: ${latestFile.name} (${latestFile.id})`);
+        console.log(`[DriveService] Latest Drive backup detected: ${latestFile.name} (Modified: ${latestFile.modifiedTime})`);
+
+        // If local file exists, we could compare timestamps, but for "Auto-Restore" on deploy, 
+        // we usually want the Drive version as the source of truth if it's available.
+        console.log(`[DriveService] Synchronizing local database with ${latestFile.name}...`);
 
         const dest = fs.createWriteStream(DB_PATH);
         const response = await drive.files.get(
@@ -262,7 +265,7 @@ const restoreDatabase = async () => {
         return new Promise((resolve, reject) => {
             response.data
                 .on('end', () => {
-                    console.log("[DriveService] Database restoration complete.");
+                    console.log("[DriveService] Database synchronization complete.");
                     resolve();
                 })
                 .on('error', err => {
@@ -272,7 +275,8 @@ const restoreDatabase = async () => {
                 .pipe(dest);
         });
     } catch (err) {
-        console.error("[DriveService] Database restore failed:", err.message);
+        console.error("[DriveService] Database restore/sync failed:", err.message);
+        console.warn("[DriveService] Falling back to local database status.");
     }
 };
 

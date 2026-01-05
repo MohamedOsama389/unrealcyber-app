@@ -4,63 +4,56 @@
 
 @layer base {
   :root {
-    /* LIGHT MODE TOKENS (Clean, White, High Contrast) */
-    --bg-app: #f8fafc;
-    /* Slate 50 */
-    --bg-panel: rgba(255, 255, 255, 0.7);
-    --border-panel: rgba(203, 213, 225, 0.5);
-    /* Slate 300 */
-    --text-primary: #0f172a;
-    /* Slate 900 */
-    --text-secondary: #475569;
-    /* Slate 600 */
-    --accent-glow: rgba(6, 182, 212, 0.1);
+    /* DEFAULT (DARK) */
+    --bg: #0b1020;
+    --text: #e8eefc;
+    --card: rgba(18, 26, 45, 0.7);
+    --muted: #8aa0c8;
+    --border: rgba(255, 255, 255, 0.08);
+    --accent: #22d3ee;
+    --accent-glow: rgba(34, 211, 238, 0.1);
   }
 
-  .dark {
-    /* DARK MODE TOKENS (Deep, Cyber, Neon) */
-    --bg-app: #0f172a;
-    /* Slate 900 */
-    --bg-panel: rgba(15, 23, 42, 0.6);
-    --border-panel: rgba(51, 65, 85, 0.5);
-    /* Slate 700 */
-    --text-primary: #f8fafc;
-    /* Slate 50 */
-    --text-secondary: #94a3b8;
-    /* Slate 400 */
-    --accent-glow: rgba(34, 211, 238, 0.1);
+  :root[data-theme='light'] {
+    --bg: #f6f8fc;
+    --text: #0e1629;
+    --card: rgba(255, 255, 255, 0.7);
+    --muted: #5b6b88;
+    --border: rgba(0, 0, 0, 0.08);
+    --accent: #0891b2;
+    --accent-glow: rgba(8, 145, 178, 0.1);
   }
 
   body {
     @apply font-sans transition-colors duration-300;
-    background-color: var(--bg-app);
-    color: var(--text-primary);
+    background-color: var(--bg);
+    color: var(--text);
     background-attachment: fixed;
     background-image:
       radial-gradient(at 0% 0%, var(--accent-glow) 0px, transparent 50%),
-      radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.1) 0px, transparent 50%);
+      radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.05) 0px, transparent 50%);
   }
 }
 
 .glass-panel {
   @apply backdrop-blur-xl rounded-2xl shadow-lg transition-all duration-300;
-  background-color: var(--bg-panel);
-  border: 1px solid var(--border-panel);
+  background-color: var(--card);
+  border: 1px solid var(--border);
 }
 
 .input-field {
   @apply w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-all font-medium;
   background-color: rgba(0, 0, 0, 0.05);
-  border: 1px solid var(--border-panel);
-  color: var(--text-primary);
+  border: 1px solid var(--border);
+  color: var(--text);
 }
 
-.dark .input-field {
-  background-color: rgba(0, 0, 0, 0.3);
+[data-theme='dark'] .input-field {
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .input-field::placeholder {
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 /* Maintain existing buttons */

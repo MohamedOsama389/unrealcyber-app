@@ -30,18 +30,18 @@ const CropModal = ({ image, onCropComplete, onCancel }) => {
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl">
-                <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+            <div className="bg-panel border border-border rounded-3xl w-full max-w-xl overflow-hidden shadow-2xl">
+                <div className="p-6 border-b border-border flex justify-between items-center bg-panel/50">
                     <div>
-                        <h2 className="text-xl font-bold text-white">Crop Profile Picture</h2>
-                        <p className="text-xs text-slate-500">Drag and zoom to perfectly frame your avatar.</p>
+                        <h2 className="text-xl font-bold text-primary">Crop Profile Picture</h2>
+                        <p className="text-xs text-secondary">Drag and zoom to perfectly frame your avatar.</p>
                     </div>
-                    <button onClick={onCancel} className="p-2 hover:bg-slate-800 rounded-full text-slate-400 transition-colors">
+                    <button onClick={onCancel} className="p-2 hover:bg-white/10 dark:hover:bg-slate-800 rounded-full text-secondary transition-colors">
                         <X size={20} />
                     </button>
                 </div>
 
-                <div className="relative h-96 bg-slate-950">
+                <div className="relative h-96 bg-app">
                     <Cropper
                         image={image}
                         crop={crop}
@@ -57,7 +57,7 @@ const CropModal = ({ image, onCropComplete, onCancel }) => {
 
                 <div className="p-6 space-y-4">
                     <div className="space-y-2">
-                        <div className="flex justify-between text-xs font-bold text-slate-500 uppercase tracking-widest">
+                        <div className="flex justify-between text-xs font-bold text-secondary uppercase tracking-widest">
                             <span>Zoom</span>
                             <span>{Math.round(zoom * 100)}%</span>
                         </div>
@@ -69,14 +69,14 @@ const CropModal = ({ image, onCropComplete, onCancel }) => {
                             step={0.1}
                             aria-labelledby="Zoom"
                             onChange={(e) => setZoom(e.target.value)}
-                            className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+                            className="w-full h-2 bg-panel border border-border rounded-lg appearance-none cursor-pointer accent-cyan-500"
                         />
                     </div>
 
                     <div className="flex gap-3 pt-2">
                         <button
                             onClick={onCancel}
-                            className="flex-1 px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-all"
+                            className="flex-1 px-6 py-3 bg-panel border border-border hover:bg-white/10 dark:hover:bg-slate-700 text-primary rounded-xl font-bold transition-all"
                         >
                             Cancel
                         </button>

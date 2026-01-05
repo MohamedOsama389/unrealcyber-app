@@ -77,7 +77,7 @@ const VMRental = () => {
             <motion.h1
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="text-3xl font-bold mb-8 flex items-center space-x-3 text-white"
+                className="text-3xl font-bold mb-8 flex items-center space-x-3 text-primary"
             >
                 <Terminal className="text-cyan-400" />
                 <span>Virtual Machine Access</span>
@@ -86,9 +86,9 @@ const VMRental = () => {
             {user?.role === 'admin' && (
                 <div className="glass-panel p-6 mb-8 border-l-4 border-purple-500">
                     <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-lg font-bold text-white">{editingId ? 'Update Instance Configuration' : 'Deploy New Instance'}</h3>
+                        <h3 className="text-lg font-bold text-primary">{editingId ? 'Update Instance Configuration' : 'Deploy New Instance'}</h3>
                         {editingId && (
-                            <button onClick={() => { setEditingId(null); setNewVM({ name: '', ip: '', type: 'Linux', username: '', password: '' }); }} className="text-xs text-slate-400 hover:text-white">
+                            <button onClick={() => { setEditingId(null); setNewVM({ name: '', ip: '', type: 'Linux', username: '', password: '' }); }} className="text-xs text-secondary hover:text-primary">
                                 Cancel Edit
                             </button>
                         )}
@@ -130,8 +130,8 @@ const VMRental = () => {
                                     <Monitor className="text-white" size={20} />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-white text-lg">{vm.name}</h3>
-                                    <p className="text-xs text-slate-400 uppercase">{vm.type} Instance</p>
+                                    <h3 className="font-bold text-primary text-lg">{vm.name}</h3>
+                                    <p className="text-xs text-secondary uppercase">{vm.type} Instance</p>
                                 </div>
                             </div>
                             <div className={`px-2 py-1 rounded text-xs font-bold uppercase ${vm.status === 'online' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
@@ -140,43 +140,43 @@ const VMRental = () => {
                         </div>
 
                         <div className="space-y-3 font-mono text-sm mb-4">
-                            <div className="bg-slate-900/50 p-3 rounded-lg flex justify-between items-center group cursor-pointer" title="Click to copy">
-                                <span className="text-slate-500">IP:</span>
+                            <div className="bg-panel border border-border p-3 rounded-lg flex justify-between items-center group cursor-pointer" title="Click to copy">
+                                <span className="text-secondary">IP:</span>
                                 <span className="text-cyan-400">{vm.ip}</span>
                             </div>
-                            <div className="bg-slate-900/50 p-3 rounded-lg flex justify-between items-center">
-                                <span className="text-slate-500">User:</span>
+                            <div className="bg-panel border border-border p-3 rounded-lg flex justify-between items-center">
+                                <span className="text-secondary">User:</span>
                                 <span className="text-green-400">{vm.username}</span>
                             </div>
-                            <div className="bg-slate-900/50 p-3 rounded-lg flex justify-between items-center">
-                                <span className="text-slate-500">Pass:</span>
+                            <div className="bg-panel border border-border p-3 rounded-lg flex justify-between items-center">
+                                <span className="text-secondary">Pass:</span>
                                 <span className="text-pink-400">{vm.password}</span>
                             </div>
                         </div>
 
                         {user?.role === 'admin' && (
-                            <div className="flex justify-end items-center space-x-2 mt-4 pt-4 border-t border-slate-700">
+                            <div className="flex justify-end items-center space-x-2 mt-4 pt-4 border-t border-border">
                                 <button
                                     onClick={() => startEdit(vm)}
-                                    className="p-2 hover:bg-slate-700 rounded text-cyan-400"
+                                    className="p-2 hover:bg-white/10 dark:hover:bg-slate-700 rounded text-cyan-400"
                                     title="Edit Config"
                                 >
                                     <Edit size={16} />
                                 </button>
                                 <button
                                     onClick={() => handleDelete(vm.id)}
-                                    className="p-2 hover:bg-slate-700 rounded text-red-400"
+                                    className="p-2 hover:bg-white/10 dark:hover:bg-slate-700 rounded text-red-400"
                                     title="Terminate Instance"
                                 >
                                     <Trash2 size={16} />
                                 </button>
-                                <div className="h-4 w-px bg-slate-700 mx-2" />
-                                <span className={`text-xs font-bold uppercase ${vm.status === 'online' ? 'text-green-400' : 'text-slate-500'}`}>
+                                <div className="h-4 w-px bg-border mx-2" />
+                                <span className={`text-xs font-bold uppercase ${vm.status === 'online' ? 'text-green-400' : 'text-secondary'}`}>
                                     {vm.status === 'online' ? 'Active' : 'Offline'}
                                 </span>
                                 <button
                                     onClick={() => toggleStatus(vm)}
-                                    className={`relative w-12 h-6 rounded-full p-1 transition-colors duration-300 ease-in-out ${vm.status === 'online' ? 'bg-green-500' : 'bg-slate-700'}`}
+                                    className={`relative w-12 h-6 rounded-full p-1 transition-colors duration-300 ease-in-out ${vm.status === 'online' ? 'bg-green-500' : 'bg-panel border border-border'}`}
                                     title={`Toggle ${vm.status === 'online' ? 'Offline' : 'Online'}`}
                                 >
                                     <div className={`w-4 h-4 rounded-full bg-white shadow-lg transform transition-transform duration-300 ${vm.status === 'online' ? 'translate-x-6' : 'translate-x-0'}`} />

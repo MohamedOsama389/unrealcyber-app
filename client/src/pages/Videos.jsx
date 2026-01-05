@@ -156,7 +156,7 @@ const Videos = () => {
                 <motion.h1
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="text-3xl font-bold flex items-center space-x-3"
+                    className="text-3xl font-bold flex items-center space-x-3 text-primary"
                 >
                     <Video className="text-cyan-400" />
                     <span>Recorded Sessions</span>
@@ -165,7 +165,7 @@ const Videos = () => {
                     {currentFolderId && (
                         <button
                             onClick={handleBack}
-                            className="flex items-center space-x-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm transition-colors"
+                            className="flex items-center space-x-2 px-4 py-2 bg-panel border border-border hover:bg-white/10 dark:hover:bg-slate-700 rounded-lg text-sm transition-colors text-primary"
                         >
                             <ChevronLeft size={16} />
                             <span>Back</span>
@@ -190,7 +190,7 @@ const Videos = () => {
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="bg-slate-900/50 border border-slate-800 p-6 mb-8 rounded-2xl overflow-hidden"
+                        className="bg-panel border border-border p-6 mb-8 rounded-2xl overflow-hidden"
                     >
                         <form onSubmit={handleCreateFolder} className="flex gap-4">
                             <input
@@ -209,8 +209,8 @@ const Videos = () => {
 
             {/* ADMIN ADD VIDEO (WITH UPLOAD) */}
             {user.role === 'admin' && (
-                <div className="bg-slate-900/50 border border-slate-800 p-6 mb-8 rounded-2xl border-l-4 border-l-cyan-500">
-                    <h3 className="text-lg font-bold text-white mb-4 flex items-center">
+                <div className="bg-panel border border-border p-6 mb-8 rounded-2xl border-l-4 border-l-cyan-500">
+                    <h3 className="text-lg font-bold text-primary mb-4 flex items-center">
                         <Plus className="mr-2" /> Add Session
                     </h3>
                     <form onSubmit={handleAddVideo} className="flex flex-col gap-4">
@@ -239,8 +239,8 @@ const Videos = () => {
                         </div>
 
                         {/* Resource Addition */}
-                        <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
-                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Attached Resources</h4>
+                        <div className="bg-panel border border-border p-4 rounded-xl">
+                            <h4 className="text-xs font-bold text-secondary uppercase tracking-widest mb-3">Attached Resources</h4>
                             <div className="flex gap-2 mb-2">
                                 <input
                                     type="text"
@@ -260,7 +260,7 @@ const Videos = () => {
                             </div>
                             <div className="flex flex-wrap gap-2">
                                 {resources.map((res, idx) => (
-                                    <div key={idx} className="flex items-center bg-slate-700 px-3 py-1 rounded-full text-xs text-white">
+                                    <div key={idx} className="flex items-center bg-panel border border-border px-3 py-1 rounded-full text-xs text-primary">
                                         <span className="font-bold mr-2 text-cyan-400">{res.title}</span>
                                         <span className="opacity-50 truncate max-w-[100px]">{res.url}</span>
                                         <button onClick={(e) => { e.preventDefault(); removeResource(idx); }} className="ml-2 text-red-400 hover:text-white"><Trash2 size={12} /></button>
@@ -270,7 +270,7 @@ const Videos = () => {
                         </div>
 
                         <div className="flex items-center justify-between">
-                            <label className="flex items-center space-x-2 cursor-pointer text-slate-400 hover:text-white transition-colors">
+                            <label className="flex items-center space-x-2 cursor-pointer text-secondary hover:text-primary transition-colors">
                                 <input
                                     type="file"
                                     accept="video/*"
@@ -298,16 +298,16 @@ const Videos = () => {
                     {/* FOLDERS GRID */}
                     {folders.length > 0 && (
                         <div className="mb-10">
-                            <h2 className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-4">Categories</h2>
+                            <h2 className="text-secondary text-xs font-bold uppercase tracking-widest mb-4">Categories</h2>
                             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                                 {folders.map(folder => (
                                     <div key={folder.id} className="relative group min-h-[100px]">
                                         <div
                                             onClick={() => handleFolderClick(folder)}
-                                            className="w-full h-full flex flex-col items-center p-4 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-all cursor-pointer"
+                                            className="w-full h-full flex flex-col items-center p-4 bg-panel border border-border rounded-xl hover:bg-white/10 dark:hover:bg-slate-700 transition-all cursor-pointer"
                                         >
                                             <Folder size={40} className="text-cyan-500 mb-2 group-hover:scale-110 transition-transform" />
-                                            <span className="text-xs font-medium text-slate-300 text-center truncate w-full">{folder.name}</span>
+                                            <span className="text-xs font-medium text-secondary text-center truncate w-full">{folder.name}</span>
                                         </div>
                                         {user.role === 'admin' && (
                                             <button
@@ -316,7 +316,7 @@ const Videos = () => {
                                                     e.stopPropagation();
                                                     handleFolderFeature(folder.id);
                                                 }}
-                                                className={`absolute top-2 right-2 p-2.5 rounded-full border border-slate-700 shadow-2xl transition-all z-[999] cursor-pointer pointer-events-auto ${folder.is_featured ? 'bg-yellow-500 text-black border-yellow-600 scale-110' : 'bg-slate-800 text-slate-400 hover:text-yellow-500 hover:scale-125'}`}
+                                                className={`absolute top-2 right-2 p-2.5 rounded-full border shadow-2xl transition-all z-[999] cursor-pointer pointer-events-auto ${folder.is_featured ? 'bg-yellow-500 text-black border-yellow-600 scale-110' : 'bg-panel border-border text-secondary hover:text-yellow-500 hover:scale-125'}`}
                                                 title="Feature on Dashboard"
                                             >
                                                 <Star size={18} fill={folder.is_featured ? 'currentColor' : 'none'} />
@@ -330,8 +330,8 @@ const Videos = () => {
 
                     {/* VIDEOS GRID */}
                     {videos.length === 0 && folders.length === 0 ? (
-                        <div className="text-center py-20 bg-slate-900/30 rounded-2xl border border-dashed border-slate-800">
-                            <p className="text-slate-500 italic">No recordings found in this section</p>
+                        <div className="text-center py-20 bg-panel border-2 border-dashed border-border rounded-2xl">
+                            <p className="text-secondary italic">No recordings found in this section</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -352,20 +352,20 @@ const Videos = () => {
                                         ></iframe>
                                     </div>
                                     <div className="p-4">
-                                        <h3 className="font-bold text-white text-lg mb-2 truncate" title={vid.title}>{vid.title}</h3>
+                                        <h3 className="font-bold text-primary text-lg mb-2 truncate" title={vid.title}>{vid.title}</h3>
                                         <div className="flex space-x-2">
                                             <a
                                                 href={vid.drive_link}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="flex-1 text-center py-2 bg-slate-700 hover:bg-cyan-600 rounded-lg text-sm font-medium transition-colors"
+                                                className="flex-1 text-center py-2 bg-panel border border-border hover:bg-white/10 dark:hover:bg-slate-700 rounded-lg text-sm font-medium transition-colors text-primary"
                                             >
                                                 Open in Drive
                                             </a>
                                             {user.role === 'admin' && (
                                                 <button
                                                     onClick={() => handleDelete(vid.id)}
-                                                    className="px-3 bg-slate-800 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+                                                    className="px-3 bg-panel border border-border text-red-500 hover:bg-red-500/20 rounded-lg transition-colors"
                                                 >
                                                     <Trash2 size={16} />
                                                 </button>
@@ -374,7 +374,7 @@ const Videos = () => {
                                         {user.role === 'admin' && (
                                             <button
                                                 onClick={() => handleFeature(vid.id)}
-                                                className={`mt-2 w-full flex items-center justify-center py-2 rounded-lg text-sm font-bold transition-all ${vid.is_featured ? 'bg-yellow-500 text-black' : 'bg-slate-700 hover:bg-yellow-500/20 text-yellow-500'}`}
+                                                className={`mt-2 w-full flex items-center justify-center py-2 rounded-lg text-sm font-bold transition-all ${vid.is_featured ? 'bg-yellow-500 text-black border-yellow-600' : 'bg-panel border border-border hover:bg-yellow-500/20 text-yellow-500'}`}
                                             >
                                                 < Star size={16} className={`mr-2 ${vid.is_featured ? 'fill-black' : ''}`} />
                                                 {vid.is_featured ? 'Featured' : 'Feature on Dashboard'}
@@ -382,8 +382,8 @@ const Videos = () => {
                                         )}
 
                                         {vid.resources && vid.resources.length > 0 && (
-                                            <div className="mt-4 pt-3 border-t border-slate-700">
-                                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2 flex items-center">
+                                            <div className="mt-4 pt-3 border-t border-border">
+                                                <p className="text-[10px] text-secondary font-bold uppercase tracking-widest mb-2 flex items-center">
                                                     <Folder size={10} className="mr-1" /> Resources
                                                 </p>
                                                 <div className="flex flex-wrap gap-2">

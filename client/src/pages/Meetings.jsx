@@ -50,7 +50,7 @@ const Meetings = () => {
             <motion.h1
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="text-3xl font-bold mb-8 flex items-center space-x-3"
+                className="text-3xl font-bold mb-8 flex items-center space-x-3 text-primary"
             >
                 <Video className="text-cyan-400" />
                 <span>Live Sessions</span>
@@ -70,7 +70,7 @@ const Meetings = () => {
                         }`}>
                         {meeting.is_active ? <Wifi size={48} /> : <WifiOff size={48} />}
                     </div>
-                    <h2 className="text-2xl font-bold text-white mb-2">
+                    <h2 className="text-2xl font-bold text-primary mb-2">
                         {meeting.is_active ? 'MEETING IN PROGRESS' : 'NO ACTIVE SESSION'}
                     </h2>
 
@@ -90,12 +90,12 @@ const Meetings = () => {
             {/* ADMIN CONTROLS */}
             {user.role === 'admin' && (
                 <div className="glass-panel p-6">
-                    <h3 className="text-lg font-bold text-cyan-400 mb-4 border-b border-slate-700 pb-2">Admin Controls</h3>
+                    <h3 className="text-lg font-bold text-cyan-400 mb-4 border-b border-border pb-2">Admin Controls</h3>
                     <form onSubmit={handleUpdate} className="space-y-4">
                         <div>
-                            <label className="block text-sm text-slate-400 mb-2">Meeting Link (Google Meet/Zoom)</label>
+                            <label className="block text-sm text-secondary mb-2">Meeting Link (Google Meet/Zoom)</label>
                             <div className="relative">
-                                <LinkIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500" size={16} />
+                                <LinkIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary opacity-30" size={16} />
                                 <input
                                     type="text"
                                     value={meeting.link || ''}
@@ -112,9 +112,9 @@ const Meetings = () => {
                                 id="status"
                                 checked={meeting.is_active}
                                 onChange={(e) => setMeeting({ ...meeting, is_active: e.target.checked })}
-                                className="w-5 h-5 rounded border-slate-600 bg-slate-700 text-cyan-500 focus:ring-cyan-500"
+                                className="w-5 h-5 rounded border-border bg-panel text-cyan-500 focus:ring-cyan-500"
                             />
-                            <label htmlFor="status" className="text-white font-medium">Set Status to Active</label>
+                            <label htmlFor="status" className="text-primary font-medium">Set Status to Active</label>
                         </div>
 
                         <button type="submit" className="btn-primary flex items-center space-x-2">

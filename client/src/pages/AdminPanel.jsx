@@ -165,7 +165,7 @@ const AdminPanel = () => {
                     onClick={() => setActiveTab('users')}
                     className={clsx(
                         "flex items-center space-x-2 px-6 py-3 rounded-xl font-bold transition-all",
-                        activeTab === 'users' ? "bg-purple-600 text-white shadow-lg shadow-purple-500/30" : "bg-panel text-secondary hover:bg-white/10 dark:hover:bg-slate-700 hover:text-primary"
+                        activeTab === 'users' ? "bg-purple-600 text-white shadow-lg shadow-purple-500/30" : "bg-panel text-secondary hover:bg-white/10 dark:hover:bg-slate-800 hover:text-primary border border-border"
                     )}
                 >
                     <Users size={20} />
@@ -175,7 +175,7 @@ const AdminPanel = () => {
                     onClick={() => setActiveTab('submissions')}
                     className={clsx(
                         "flex items-center space-x-2 px-6 py-3 rounded-xl font-bold transition-all",
-                        activeTab === 'submissions' ? "bg-cyan-600 text-white shadow-lg shadow-cyan-500/30" : "bg-panel text-secondary hover:bg-white/10 dark:hover:bg-slate-700 hover:text-primary"
+                        activeTab === 'submissions' ? "bg-cyan-600 text-white shadow-lg shadow-cyan-500/30" : "bg-panel text-secondary hover:bg-white/10 dark:hover:bg-slate-800 hover:text-primary border border-border"
                     )}
                 >
                     <FileCheck size={20} />
@@ -185,7 +185,7 @@ const AdminPanel = () => {
                     onClick={() => setActiveTab('votes')}
                     className={clsx(
                         "flex items-center space-x-2 px-6 py-3 rounded-xl font-bold transition-all",
-                        activeTab === 'votes' ? "bg-yellow-600 text-white shadow-lg shadow-yellow-500/30" : "bg-panel text-secondary hover:bg-white/10 dark:hover:bg-slate-700 hover:text-primary"
+                        activeTab === 'votes' ? "bg-yellow-600 text-white shadow-lg shadow-yellow-500/30" : "bg-panel text-secondary hover:bg-white/10 dark:hover:bg-slate-800 hover:text-primary border border-border"
                     )}
                 >
                     <Star size={20} />
@@ -204,7 +204,7 @@ const AdminPanel = () => {
                             </h3>
                             <button
                                 onClick={() => setShowCreateForm(!showCreateForm)}
-                                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-bold transition-colors"
+                                className="px-4 py-2 bg-panel border border-border hover:bg-white/10 dark:hover:bg-slate-700 rounded-lg text-xs font-bold transition-colors text-primary"
                             >
                                 {showCreateForm ? 'Cancel' : 'Create New Recruit'}
                             </button>
@@ -243,7 +243,7 @@ const AdminPanel = () => {
                                         <select
                                             value={newUser.role}
                                             onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
-                                            className="input-field bg-slate-800 h-[48px] min-w-[160px]"
+                                            className="input-field bg-panel h-[48px] min-w-[160px]"
                                         >
                                             <option value="student">Recruit (Student)</option>
                                             <option value="admin">Admin</option>
@@ -256,7 +256,7 @@ const AdminPanel = () => {
                             )}
                         </AnimatePresence>
 
-                        <div className="overflow-hidden rounded-xl border border-slate-800">
+                        <div className="overflow-hidden rounded-xl border border-border">
                             <table className="w-full text-left">
                                 <thead className="bg-panel border-b border-border text-secondary uppercase text-xs">
                                     <tr>
@@ -273,10 +273,10 @@ const AdminPanel = () => {
                                             <td className="p-4 font-mono text-secondary">#{u.id}</td>
                                             <td className="p-4">
                                                 <div className="flex items-center space-x-3">
-                                                    <div className="w-8 h-8 rounded-full bg-slate-800 overflow-hidden border border-slate-700 shrink-0">
+                                                    <div className="w-8 h-8 rounded-full bg-panel overflow-hidden border border-border shrink-0">
                                                         {u.avatar_id ? (
                                                             <img
-                                                                src={`https://lh3.googleusercontent.com/u/0/d/${u.avatar_id}=w50-h50-p-k-no`}
+                                                                src={`https://drive.google.com/uc?id=${u.avatar_id}&v=${u.avatar_version || 0}`}
                                                                 className="w-full h-full object-cover"
                                                                 alt=""
                                                                 onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${u.username}&background=22d3ee&color=fff`; }}
@@ -295,27 +295,27 @@ const AdminPanel = () => {
                                                     {u.role.toUpperCase()}
                                                 </span>
                                             </td>
-                                            <td className="p-4 text-slate-400 text-sm">
+                                            <td className="p-4 text-secondary text-sm">
                                                 {new Date(u.created_at).toLocaleDateString()}
                                             </td>
                                             <td className="p-4 text-right flex items-center justify-end space-x-2">
                                                 <button
                                                     onClick={() => toggleRole(u.id, u.role)}
-                                                    className="text-xs font-bold px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded text-white transition-colors"
+                                                    className="text-xs font-bold px-3 py-1 bg-panel border border-border hover:bg-white/10 dark:hover:bg-slate-700 rounded text-primary transition-colors"
                                                     disabled={u.username === 'Lloyed'} // Protect main admin
                                                 >
                                                     {u.role === 'admin' ? 'Demote' : 'Promote'}
                                                 </button>
                                                 <button
                                                     onClick={() => handleResetPassword(u.id, u.username)}
-                                                    className="p-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-400 rounded-lg transition-colors"
+                                                    className="p-1.5 bg-panel border border-border hover:bg-panel/50 text-cyan-400 rounded-lg transition-colors"
                                                     title="Change Password"
                                                 >
                                                     <Key size={14} />
                                                 </button>
                                                 <button
                                                     onClick={() => handleDeleteUser(u.id, u.username)}
-                                                    className="p-1.5 bg-slate-800 hover:bg-red-500/20 text-red-500 rounded-lg transition-colors"
+                                                    className="p-1.5 bg-panel border border-border hover:bg-red-500/20 text-red-500 rounded-lg transition-colors"
                                                     title="Delete User"
                                                     disabled={u.username === 'Lloyed'}
                                                 >
@@ -326,8 +326,8 @@ const AdminPanel = () => {
                                     ))}
                                 </tbody>
                             </table>
-                            <div className="p-4 bg-slate-900/30 border-t border-slate-700">
-                                <p className="text-[10px] text-slate-500 flex items-center">
+                            <div className="p-4 bg-panel border-t border-border">
+                                <p className="text-[10px] text-secondary flex items-center">
                                     <Shield size={10} className="mr-1" /> Passwords are cryptographically hashed and cannot be retrieved. Use the key icon to set a new password.
                                 </p>
                             </div>
@@ -369,7 +369,7 @@ const AdminPanel = () => {
                                     </div>
                                 </div>
                                 <div className="text-right flex flex-col items-end">
-                                    <span className="text-xs text-slate-500 mb-1">{new Date(sub.uploaded_at).toLocaleString()}</span>
+                                    <span className="text-xs text-secondary mb-1">{new Date(sub.uploaded_at).toLocaleString()}</span>
                                     <button
                                         onClick={() => handleDeleteTask(sub.id)}
                                         className="text-xs bg-red-500/10 text-red-400 border border-red-500/30 px-2 py-1 rounded hover:bg-red-500/20 transition-colors"
@@ -385,10 +385,10 @@ const AdminPanel = () => {
                             </div>
 
                             {grading.id === sub.id ? (
-                                <form onSubmit={submitGrade} className="bg-slate-800 p-4 rounded-lg animate-in fade-in">
+                                <form onSubmit={submitGrade} className="bg-panel border border-border p-4 rounded-lg animate-in fade-in">
                                     <div className="flex space-x-4 mb-3">
                                         <div className="flex-1">
-                                            <label className="text-xs text-slate-400 block mb-1">Rating (1-5 Stars)</label>
+                                            <label className="text-xs text-secondary block mb-1">Rating (1-5 Stars)</label>
                                             <StarRating
                                                 rating={grading.rating}
                                                 setRating={(r) => setGrading({ ...grading, rating: r })}
@@ -396,7 +396,7 @@ const AdminPanel = () => {
                                         </div>
                                     </div>
                                     <div className="mb-3">
-                                        <label className="text-xs text-slate-400 block mb-1">Feedback</label>
+                                        <label className="text-xs text-secondary block mb-1">Feedback</label>
                                         <input
                                             type="text"
                                             value={grading.admin_notes}
@@ -406,18 +406,18 @@ const AdminPanel = () => {
                                         />
                                     </div>
                                     <div className="flex justify-end space-x-2">
-                                        <button type="button" onClick={() => setGrading({ id: null, rating: 0, admin_notes: '' })} className="px-3 py-1 text-sm bg-slate-700 rounded text-slate-300">Cancel</button>
+                                        <button type="button" onClick={() => setGrading({ id: null, rating: 0, admin_notes: '' })} className="px-3 py-1 text-sm bg-panel border border-border rounded text-secondary">Cancel</button>
                                         <button type="submit" className="px-3 py-1 text-sm bg-green-600 rounded text-white">Save Evaluation</button>
                                     </div>
                                 </form>
                             ) : (
-                                <div className="flex justify-between items-center border-t border-slate-700 pt-4">
+                                <div className="flex justify-between items-center border-t border-border pt-4">
                                     <div>
                                         {sub.rating ? (
                                             <div className="flex items-center space-x-2 text-green-400 text-sm font-bold">
                                                 <Award size={16} />
                                                 <StarRating rating={sub.rating} readonly />
-                                                <span className="text-slate-500 font-normal ml-2">"{sub.admin_notes}"</span>
+                                                <span className="text-secondary font-normal ml-2">"{sub.admin_notes}"</span>
                                             </div>
                                         ) : (
                                             <span className="text-yellow-500 text-sm italic">Pending Review</span>
@@ -522,7 +522,7 @@ const AdminPanel = () => {
                                                 setNewVote({ title: v.title, options: [...v.options] });
                                                 window.scrollTo({ top: 0, behavior: 'smooth' });
                                             }}
-                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-cyan-500/20 text-cyan-400 rounded-lg border border-slate-700 transition-all text-xs font-bold"
+                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-panel border border-border hover:bg-cyan-500/20 text-cyan-400 rounded-lg transition-all text-xs font-bold"
                                             title="Edit Poll"
                                         >
                                             <Edit size={14} />
@@ -533,7 +533,7 @@ const AdminPanel = () => {
                                                 e.stopPropagation();
                                                 toggleVoteStatus(v.id);
                                             }}
-                                            className={`px-3 h-[32px] rounded-lg text-[10px] font-bold border transition-all ${v.is_active ? 'bg-green-500/10 text-green-400 border-green-500/30' : 'bg-slate-800 text-slate-500 border-slate-700'}`}
+                                            className={`px-3 h-[32px] rounded-lg text-[10px] font-bold border transition-all ${v.is_active ? 'bg-green-500/10 text-green-400 border-green-500/30' : 'bg-panel text-secondary border-border'}`}
                                         >
                                             {v.is_active ? 'ACTIVE' : 'INACTIVE'}
                                         </button>
@@ -542,7 +542,7 @@ const AdminPanel = () => {
                                                 e.stopPropagation();
                                                 handleDeleteVote(v.id);
                                             }}
-                                            className="p-2 bg-slate-800 hover:bg-red-500/20 text-red-400 rounded-lg border border-slate-700 transition-all"
+                                            className="p-2 bg-panel hover:bg-red-500/20 text-red-400 rounded-lg border border-border transition-all"
                                             title="Delete Poll"
                                         >
                                             <Trash2 size={14} />
@@ -551,7 +551,7 @@ const AdminPanel = () => {
                                 </div>
                                 <div className="space-y-2">
                                     {Array.isArray(v.options) && v.options.map((opt, idx) => (
-                                        <div key={idx} className="text-sm text-secondary flex justify-between p-2 bg-app/50 dark:bg-slate-900/50 rounded">
+                                        <div key={idx} className="text-sm text-secondary flex justify-between p-2 bg-panel rounded border border-border">
                                             <span>{opt}</span>
                                             <span className="font-mono text-cyan-500 font-bold">{v.results ? v.results[idx] : 0} votes</span>
                                         </div>
@@ -559,7 +559,7 @@ const AdminPanel = () => {
                                 </div>
                             </div>
                         ))}
-                        {votes.length === 0 && <p className="text-slate-500 text-center py-10 col-span-full">No polls created yet.</p>}
+                        {votes.length === 0 && <p className="text-secondary text-center py-10 col-span-full">No polls created yet.</p>}
                     </div >
                 </div >
             )}

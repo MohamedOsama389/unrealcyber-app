@@ -13,11 +13,7 @@ export const ThemeProvider = ({ children }) => {
 
     useEffect(() => {
         const root = window.document.documentElement;
-        if (theme === 'dark') {
-            root.classList.add('dark');
-        } else {
-            root.classList.remove('dark');
-        }
+        root.setAttribute('data-theme', theme);
         localStorage.setItem('theme', theme);
     }, [theme]);
 

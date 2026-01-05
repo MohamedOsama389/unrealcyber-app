@@ -144,7 +144,7 @@ const Files = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="flex items-center justify-between mb-8"
             >
-                <h1 className="text-3xl font-bold flex items-center space-x-3">
+                <h1 className="text-3xl font-bold flex items-center space-x-3 text-primary">
                     <FileText className="text-purple-400" />
                     <span>Academy Files</span>
                 </h1>
@@ -152,7 +152,7 @@ const Files = () => {
                     {currentFolderId && (
                         <button
                             onClick={handleBack}
-                            className="flex items-center space-x-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm transition-colors"
+                            className="flex items-center space-x-2 px-4 py-2 bg-panel border border-border hover:bg-white/10 dark:hover:bg-slate-700 rounded-lg text-sm transition-colors text-primary"
                         >
                             <ChevronLeft size={16} />
                             <span>Back</span>
@@ -177,7 +177,7 @@ const Files = () => {
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="bg-slate-900/50 border border-slate-800 p-6 mb-8 rounded-2xl overflow-hidden"
+                        className="bg-panel border border-border p-6 mb-8 rounded-2xl overflow-hidden"
                     >
                         <form onSubmit={handleCreateFolder} className="flex gap-4">
                             <input
@@ -196,8 +196,8 @@ const Files = () => {
 
             {/* ADMIN ADD FILE (WITH UPLOAD) */}
             {user.role === 'admin' && (
-                <div className="bg-slate-900/50 border border-slate-800 p-6 mb-8 rounded-2xl border-l-4 border-l-purple-500">
-                    <h3 className="text-lg font-bold text-white mb-4 flex items-center">
+                <div className="bg-panel border border-border p-6 mb-8 rounded-2xl border-l-4 border-l-purple-500">
+                    <h3 className="text-lg font-bold text-primary mb-4 flex items-center">
                         <Plus className="mr-2" /> Add Document
                     </h3>
                     <form onSubmit={handleAddFile} className="flex flex-col gap-4">
@@ -219,13 +219,13 @@ const Files = () => {
                                     className="input-field flex-1"
                                 />
                             ) : (
-                                <div className="flex-1 bg-slate-800 py-2 px-4 rounded-xl flex items-center text-purple-400 font-mono text-sm">
+                                <div className="flex-1 bg-panel border border-border py-2 px-4 rounded-xl flex items-center text-purple-400 font-mono text-sm">
                                     <Eye size={14} className="mr-2" /> {uploadFile.name}
                                 </div>
                             )}
                         </div>
                         <div className="flex items-center justify-between">
-                            <label className="flex items-center space-x-2 cursor-pointer text-slate-400 hover:text-white transition-colors">
+                            <label className="flex items-center space-x-2 cursor-pointer text-secondary hover:text-primary transition-colors">
                                 <input
                                     type="file"
                                     accept="application/pdf"
@@ -254,16 +254,16 @@ const Files = () => {
                     {/* FOLDERS GRID */}
                     {folders.length > 0 && (
                         <div className="mb-10">
-                            <h2 className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-4">Folders</h2>
+                            <h2 className="text-secondary text-xs font-bold uppercase tracking-widest mb-4">Folders</h2>
                             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                                 {folders.map(folder => (
                                     <div key={folder.id} className="relative group min-h-[100px]">
                                         <div
                                             onClick={() => handleFolderClick(folder)}
-                                            className="w-full h-full flex flex-col items-center p-4 bg-slate-900/50 border border-slate-800 rounded-xl hover:bg-slate-800 hover:border-slate-700 transition-all cursor-pointer"
+                                            className="w-full h-full flex flex-col items-center p-4 bg-panel border border-border rounded-xl hover:bg-white/10 dark:hover:bg-slate-700 transition-all cursor-pointer"
                                         >
                                             <Folder size={40} className="text-purple-400 mb-2 group-hover:scale-110 transition-transform" />
-                                            <span className="text-xs font-medium text-slate-300 text-center truncate w-full">{folder.name}</span>
+                                            <span className="text-xs font-medium text-secondary text-center truncate w-full">{folder.name}</span>
                                         </div>
                                         {user.role === 'admin' && (
                                             <button
@@ -272,7 +272,7 @@ const Files = () => {
                                                     e.stopPropagation();
                                                     handleFolderFeature(folder.id);
                                                 }}
-                                                className={`absolute top-2 right-2 p-2.5 rounded-full border border-slate-700 shadow-2xl transition-all z-[999] cursor-pointer pointer-events-auto ${folder.is_featured ? 'bg-yellow-500 text-black border-yellow-600 scale-110' : 'bg-slate-800 text-slate-400 hover:text-yellow-500 hover:scale-125'}`}
+                                                className={`absolute top-2 right-2 p-2.5 rounded-full border shadow-2xl transition-all z-[999] cursor-pointer pointer-events-auto ${folder.is_featured ? 'bg-yellow-500 text-black border-yellow-600 scale-110' : 'bg-panel border-border text-secondary hover:text-yellow-500 hover:scale-125'}`}
                                                 title="Feature on Dashboard"
                                             >
                                                 <Star size={18} fill={folder.is_featured ? 'currentColor' : 'none'} />
@@ -285,10 +285,10 @@ const Files = () => {
                     )}
 
                     {/* FILES GRID */}
-                    <h2 className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-4">Documents</h2>
+                    <h2 className="text-secondary text-xs font-bold uppercase tracking-widest mb-4">Documents</h2>
                     {files.length === 0 && folders.length === 0 ? (
-                        <div className="text-center py-20 bg-slate-900/30 rounded-2xl border border-dashed border-slate-800">
-                            <p className="text-slate-500">This folder is empty</p>
+                        <div className="text-center py-20 bg-panel border-2 border-dashed border-border rounded-2xl">
+                            <p className="text-secondary">This folder is empty</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -299,7 +299,7 @@ const Files = () => {
                                     layout
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
-                                    className={`bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden group hover:border-purple-500/30 transition-all shadow-lg ${searchParams.get('highlightId') === String(file.id) ? 'border-purple-500 border-2 shadow-purple-500/20' : ''}`}
+                                    className={`bg-panel border border-border rounded-2xl overflow-hidden group hover:border-purple-500/30 transition-all shadow-lg ${searchParams.get('highlightId') === String(file.id) ? 'border-purple-500 border-2 shadow-purple-500/20' : ''}`}
                                 >
                                     <div className="p-6">
                                         <div className="flex items-start justify-between mb-4">
@@ -310,14 +310,14 @@ const Files = () => {
                                                 <div className="flex space-x-2">
                                                     <button
                                                         onClick={() => handleFeature(file.id)}
-                                                        className={`p-2 rounded-lg transition-colors ${file.is_featured ? 'bg-yellow-500 text-black' : 'bg-slate-800 text-yellow-500 hover:bg-yellow-500/20'}`}
+                                                        className={`p-2 rounded-lg transition-colors border border-border ${file.is_featured ? 'bg-yellow-500 text-black border-yellow-600' : 'bg-panel text-secondary hover:bg-yellow-500/20'}`}
                                                         title="Feature on Dashboard"
                                                     >
                                                         <Star size={16} fill={file.is_featured ? 'currentColor' : 'none'} />
                                                     </button>
                                                     <button
                                                         onClick={() => handleDelete(file.id)}
-                                                        className="p-2 bg-slate-800 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
+                                                        className="p-2 bg-panel border border-red-500/30 text-red-500 hover:bg-red-500/20 rounded-lg transition-colors"
                                                         title="Delete Record"
                                                     >
                                                         <Trash2 size={16} />
@@ -325,8 +325,8 @@ const Files = () => {
                                                 </div>
                                             )}
                                         </div>
-                                        <h3 className="font-bold text-white mb-1 truncate" title={file.title}>{file.title}</h3>
-                                        <p className="text-xs text-slate-500 mb-6 flex items-center">
+                                        <h3 className="font-bold text-primary mb-1 truncate" title={file.title}>{file.title}</h3>
+                                        <p className="text-xs text-secondary mb-6 flex items-center">
                                             PDF Document • {new Date(file.created_at).toLocaleDateString()}
                                         </p>
                                         <div className="flex space-x-3">
@@ -334,7 +334,7 @@ const Files = () => {
                                                 href={file.drive_link}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="flex-1 flex items-center justify-center space-x-2 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-sm font-bold transition-all"
+                                                className="flex-1 flex items-center justify-center space-x-2 py-2.5 bg-panel border border-border hover:bg-white/10 dark:hover:bg-slate-700 text-primary rounded-xl text-sm font-bold transition-all"
                                             >
                                                 <Eye size={16} />
                                                 <span>View</span>

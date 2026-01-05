@@ -13,7 +13,7 @@ const StarRating = ({ rating, setRating, readonly = false }) => {
                 >
                     <Star
                         size={20}
-                        className={`${star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-slate-600'}`}
+                        className={`${star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-secondary opacity-30'}`}
                     />
                 </button>
             ))}

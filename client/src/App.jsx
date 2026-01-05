@@ -21,7 +21,7 @@ function AppContent() {
   const isAuthPage = ['/login', '/signup'].includes(window.location.pathname);
 
   return (
-    <div className="flex min-h-screen bg-slate-950 text-white font-sans selection:bg-cyan-500/30">
+    <div className="flex min-h-screen bg-app text-primary font-sans selection:bg-cyan-500/30">
       {!isAuthPage && <Navbar />}
       <div className={clsx(
         "flex-1 pt-16 md:pt-0 transition-all duration-300",

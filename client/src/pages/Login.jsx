@@ -21,7 +21,7 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-900 relative overflow-hidden">
+        <div className="min-h-screen flex items-center justify-center bg-app relative overflow-hidden">
             {/* Background decorations */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
                 <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-cyan-500/10 rounded-full blur-[100px]" />
@@ -32,7 +32,7 @@ const Login = () => {
                 <h2 className="text-3xl font-bold text-center mb-2 bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
                     Unreal Cyber Academy
                 </h2>
-                <p className="text-center text-slate-400 mb-8">Welcome to login page</p>
+                <p className="text-center text-secondary mb-8">Welcome to login page</p>
 
                 {error && (
                     <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-200 text-sm text-center">
@@ -42,9 +42,9 @@ const Login = () => {
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-2">Username</label>
+                        <label className="block text-sm font-medium text-secondary mb-2">Username</label>
                         <div className="relative">
-                            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 z-10" size={18} />
+                            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary opacity-30 z-10" size={18} />
                             <input
                                 type="text"
                                 value={username}
@@ -57,9 +57,9 @@ const Login = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-400 mb-2">Password</label>
+                        <label className="block text-sm font-medium text-secondary mb-2">Password</label>
                         <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 z-10" size={18} />
+                            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-secondary opacity-30 z-10" size={18} />
                             <input
                                 type="password"
                                 value={password}
@@ -76,7 +76,7 @@ const Login = () => {
                     </button>
                 </form>
 
-                <div className="mt-6 text-center text-sm text-slate-500">
+                <div className="mt-6 text-center text-sm text-secondary">
                     Don't have an account? <Link to="/signup" className="text-cyan-400 hover:text-cyan-300">Sign Up</Link>
                 </div>
             </div>

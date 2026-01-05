@@ -54,8 +54,8 @@ const Chat = () => {
     return (
         <div className="h-[calc(100vh-64px)] p-6 max-w-5xl mx-auto flex flex-col">
             <div className="glass-panel flex-1 flex flex-col overflow-hidden">
-                <div className="p-4 border-b border-slate-700 bg-slate-900/50 flex items-center justify-between">
-                    <h2 className="flex items-center text-xl font-bold text-white">
+                <div className="p-4 border-b border-border bg-panel flex items-center justify-between">
+                    <h2 className="flex items-center text-xl font-bold text-primary">
                         <MessageSquare className="mr-2 text-cyan-400" />
                         Academy Public Comms
                     </h2>
@@ -77,7 +77,7 @@ const Chat = () => {
                                     <div className="w-6 h-6 rounded-full bg-slate-800 overflow-hidden border border-slate-700 shrink-0">
                                         {msg.avatar_id ? (
                                             <img
-                                                src={`https://lh3.googleusercontent.com/u/0/d/${msg.avatar_id}=w50-h50-p-k-no?v=${msg.avatar_version || 0}`}
+                                                src={`https://drive.google.com/uc?id=${msg.avatar_id}&v=${msg.avatar_version || 0}`}
                                                 className="w-full h-full object-cover"
                                                 alt=""
                                                 onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${msg.username}&background=22d3ee&color=fff`; }}
@@ -98,7 +98,7 @@ const Chat = () => {
                                 <div
                                     className={`max-w-[80%] px-4 py-2 rounded-2xl text-sm ${isMe
                                         ? 'bg-cyan-600 text-white rounded-br-none'
-                                        : 'bg-slate-700 text-slate-200 rounded-bl-none'
+                                        : 'bg-panel border border-border text-primary rounded-bl-none'
                                         }`}
                                 >
                                     {msg.content}
@@ -108,7 +108,7 @@ const Chat = () => {
                     })}
                 </div>
 
-                <form onSubmit={sendMessage} className="p-4 bg-slate-900/50 border-t border-slate-700 flex gap-2">
+                <form onSubmit={sendMessage} className="p-4 bg-panel border-t border-border flex gap-2">
                     <input
                         type="text"
                         value={input}

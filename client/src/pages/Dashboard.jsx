@@ -190,18 +190,18 @@ const Dashboard = () => {
                         <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 p-1 shadow-2xl">
                             {profile?.avatar_id ? (
                                 <img
-                                    src={`https://lh3.googleusercontent.com/u/0/d/${profile.avatar_id}=w200-h200-p-k-no`}
-                                    className="w-full h-full rounded-full object-cover border-4 border-slate-950"
+                                    src={`https://drive.google.com/uc?id=${profile.avatar_id}&v=${profile.avatar_version || 0}`}
+                                    className="w-full h-full rounded-full object-cover border-4 border-app"
                                     alt="Avatar"
                                     onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${user.username}&background=22d3ee&color=fff`; }}
                                 />
                             ) : (
-                                <div className="w-full h-full rounded-full flex items-center justify-center bg-slate-800 text-3xl font-bold border-4 border-slate-950">
+                                <div className="w-full h-full rounded-full flex items-center justify-center bg-panel text-3xl font-bold border-4 border-app text-primary">
                                     {user.username[0].toUpperCase()}
                                 </div>
                             )}
                         </div>
-                        <label className="absolute bottom-0 right-0 p-2 bg-cyan-500 rounded-full cursor-pointer hover:scale-110 transition-all shadow-lg border-2 border-slate-950 group-hover:bg-cyan-400">
+                        <label className="absolute bottom-0 right-0 p-2 bg-cyan-500 rounded-full cursor-pointer hover:scale-110 transition-all shadow-lg border-2 border-app group-hover:bg-cyan-400">
                             <input type="file" className="hidden" onChange={handleAvatarUpload} accept="image/*" disabled={uploadingAvatar} />
                             <Award size={14} className="text-white" />
                         </label>
@@ -222,13 +222,13 @@ const Dashboard = () => {
                         <div className="text-orange-500 font-bold text-2xl flex items-center gap-2">
                             🔥 {profile?.streak_count || 0}
                         </div>
-                        <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Day Streak</div>
+                        <div className="text-[10px] text-secondary uppercase tracking-widest font-bold">Day Streak</div>
                     </div>
                     <div className="glass-panel px-6 py-4 flex flex-col items-center">
                         <div className="text-green-500 font-bold text-2xl">
                             {stats.tasksCompleted}/{stats.tasksTotal}
                         </div>
-                        <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Goals Met</div>
+                        <div className="text-[10px] text-secondary uppercase tracking-widest font-bold">Goals Met</div>
                     </div>
                 </div>
             </motion.div>
@@ -244,7 +244,7 @@ const Dashboard = () => {
                         <Play size={12} className="mr-1 fill-white" /> FEATURED SESSION
                     </div>
                     <div className="flex flex-col md:flex-row">
-                        <div className="w-full md:w-2/3 aspect-video bg-slate-900">
+                        <div className="w-full md:w-2/3 aspect-video bg-black/20">
                             <iframe
                                 src={getVideoEmbedUrl(featuredVideo.drive_link)}
                                 className="w-full h-full"
@@ -296,7 +296,7 @@ const Dashboard = () => {
                                             "w-full p-4 rounded-xl border flex justify-between items-center transition-all",
                                             myVotes[vote.id] === idx
                                                 ? "bg-cyan-500/20 border-cyan-500 text-cyan-400 shadow-lg shadow-cyan-500/10"
-                                                : "bg-panel border-border text-secondary hover:bg-slate-800/50 hover:text-primary"
+                                                : "bg-panel border-border text-secondary hover:bg-white/10 dark:hover:bg-slate-800/50 hover:text-primary"
                                         )}
                                     >
                                         <span className="font-bold">{opt}</span>
@@ -340,7 +340,7 @@ const Dashboard = () => {
                             href={featuredFile.drive_link}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex-1 md:flex-none flex items-center justify-center space-x-2 px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-all border border-slate-700"
+                            className="flex-1 md:flex-none flex items-center justify-center space-x-2 px-6 py-3 bg-panel border border-border hover:bg-white/10 dark:hover:bg-slate-700 text-primary rounded-xl font-bold transition-all"
                         >
                             <Eye size={18} />
                             <span>Open Drive</span>
@@ -359,7 +359,7 @@ const Dashboard = () => {
                             <a
                                 key={folder.id}
                                 href={folder.parent_id === '14nYLGu1H9eqQNCHxk2JXot2G42WY2xN_' ? `/files?folderId=${folder.id}` : `/videos?folderId=${folder.id}`}
-                                className="flex flex-col items-center p-4 bg-panel border-border rounded-xl hover:bg-white/10 dark:hover:bg-slate-800 transition-all group border-l-2 border-l-yellow-500 shadow-md"
+                                className="flex flex-col items-center p-4 bg-panel border-border rounded-xl hover:bg-white/10 dark:hover:bg-slate-800 transition-all group border-l-2 border-l-yellow-500 shadow-sm"
                             >
                                 <Folder size={32} className="text-yellow-500 mb-2 group-hover:scale-110 transition-transform" />
                                 <span className="text-xs font-medium text-secondary text-center truncate w-full">{folder.name || 'Quick Access'}</span>
@@ -375,20 +375,20 @@ const Dashboard = () => {
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.1 }}
-                    className="glass-panel p-6 hover:bg-slate-800/50 transition-colors cursor-default relative overflow-hidden"
+                    className="glass-panel p-6 hover:bg-white/5 dark:hover:bg-slate-800/50 transition-colors cursor-default relative overflow-hidden"
                 >
                     <div className="flex justify-between items-start mb-4">
                         <div>
                             <h3 className="text-xl font-semibold mb-1 text-cyan-400">System Status</h3>
-                            <p className="text-slate-400 text-sm uppercase tracking-wider">Connection</p>
+                            <p className="text-secondary text-sm uppercase tracking-wider">Connection</p>
                         </div>
                         <Activity className="text-cyan-500" size={24} />
                     </div>
                     <div className="flex items-center space-x-2">
                         <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-                        <span className="text-white font-mono">ONLINE</span>
+                        <span className="text-primary font-mono">ONLINE</span>
                     </div>
-                    <p className="text-slate-500 text-xs mt-2">Role: {user.role.toUpperCase()}</p>
+                    <p className="text-secondary text-xs mt-2">Role: {user.role.toUpperCase()}</p>
                 </motion.div>
 
                 {/* MEETING STATUS CARD */}
@@ -396,21 +396,21 @@ const Dashboard = () => {
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.2 }}
-                    className={`glass-panel p-6 transition-colors border-l-4 ${stats.meetingActive ? 'border-l-green-500 bg-green-500/10' : 'border-l-slate-700'}`}
+                    className={`glass-panel p-6 transition-colors border-l-4 ${stats.meetingActive ? 'border-l-green-500 bg-green-500/10' : 'border-l-border bg-panel'}`}
                 >
                     <div className="flex justify-between items-start mb-4">
                         <div>
-                            <h3 className={`text-xl font-semibold mb-1 ${stats.meetingActive ? 'text-green-400' : 'text-slate-400'}`}>Session Status</h3>
-                            <p className="text-slate-400 text-sm uppercase tracking-wider">Live Meetings</p>
+                            <h3 className={`text-xl font-semibold mb-1 ${stats.meetingActive ? 'text-green-400' : 'text-secondary'}`}>Session Status</h3>
+                            <p className="text-secondary text-sm uppercase tracking-wider">Live Meetings</p>
                         </div>
-                        <Calendar className={stats.meetingActive ? 'text-green-500' : 'text-slate-600'} size={24} />
+                        <Calendar className={stats.meetingActive ? 'text-green-500' : 'text-secondary'} size={24} />
                     </div>
                     {stats.meetingActive ? (
                         <div className="inline-block px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm font-bold animate-pulse">
                             SESSION ACTIVE
                         </div>
                     ) : (
-                        <div className="text-slate-500 text-sm">No active sessions. Standby.</div>
+                        <div className="text-secondary text-sm">No active sessions. Standby.</div>
                     )}
                 </motion.div>
 
@@ -419,21 +419,21 @@ const Dashboard = () => {
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.25 }}
-                    className="glass-panel p-6 hover:bg-slate-800/50 transition-colors"
+                    className="glass-panel p-6 hover:bg-white/5 dark:hover:bg-slate-800/50 transition-colors"
                 >
                     <div className="flex justify-between items-start mb-4">
                         <div>
                             <h3 className="text-xl font-semibold mb-1 text-purple-400">VM Infrastructure</h3>
-                            <p className="text-slate-400 text-sm uppercase tracking-wider">Lab Status</p>
+                            <p className="text-secondary text-sm uppercase tracking-wider">Lab Status</p>
                         </div>
                         <Server className="text-purple-500" size={24} />
                     </div>
                     <div className="flex items-end justify-between">
                         <div>
-                            <div className="text-3xl font-bold text-white">{stats.vmOnlineCount} <span className="text-sm text-slate-500 font-normal">/ {stats.vmTotalCount}</span></div>
+                            <div className="text-3xl font-bold text-primary">{stats.vmOnlineCount} <span className="text-sm text-secondary font-normal">/ {stats.vmTotalCount}</span></div>
                             <span className="text-xs text-green-400">Running Instances</span>
                         </div>
-                        <div className={`h-2 w-2 rounded-full ${stats.vmOnlineCount > 0 ? 'bg-green-500 animate-pulse' : 'bg-slate-600'}`}></div>
+                        <div className={`h-2 w-2 rounded-full ${stats.vmOnlineCount > 0 ? 'bg-green-500 animate-pulse' : 'bg-border'}`}></div>
                     </div>
                 </motion.div>
 
@@ -443,12 +443,12 @@ const Dashboard = () => {
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.3 }}
-                        className="glass-panel p-6 hover:bg-slate-800/50 transition-colors"
+                        className="glass-panel p-6 hover:bg-white/5 dark:hover:bg-slate-800/50 transition-colors"
                     >
                         <div className="flex justify-between items-start mb-4">
                             <div>
                                 <h3 className="text-xl font-semibold mb-1 text-purple-400">Performance</h3>
-                                <p className="text-slate-400 text-sm uppercase tracking-wider">Mission Data</p>
+                                <p className="text-secondary text-sm uppercase tracking-wider">Mission Data</p>
                             </div>
                             <Award className="text-purple-500" size={24} />
                         </div>
@@ -456,10 +456,10 @@ const Dashboard = () => {
                         <div className="space-y-4">
                             <div>
                                 <div className="flex justify-between text-sm mb-1">
-                                    <span className="text-slate-300">Completion Rate</span>
-                                    <span className="text-white font-bold">{stats.tasksTotal > 0 ? Math.round((stats.tasksCompleted / stats.tasksTotal) * 100) : 0}%</span>
+                                    <span className="text-secondary">Completion Rate</span>
+                                    <span className="text-primary font-bold">{stats.tasksTotal > 0 ? Math.round((stats.tasksCompleted / stats.tasksTotal) * 100) : 0}%</span>
                                 </div>
-                                <div className="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
+                                <div className="w-full bg-border h-2 rounded-full overflow-hidden">
                                     <div
                                         className="bg-purple-500 h-full transition-all duration-1000"
                                         style={{ width: `${stats.tasksTotal > 0 ? (stats.tasksCompleted / stats.tasksTotal) * 100 : 0}%` }}
@@ -467,8 +467,8 @@ const Dashboard = () => {
                                 </div>
                             </div>
 
-                            <div className="flex justify-between items-center bg-slate-800/50 p-3 rounded-lg">
-                                <span className="text-slate-300 text-sm">Avg Rating</span>
+                            <div className="flex justify-between items-center bg-panel p-3 rounded-lg border border-border">
+                                <span className="text-secondary text-sm">Avg Rating</span>
                                 <StarRating rating={stats.averageRating} readonly />
                             </div>
                         </div>

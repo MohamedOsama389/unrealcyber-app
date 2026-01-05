@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import {
     LayoutDashboard,
     Video,
@@ -13,12 +14,15 @@ import {
     Menu,
     X,
     Folder,
-    FileText
+    FileText,
+    Sun,
+    Moon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Navbar = () => {
     const { user, logout } = useAuth();
+    const { theme, toggleTheme } = useTheme();
     const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
     const [profile, setProfile] = useState(null);
@@ -118,13 +122,23 @@ const Navbar = () => {
                                     <p className="text-xs text-slate-500 capitalize">{user.role}</p>
                                 </div>
                             </div>
-                            <button
-                                onClick={handleLogout}
-                                className="w-full flex items-center space-x-3 px-4 py-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors text-sm font-medium"
-                            >
-                                <LogOut size={18} />
-                                <span>Sign Out</span>
-                            </button>
+                            {/* LOGOUT & THEME */}
+                            <div className="px-4"> {/* Adjusted to keep it within the existing structure */}
+                                <button
+                                    onClick={toggleTheme}
+                                    className="w-full flex items-center mb-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all font-medium"
+                                >
+                                    {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+                                    <span className="ml-3">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+                                </button>
+                                <button
+                                    onClick={handleLogout} // Changed to handleLogout
+                                    className="w-full flex items-center px-4 py-3 text-red-500 hover:bg-red-500/10 rounded-xl transition-all font-bold"
+                                >
+                                    <LogOut size={20} />
+                                    <span className="ml-3">Sign Out</span>
+                                </button>
+                            </div>
                         </div>
                     </motion.nav>
                 )}

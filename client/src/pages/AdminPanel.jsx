@@ -1,3 +1,4 @@
+// v2.0.1 - Force rebuild
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
@@ -270,7 +271,25 @@ const AdminPanel = () => {
                                     {users.map((u) => (
                                         <tr key={u.id} className="hover:bg-slate-800/30 transition-colors">
                                             <td className="p-4 font-mono text-slate-500">#{u.id}</td>
-                                            <td className="p-4 font-bold text-white">{u.username}</td>
+                                            <td className="p-4">
+                                                <div className="flex items-center space-x-3">
+                                                    <div className="w-8 h-8 rounded-full bg-slate-800 overflow-hidden border border-slate-700 shrink-0">
+                                                        {u.avatar_id ? (
+                                                            <img
+                                                                src={`https://lh3.googleusercontent.com/u/0/d/${u.avatar_id}=w50-h50-p-k-no`}
+                                                                className="w-full h-full object-cover"
+                                                                alt=""
+                                                                onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${u.username}&background=22d3ee&color=fff`; }}
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-white bg-gradient-to-tr from-cyan-500 to-blue-600 uppercase">
+                                                                {u.username[0]}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <span className="font-bold text-white">{u.username}</span>
+                                                </div>
+                                            </td>
                                             <td className="p-4">
                                                 <span className={`px-2 py-1 rounded text-xs font-bold ${u.role === 'admin' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-green-500/20 text-green-300 border border-green-500/30'}`}>
                                                     {u.role.toUpperCase()}
@@ -330,8 +349,24 @@ const AdminPanel = () => {
                         >
                             <div className="flex justify-between items-start mb-4">
                                 <div>
-                                    <h3 className="font-bold text-lg text-white">{sub.task_title}</h3>
-                                    <p className="text-sm text-cyan-400">Agent: {sub.username}</p>
+                                    <h3 className="font-bold text-lg text-white mb-1">{sub.task_title}</h3>
+                                    <div className="flex items-center space-x-2">
+                                        <div className="w-6 h-6 rounded-full bg-slate-800 overflow-hidden border border-slate-700 shrink-0">
+                                            {sub.avatar_id ? (
+                                                <img
+                                                    src={`https://lh3.googleusercontent.com/u/0/d/${sub.avatar_id}=w50-h50-p-k-no`}
+                                                    className="w-full h-full object-cover"
+                                                    alt=""
+                                                    onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${sub.username}&background=22d3ee&color=fff`; }}
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-white bg-gradient-to-tr from-cyan-500 to-blue-600 uppercase">
+                                                    {sub.username[0]}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <p className="text-sm text-cyan-400">Agent: {sub.username}</p>
+                                    </div>
                                 </div>
                                 <div className="text-right flex flex-col items-end">
                                     <span className="text-xs text-slate-500 mb-1">{new Date(sub.uploaded_at).toLocaleString()}</span>

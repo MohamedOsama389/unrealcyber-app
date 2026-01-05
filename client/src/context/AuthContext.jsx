@@ -20,9 +20,9 @@ export const AuthProvider = ({ children }) => {
     const login = async (username, password) => {
         try {
             const res = await axios.post('/api/auth/login', { username, password });
-            const { token, role, username: dbUsername } = res.data;
+            const { token, role, username: dbUsername, avatar_id } = res.data;
 
-            const userData = { username: dbUsername, role };
+            const userData = { username: dbUsername, role, avatar_id };
             setUser(userData);
 
             localStorage.setItem('token', token);
@@ -41,8 +41,14 @@ export const AuthProvider = ({ children }) => {
         delete axios.defaults.headers.common['Authorization'];
     };
 
+    const updateUser = (data) => {
+        const updatedUser = { ...user, ...data };
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+    };
+
     return (
-        <AuthContext.Provider value={{ user, login, logout, loading }}>
+        <AuthContext.Provider value={{ user, login, logout, updateUser, loading }}>
             {children}
         </AuthContext.Provider>
     );

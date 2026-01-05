@@ -10,7 +10,7 @@ import clsx from 'clsx'; // Added import for clsx
 import CropModal from '../components/CropModal';
 
 const Dashboard = () => {
-    const { user, logout } = useAuth(); // Added logout
+    const { user, logout, updateUser } = useAuth(); // Added logout and updateUser
     const navigate = useNavigate(); // Added useNavigate
     const [isOpen, setIsOpen] = useState(false); // Added isOpen state
 
@@ -132,7 +132,20 @@ const Dashboard = () => {
         try {
             console.log("[Dashboard] Sending avatar to server...");
             const res = await axios.post('/api/profile/upload-avatar', formData);
-            setProfile({ ...profile, avatar_id: res.data.avatar_id });
+            const newAvatarId = res.data.avatar_id;
+
+            // Update local state
+            setProfile({ ...profile, avatar_id: newAvatarId });
+
+            // Update global context (for Navbar, Chat, etc.)
+            if (user && user.updateUser) {
+                user.updateUser({ avatar_id: newAvatarId });
+            }
+            // Fallback if updateUser is exposed directly from useAuth (it is)
+            if (updateUser) {
+                updateUser({ avatar_id: newAvatarId });
+            }
+
             alert("Profile picture updated!");
         } catch (err) {
             console.error("[Dashboard] Upload failed:", err.response?.data || err.message);

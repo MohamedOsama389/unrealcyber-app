@@ -73,7 +73,21 @@ const Chat = () => {
                                 key={idx}
                                 className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}
                             >
-                                <div className="flex items-center space-x-2 mb-1">
+                                <div className={`flex items-center space-x-2 mb-1 ${isMe ? 'flex-row-reverse space-x-reverse' : ''}`}>
+                                    <div className="w-6 h-6 rounded-full bg-slate-800 overflow-hidden border border-slate-700 shrink-0">
+                                        {msg.avatar_id ? (
+                                            <img
+                                                src={`https://lh3.googleusercontent.com/u/0/d/${msg.avatar_id}=w50-h50-p-k-no`}
+                                                className="w-full h-full object-cover"
+                                                alt=""
+                                                onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${msg.username}&background=22d3ee&color=fff`; }}
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-white bg-gradient-to-tr from-cyan-500 to-blue-600 uppercase">
+                                                {msg.username[0]}
+                                            </div>
+                                        )}
+                                    </div>
                                     <span className={`text-xs font-bold ${isMe ? 'text-cyan-400' : 'text-purple-400'}`}>
                                         {msg.username}
                                     </span>

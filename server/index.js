@@ -299,7 +299,7 @@ app.post('/api/tasks/upload', authenticateToken, upload.single('file'), async (r
 app.get('/api/tasks/uploads', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
     const uploads = db.prepare(`
-        SELECT su.*, u.username, t.title as task_title 
+        SELECT su.*, u.username, u.avatar_id, t.title as task_title 
         FROM student_uploads su 
         JOIN users u ON su.student_id = u.id 
         JOIN tasks t ON su.task_id = t.id
@@ -614,7 +614,7 @@ app.delete('/api/vms/:id', authenticateToken, (req, res) => {
 // --- USERS ---
 app.get('/api/users', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
-    const users = db.prepare('SELECT id, username, role, created_at FROM users').all();
+    const users = db.prepare('SELECT id, username, role, avatar_id, created_at FROM users').all();
     res.json(users);
 });
 
@@ -668,13 +668,26 @@ app.delete('/api/users/:id', authenticateToken, (req, res) => {
 // --- CHAT (Socket.io) ---
 io.on('connection', (socket) => {
     // Send recent messages
-    const recent = db.prepare('SELECT * FROM messages ORDER BY timestamp DESC LIMIT 50').all().reverse();
+    const recent = db.prepare(`
+        SELECT m.*, u.avatar_id 
+        FROM messages m 
+        LEFT JOIN users u ON m.username = u.username 
+        ORDER BY m.timestamp DESC 
+        LIMIT 50
+    `).all().reverse();
     socket.emit('init_messages', recent);
 
     socket.on('send_message', (data) => {
         // data: { username, content }
         const result = db.prepare('INSERT INTO messages (username, content) VALUES (?, ?)').run(data.username, data.content);
-        const msg = { id: result.lastInsertRowid, username: data.username, content: data.content, timestamp: new Date() };
+        const user = db.prepare('SELECT avatar_id FROM users WHERE username = ?').get(data.username);
+        const msg = {
+            id: result.lastInsertRowid,
+            username: data.username,
+            content: data.content,
+            timestamp: new Date(),
+            avatar_id: user?.avatar_id
+        };
         io.emit('new_message', msg);
     });
 });

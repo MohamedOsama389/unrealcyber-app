@@ -7,6 +7,7 @@ import { Activity, Calendar, CheckCircle, Award, Server, Play, FileText, Eye, St
 import io from 'socket.io-client';
 import { useNavigate } from 'react-router-dom'; // Added import for useNavigate
 import clsx from 'clsx'; // Added import for clsx
+import CropModal from '../components/CropModal';
 
 const Dashboard = () => {
     const { user, logout } = useAuth(); // Added logout
@@ -29,6 +30,8 @@ const Dashboard = () => {
     const [myVotes, setMyVotes] = useState({}); // { voteId: optionIndex }
     const [profile, setProfile] = useState(null);
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
+    const [tempImage, setTempImage] = useState(null);
+    const [showCropper, setShowCropper] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -112,23 +115,37 @@ const Dashboard = () => {
     const handleAvatarUpload = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            setTempImage(reader.result);
+            setShowCropper(true);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleCropComplete = async (croppedBlob) => {
+        setShowCropper(false);
         setUploadingAvatar(true);
         const formData = new FormData();
-        formData.append('image', file);
+        formData.append('avatar', croppedBlob, 'avatar.jpg');
         try {
-            const res = await axios.post('/api/profile/upload', formData);
+            console.log("[Dashboard] Sending avatar to server...");
+            const res = await axios.post('/api/profile/upload-avatar', formData);
             setProfile({ ...profile, avatar_id: res.data.avatar_id });
             alert("Profile picture updated!");
         } catch (err) {
-            alert("Upload failed");
+            console.error("[Dashboard] Upload failed:", err.response?.data || err.message);
+            alert(`Upload failed: ${err.response?.data?.error || err.message}`);
         } finally {
             setUploadingAvatar(false);
+            setTempImage(null);
         }
     };
 
     const handleVote = async (voteId, optionIndex) => {
         try {
-            await axios.post(`/api/votes/${voteId}/vote`, { option_index: optionIndex });
+            await axios.post(`/api/votes/${voteId}/vote`, { optionIndex: optionIndex });
             setMyVotes({ ...myVotes, [voteId]: optionIndex });
             alert("Vote submitted!");
         } catch (err) {
@@ -258,7 +275,7 @@ const Dashboard = () => {
                             </div>
                             <h4 className="text-lg text-slate-200 mb-6">{vote.title}</h4>
                             <div className="space-y-3">
-                                {vote.options.map((opt, idx) => (
+                                {Array.isArray(vote.options) && vote.options.map((opt, idx) => (
                                     <button
                                         key={idx}
                                         onClick={() => handleVote(vote.id, idx)}
@@ -445,6 +462,16 @@ const Dashboard = () => {
                     </motion.div>
                 )}
             </div>
+            {showCropper && (
+                <CropModal
+                    image={tempImage}
+                    onCropComplete={handleCropComplete}
+                    onCancel={() => {
+                        setShowCropper(false);
+                        setTempImage(null);
+                    }}
+                />
+            )}
         </div>
     );
 };

@@ -130,12 +130,18 @@ app.get('/api/profile/me', authenticateToken, (req, res) => {
 
 app.post('/api/profile/upload-avatar', authenticateToken, upload.single('avatar'), async (req, res) => {
     try {
-        if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+        if (!req.file) {
+            console.error("[AvatarUpload] No file provided in request.");
+            return res.status(400).json({ error: "No file uploaded" });
+        }
+        console.log(`[AvatarUpload] Processing file: ${req.file.originalname} (${req.file.size} bytes)`);
         const avatarId = await driveService.uploadAvatar(req.file.buffer, req.file.originalname, req.file.mimetype);
+        console.log(`[AvatarUpload] Drive upload successful. ID: ${avatarId}`);
         db.prepare('UPDATE users SET avatar_id = ? WHERE id = ?').run(avatarId, req.user.id);
         res.json({ success: true, avatar_id: avatarId });
     } catch (err) {
-        res.status(500).json({ error: "Avatar upload failed" });
+        console.error("[AvatarUpload] Error:", err);
+        res.status(500).json({ error: "Avatar upload failed", details: err.message });
     }
 });
 
@@ -182,6 +188,14 @@ app.post('/api/votes', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
     const { title, options } = req.body;
     db.prepare('INSERT INTO votes (title, options) VALUES (?, ?)').run(title, JSON.stringify(options));
+    res.json({ success: true });
+});
+
+app.put('/api/votes/:id', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    const { id } = req.params;
+    const { title, options } = req.body;
+    db.prepare('UPDATE votes SET title = ?, options = ? WHERE id = ?').run(title, JSON.stringify(options), id);
     res.json({ success: true });
 });
 

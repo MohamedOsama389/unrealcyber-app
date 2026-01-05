@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Users, FileCheck, Search, Award, Trash2, Key, Star } from 'lucide-react';
+import { Shield, Users, FileCheck, Search, Award, Trash2, Key, Star, Edit, Trash } from 'lucide-react';
 import clsx from 'clsx';
 import StarRating from '../components/StarRating';
 
@@ -12,6 +12,7 @@ const AdminPanel = () => {
     const [users, setUsers] = useState([]);
     const [submissions, setSubmissions] = useState([]);
     const [votes, setVotes] = useState([]);
+    const [editingVote, setEditingVote] = useState(null); // Added for editing
     const [grading, setGrading] = useState({ id: null, rating: 0, admin_notes: '' });
     const [newUser, setNewUser] = useState({ username: '', password: '', role: 'student' });
     const [showCreateForm, setShowCreateForm] = useState(false);
@@ -25,7 +26,7 @@ const AdminPanel = () => {
 
     const fetchVotes = async () => {
         try {
-            const res = await axios.get('/api/votes/active'); // Note: Adjust if you want list of ALL votes
+            const res = await axios.get('/api/votes');
             setVotes(res.data);
         } catch (err) { }
     };
@@ -33,18 +34,32 @@ const AdminPanel = () => {
     const handleCreateVote = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('/api/votes', newVote);
+            if (editingVote) {
+                await axios.put(`/api/votes/${editingVote.id}`, newVote);
+                setEditingVote(null);
+                alert("Poll updated!");
+            } else {
+                await axios.post('/api/votes', newVote);
+                alert("Poll created!");
+            }
             setNewVote({ title: '', options: ['', ''] });
             fetchVotes();
-            alert("Poll created!");
         } catch (err) {
-            alert("Failed to create poll");
+            alert("Operation failed");
         }
     };
 
     const toggleVoteStatus = async (id) => {
         try {
             await axios.post(`/api/votes/${id}/toggle`);
+            fetchVotes();
+        } catch (err) { }
+    };
+
+    const handleDeleteVote = async (id) => {
+        if (!confirm("Are you sure you want to delete this poll? This will also remove all cast votes.")) return;
+        try {
+            await axios.delete(`/api/votes/${id}`);
             fetchVotes();
         } catch (err) { }
     };
@@ -389,9 +404,23 @@ const AdminPanel = () => {
             {activeTab === 'votes' && (
                 <div className="space-y-6">
                     <form onSubmit={handleCreateVote} className="glass-panel p-6 border-l-4 border-l-yellow-500 space-y-4">
-                        <h3 className="text-lg font-bold text-white flex items-center">
-                            <Star className="mr-2 text-yellow-500" size={20} />
-                            Create New Academy Poll
+                        <h3 className="text-lg font-bold text-white flex items-center justify-between">
+                            <div className="flex items-center">
+                                <Star className="mr-2 text-yellow-500" size={20} />
+                                {editingVote ? 'Edit Academy Poll' : 'Create New Academy Poll'}
+                            </div>
+                            {editingVote && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setEditingVote(null);
+                                        setNewVote({ title: '', options: ['', ''] });
+                                    }}
+                                    className="text-xs text-red-400 hover:text-red-300 font-bold"
+                                >
+                                    Cancel Edit
+                                </button>
+                            )}
                         </h3>
                         <input
                             type="text"
@@ -439,36 +468,68 @@ const AdminPanel = () => {
                             >
                                 + Add Another Option
                             </button>
-                            <button type="submit" className="btn-primary px-8 h-[48px] w-full md:w-auto">Launch Poll to Dashboard</button>
+                            <button type="submit" className="btn-primary px-8 h-[48px] w-full md:w-auto">
+                                {editingVote ? 'Save Changes' : 'Launch Poll to Dashboard'}
+                            </button>
                         </div>
                     </form>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {votes.map(v => (
-                            <div key={v.id} className="glass-panel p-6 border border-slate-800">
-                                <div className="flex justify-between items-start mb-4">
-                                    <h4 className="font-bold text-white">{v.title}</h4>
-                                    <button
-                                        onClick={() => toggleVoteStatus(v.id)}
-                                        className={`px-3 py-1 rounded text-[10px] font-bold ${v.is_active ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-slate-700 text-slate-400'}`}
-                                    >
-                                        {v.is_active ? 'ACTIVE' : 'INACTIVE'}
-                                    </button>
+                            <div key={v.id} className="glass-panel p-6 border border-slate-800 relative shadow-sm hover:shadow-cyan-500/5 transition-all">
+                                <div className="flex justify-between items-start mb-4 gap-4">
+                                    <h4 className="font-bold text-white flex-1 truncate">{v.title}</h4>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                console.log("[Admin] Editing vote:", v);
+                                                setEditingVote(v);
+                                                setNewVote({ title: v.title, options: [...v.options] });
+                                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                                            }}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-cyan-500/20 text-cyan-400 rounded-lg border border-slate-700 transition-all text-xs font-bold"
+                                            title="Edit Poll"
+                                        >
+                                            <Edit size={14} />
+                                            <span>Edit</span>
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                toggleVoteStatus(v.id);
+                                            }}
+                                            className={`px-3 h-[32px] rounded-lg text-[10px] font-bold border transition-all ${v.is_active ? 'bg-green-500/10 text-green-400 border-green-500/30' : 'bg-slate-800 text-slate-500 border-slate-700'}`}
+                                        >
+                                            {v.is_active ? 'ACTIVE' : 'INACTIVE'}
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDeleteVote(v.id);
+                                            }}
+                                            className="p-2 bg-slate-800 hover:bg-red-500/20 text-red-400 rounded-lg border border-slate-700 transition-all"
+                                            title="Delete Poll"
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="space-y-2">
-                                    {v.options.map((opt, idx) => (
+                                    {Array.isArray(v.options) && v.options.map((opt, idx) => (
                                         <div key={idx} className="text-sm text-slate-400 flex justify-between p-2 bg-slate-900/50 rounded">
                                             <span>{opt}</span>
+                                            <span className="font-mono text-cyan-500 font-bold">{v.results ? v.results[idx] : 0} votes</span>
                                         </div>
                                     ))}
                                 </div>
                             </div>
                         ))}
                         {votes.length === 0 && <p className="text-slate-500 text-center py-10 col-span-full">No polls created yet.</p>}
-                    </div>
-                </div>
+                    </div >
+                </div >
             )}
-        </div>
+        </div >
     );
 };
 

@@ -99,7 +99,7 @@ const Navbar = () => {
                                 <div className="w-10 h-10 rounded-full bg-panel overflow-hidden shadow-lg border border-border">
                                     {user?.avatar_id ? (
                                         <img
-                                            src={`https://drive.google.com/uc?id=${user.avatar_id}&v=${user.avatar_version || 0}`}
+                                            src={`https://lh3.googleusercontent.com/d/${user.avatar_id}?v=${user.avatar_version || 0}`}
                                             className="w-full h-full object-cover"
                                             alt="Nav Avatar"
                                             onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${user.username}&background=22d3ee&color=fff`; }}

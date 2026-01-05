@@ -187,7 +187,7 @@ const Dashboard = () => {
                         <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 p-1 shadow-2xl">
                             {user?.avatar_id ? (
                                 <img
-                                    src={`https://drive.google.com/uc?id=${user.avatar_id}&v=${user.avatar_version || 0}`}
+                                    src={`https://lh3.googleusercontent.com/d/${user.avatar_id}?v=${user.avatar_version || 0}`}
                                     className="w-full h-full rounded-full object-cover border-4 border-app"
                                     alt="Avatar"
                                     onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${user.username}&background=22d3ee&color=fff`; }}

@@ -240,8 +240,8 @@ const restoreDatabase = async () => {
         console.log("[DriveService] Local database missing, attempting restore from Drive...");
         const res = await drive.files.list({
             q: `'${DB_FOLDER_ID}' in parents and trashed=false`,
-            fields: 'files(id, name, createdTime)',
-            orderBy: 'createdTime desc',
+            fields: 'files(id, name, modifiedTime)',
+            orderBy: 'modifiedTime desc',
             pageSize: 1
         });
 

@@ -57,9 +57,9 @@ const Navbar = () => {
     return (
         <>
             {/* MOBILE HEADER */}
-            <div className="md:hidden fixed top-0 w-full z-50 bg-slate-950/90 backdrop-blur border-b border-slate-800 p-4 flex justify-between items-center">
+            <div className="md:hidden fixed top-0 w-full z-50 bg-app/90 backdrop-blur border-b border-border p-4 flex justify-between items-center">
                 <div className="text-cyan-400 font-bold tracking-widest text-lg">UNREAL CYBER</div>
-                <button onClick={() => setIsOpen(!isOpen)} className="text-white">
+                <button onClick={() => setIsOpen(!isOpen)} className="text-primary">
                     {isOpen ? <X /> : <Menu />}
                 </button>
             </div>
@@ -72,7 +72,7 @@ const Navbar = () => {
                         animate={{ x: 0 }}
                         exit={{ x: -280 }}
                         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                        className={`fixed top-0 left-0 h-full w-72 bg-slate-900 border-r border-slate-800 p-6 flex flex-col z-40 ${isOpen ? 'block pt-20' : 'hidden md:block'}`}
+                        className={`fixed top-0 left-0 h-full w-72 bg-app border-r border-border p-6 flex flex-col z-40 ${isOpen ? 'block pt-20' : 'hidden md:block'}`}
                     >
                         <div className="mb-10 px-2 hidden md:block">
                             <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
@@ -91,7 +91,7 @@ const Navbar = () => {
                                         flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300
                                         ${isActive
                                             ? 'bg-cyan-500/10 text-cyan-400 border-l-4 border-cyan-500 shadow-[0_0_20px_rgba(34,211,238,0.1)]'
-                                            : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                            : 'text-secondary hover:bg-panel hover:text-primary'
                                         }
                                     `}
                                 >
@@ -101,9 +101,9 @@ const Navbar = () => {
                             ))}
                         </div>
 
-                        <div className="mt-8 pt-6 border-t border-slate-800">
+                        <div className="mt-8 pt-6 border-t border-border">
                             <div className="flex items-center space-x-3 px-4 mb-4">
-                                <div className="w-10 h-10 rounded-full bg-slate-800 overflow-hidden shadow-lg border border-slate-700">
+                                <div className="w-10 h-10 rounded-full bg-panel overflow-hidden shadow-lg border border-border">
                                     {profile?.avatar_id ? (
                                         <img
                                             src={`https://lh3.googleusercontent.com/u/0/d/${profile.avatar_id}=w100-h100-p-k-no?v=${profile.avatar_version || 0}`}
@@ -118,15 +118,15 @@ const Navbar = () => {
                                     )}
                                 </div>
                                 <div className="overflow-hidden">
-                                    <p className="text-white font-bold truncate">{user.username}</p>
-                                    <p className="text-xs text-slate-500 capitalize">{user.role}</p>
+                                    <p className="text-primary font-bold truncate">{user.username}</p>
+                                    <p className="text-xs text-secondary capitalize">{user.role}</p>
                                 </div>
                             </div>
                             {/* LOGOUT & THEME */}
                             <div className="px-4"> {/* Adjusted to keep it within the existing structure */}
                                 <button
                                     onClick={toggleTheme}
-                                    className="w-full flex items-center mb-3 px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all font-medium"
+                                    className="w-full flex items-center mb-3 px-4 py-3 text-secondary hover:text-primary hover:bg-panel rounded-xl transition-all font-medium"
                                 >
                                     {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
                                     <span className="ml-3">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>

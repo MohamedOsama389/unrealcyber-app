@@ -207,10 +207,10 @@ const Dashboard = () => {
                         </label>
                     </div>
                     <div>
-                        <h1 className="text-4xl md:text-5xl font-bold text-white mb-1">
+                        <h1 className="text-4xl md:text-5xl font-bold text-primary mb-1">
                             Welcome, <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">{user.username}</span>
                         </h1>
-                        <p className="text-lg text-slate-400 flex items-center">
+                        <p className="text-lg text-secondary flex items-center">
                             <Award className="mr-2 text-yellow-500" size={18} />
                             Academy Member • <span className="text-cyan-400 ml-1">v2.0</span>
                         </p>
@@ -254,8 +254,8 @@ const Dashboard = () => {
                             ></iframe>
                         </div>
                         <div className="p-6 flex flex-col justify-center">
-                            <h2 className="text-2xl font-bold text-white mb-2">{featuredVideo.title}</h2>
-                            <p className="text-slate-400 mb-4">Recommended viewing for this week's module.</p>
+                            <h2 className="text-2xl font-bold text-primary mb-2">{featuredVideo.title}</h2>
+                            <p className="text-secondary mb-4">Recommended viewing for this week's module.</p>
                             <a
                                 href={featuredVideo.drive_link}
                                 target="_blank"
@@ -280,13 +280,13 @@ const Dashboard = () => {
                             className="glass-panel p-6 border-l-4 border-l-yellow-500"
                         >
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-xl font-bold text-white flex items-center">
+                                <h3 className="text-xl font-bold text-primary flex items-center">
                                     <Star className="mr-2 text-yellow-500 fill-yellow-500" size={20} />
                                     Academy Poll
                                 </h3>
                                 <span className="text-xs bg-yellow-500/20 text-yellow-500 px-2 py-1 rounded-full font-bold">ACTIVE</span>
                             </div>
-                            <h4 className="text-lg text-slate-200 mb-6">{vote.title}</h4>
+                            <h4 className="text-lg text-secondary mb-6">{vote.title}</h4>
                             <div className="space-y-3">
                                 {Array.isArray(vote.options) && vote.options.map((opt, idx) => (
                                     <button
@@ -296,7 +296,7 @@ const Dashboard = () => {
                                             "w-full p-4 rounded-xl border flex justify-between items-center transition-all",
                                             myVotes[vote.id] === idx
                                                 ? "bg-cyan-500/20 border-cyan-500 text-cyan-400 shadow-lg shadow-cyan-500/10"
-                                                : "bg-slate-800/50 border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-white"
+                                                : "bg-panel border-border text-secondary hover:bg-slate-800/50 hover:text-primary"
                                         )}
                                     >
                                         <span className="font-bold">{opt}</span>
@@ -324,8 +324,8 @@ const Dashboard = () => {
                                 <Star size={12} fill="currentColor" />
                                 <span>Featured Document</span>
                             </div>
-                            <h2 className="text-2xl font-bold text-white">{featuredFile.title}</h2>
-                            <p className="text-slate-400">Important PDF available for review.</p>
+                            <h2 className="text-2xl font-bold text-primary">{featuredFile.title}</h2>
+                            <p className="text-secondary">Important PDF available for review.</p>
                         </div>
                     </div>
                     <div className="mt-6 md:mt-0 flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4 w-full md:w-auto">
@@ -359,10 +359,10 @@ const Dashboard = () => {
                             <a
                                 key={folder.id}
                                 href={folder.parent_id === '14nYLGu1H9eqQNCHxk2JXot2G42WY2xN_' ? `/files?folderId=${folder.id}` : `/videos?folderId=${folder.id}`}
-                                className="flex flex-col items-center p-4 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-all group border-l-2 border-l-yellow-500"
+                                className="flex flex-col items-center p-4 bg-panel border-border rounded-xl hover:bg-white/10 dark:hover:bg-slate-800 transition-all group border-l-2 border-l-yellow-500 shadow-md"
                             >
                                 <Folder size={32} className="text-yellow-500 mb-2 group-hover:scale-110 transition-transform" />
-                                <span className="text-xs font-medium text-slate-300 text-center truncate w-full">{folder.name || 'Quick Access'}</span>
+                                <span className="text-xs font-medium text-secondary text-center truncate w-full">{folder.name || 'Quick Access'}</span>
                             </a>
                         ))}
                     </div>

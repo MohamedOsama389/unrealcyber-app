@@ -165,7 +165,7 @@ const AdminPanel = () => {
                     onClick={() => setActiveTab('users')}
                     className={clsx(
                         "flex items-center space-x-2 px-6 py-3 rounded-xl font-bold transition-all",
-                        activeTab === 'users' ? "bg-purple-600 text-white shadow-lg shadow-purple-500/30" : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"
+                        activeTab === 'users' ? "bg-purple-600 text-white shadow-lg shadow-purple-500/30" : "bg-panel text-secondary hover:bg-white/10 dark:hover:bg-slate-700 hover:text-primary"
                     )}
                 >
                     <Users size={20} />
@@ -175,7 +175,7 @@ const AdminPanel = () => {
                     onClick={() => setActiveTab('submissions')}
                     className={clsx(
                         "flex items-center space-x-2 px-6 py-3 rounded-xl font-bold transition-all",
-                        activeTab === 'submissions' ? "bg-cyan-600 text-white shadow-lg shadow-cyan-500/30" : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"
+                        activeTab === 'submissions' ? "bg-cyan-600 text-white shadow-lg shadow-cyan-500/30" : "bg-panel text-secondary hover:bg-white/10 dark:hover:bg-slate-700 hover:text-primary"
                     )}
                 >
                     <FileCheck size={20} />
@@ -185,7 +185,7 @@ const AdminPanel = () => {
                     onClick={() => setActiveTab('votes')}
                     className={clsx(
                         "flex items-center space-x-2 px-6 py-3 rounded-xl font-bold transition-all",
-                        activeTab === 'votes' ? "bg-yellow-600 text-white shadow-lg shadow-yellow-500/30" : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"
+                        activeTab === 'votes' ? "bg-yellow-600 text-white shadow-lg shadow-yellow-500/30" : "bg-panel text-secondary hover:bg-white/10 dark:hover:bg-slate-700 hover:text-primary"
                     )}
                 >
                     <Star size={20} />
@@ -199,7 +199,7 @@ const AdminPanel = () => {
                     {/* Create User Button/Form */}
                     <div className="glass-panel p-6 border-l-4 border-l-cyan-500">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-bold text-white flex items-center">
+                            <h3 className="text-lg font-bold text-primary flex items-center">
                                 <Users size={20} className="mr-2 text-cyan-400" /> Administrative Access
                             </h3>
                             <button
@@ -217,7 +217,7 @@ const AdminPanel = () => {
                                     animate={{ height: 'auto', opacity: 1 }}
                                     exit={{ height: 0, opacity: 0 }}
                                     onSubmit={handleCreateUser}
-                                    className="overflow-hidden bg-slate-900/50 p-6 rounded-2xl border border-slate-800 flex flex-col md:flex-row gap-4 mb-4 items-center"
+                                    className="overflow-hidden bg-panel p-6 rounded-2xl border border-border flex flex-col md:flex-row gap-4 mb-4 items-center"
                                 >
                                     <div className="flex-1 w-full">
                                         <input
@@ -258,7 +258,7 @@ const AdminPanel = () => {
 
                         <div className="overflow-hidden rounded-xl border border-slate-800">
                             <table className="w-full text-left">
-                                <thead className="bg-slate-900/50 text-slate-400 uppercase text-xs">
+                                <thead className="bg-panel border-b border-border text-secondary uppercase text-xs">
                                     <tr>
                                         <th className="p-4">ID</th>
                                         <th className="p-4">Username</th>
@@ -267,10 +267,10 @@ const AdminPanel = () => {
                                         <th className="p-4 text-right">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-700">
+                                <tbody className="divide-y divide-border">
                                     {users.map((u) => (
-                                        <tr key={u.id} className="hover:bg-slate-800/30 transition-colors">
-                                            <td className="p-4 font-mono text-slate-500">#{u.id}</td>
+                                        <tr key={u.id} className="hover:bg-white/5 dark:hover:bg-slate-800/30 transition-colors">
+                                            <td className="p-4 font-mono text-secondary">#{u.id}</td>
                                             <td className="p-4">
                                                 <div className="flex items-center space-x-3">
                                                     <div className="w-8 h-8 rounded-full bg-slate-800 overflow-hidden border border-slate-700 shrink-0">
@@ -287,7 +287,7 @@ const AdminPanel = () => {
                                                             </div>
                                                         )}
                                                     </div>
-                                                    <span className="font-bold text-white">{u.username}</span>
+                                                    <span className="font-bold text-primary">{u.username}</span>
                                                 </div>
                                             </td>
                                             <td className="p-4">
@@ -349,7 +349,7 @@ const AdminPanel = () => {
                         >
                             <div className="flex justify-between items-start mb-4">
                                 <div>
-                                    <h3 className="font-bold text-lg text-white mb-1">{sub.task_title}</h3>
+                                    <h3 className="font-bold text-lg text-primary mb-1">{sub.task_title}</h3>
                                     <div className="flex items-center space-x-2">
                                         <div className="w-6 h-6 rounded-full bg-slate-800 overflow-hidden border border-slate-700 shrink-0">
                                             {sub.avatar_id ? (
@@ -379,9 +379,9 @@ const AdminPanel = () => {
                                 </div>
                             </div>
 
-                            <div className="bg-slate-900/50 p-4 rounded-lg mb-4 text-sm font-mono space-y-2">
-                                <p><span className="text-slate-500">Link:</span> <a href={sub.upload_link} target="_blank" className="text-blue-400 underline truncate block">{sub.upload_link}</a></p>
-                                <p><span className="text-slate-500">Notes:</span> <span className="text-slate-300">{sub.notes || 'None'}</span></p>
+                            <div className="bg-panel border border-border p-4 rounded-lg mb-4 text-sm font-mono space-y-2">
+                                <p><span className="text-secondary">Link:</span> <a href={sub.upload_link} target="_blank" className="text-blue-400 underline truncate block">{sub.upload_link}</a></p>
+                                <p><span className="text-secondary">Notes:</span> <span className="text-secondary">{sub.notes || 'None'}</span></p>
                             </div>
 
                             {grading.id === sub.id ? (
@@ -435,11 +435,10 @@ const AdminPanel = () => {
                     ))}
                 </div>
             )}
-            {/* VOTES TAB */}
             {activeTab === 'votes' && (
                 <div className="space-y-6">
                     <form onSubmit={handleCreateVote} className="glass-panel p-6 border-l-4 border-l-yellow-500 space-y-4">
-                        <h3 className="text-lg font-bold text-white flex items-center justify-between">
+                        <h3 className="text-lg font-bold text-primary flex items-center justify-between">
                             <div className="flex items-center">
                                 <Star className="mr-2 text-yellow-500" size={20} />
                                 {editingVote ? 'Edit Academy Poll' : 'Create New Academy Poll'}
@@ -511,9 +510,9 @@ const AdminPanel = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {votes.map(v => (
-                            <div key={v.id} className="glass-panel p-6 border border-slate-800 relative shadow-sm hover:shadow-cyan-500/5 transition-all">
+                            <div key={v.id} className="glass-panel p-6 border border-border relative shadow-sm hover:shadow-cyan-500/5 transition-all">
                                 <div className="flex justify-between items-start mb-4 gap-4">
-                                    <h4 className="font-bold text-white flex-1 truncate">{v.title}</h4>
+                                    <h4 className="font-bold text-primary flex-1 truncate">{v.title}</h4>
                                     <div className="flex items-center gap-2 shrink-0">
                                         <button
                                             onClick={(e) => {
@@ -552,7 +551,7 @@ const AdminPanel = () => {
                                 </div>
                                 <div className="space-y-2">
                                     {Array.isArray(v.options) && v.options.map((opt, idx) => (
-                                        <div key={idx} className="text-sm text-slate-400 flex justify-between p-2 bg-slate-900/50 rounded">
+                                        <div key={idx} className="text-sm text-secondary flex justify-between p-2 bg-app/50 dark:bg-slate-900/50 rounded">
                                             <span>{opt}</span>
                                             <span className="font-mono text-cyan-500 font-bold">{v.results ? v.results[idx] : 0} votes</span>
                                         </div>

@@ -132,18 +132,15 @@ const Dashboard = () => {
         try {
             console.log("[Dashboard] Sending avatar to server...");
             const res = await axios.post('/api/profile/upload-avatar', formData);
-            const newAvatarId = res.data.avatar_id;
+            const { avatar_id: newAvatarId, avatar_version: newVersion } = res.data;
+            console.log(`[Dashboard] Upload successful. New Version: ${newVersion}`);
 
             // Update local state
-            setProfile({ ...profile, avatar_id: newAvatarId });
+            setProfile({ ...profile, avatar_id: newAvatarId, avatar_version: newVersion });
 
             // Update global context (for Navbar, Chat, etc.)
-            if (user && user.updateUser) {
-                user.updateUser({ avatar_id: newAvatarId });
-            }
-            // Fallback if updateUser is exposed directly from useAuth (it is)
             if (updateUser) {
-                updateUser({ avatar_id: newAvatarId });
+                updateUser({ avatar_id: newAvatarId, avatar_version: newVersion });
             }
 
             alert("Profile picture updated!");

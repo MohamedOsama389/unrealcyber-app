@@ -12,6 +12,9 @@ const Dashboard = () => {
     const { user, logout } = useAuth(); // Added logout
     const navigate = useNavigate(); // Added useNavigate
     const [isOpen, setIsOpen] = useState(false); // Added isOpen state
+
+    if (!user) return null;
+
     const [stats, setStats] = useState({
         meetingActive: false,
         tasksTotal: 0,

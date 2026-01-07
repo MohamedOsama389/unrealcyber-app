@@ -80,13 +80,14 @@ const PartyOverlay = () => {
     };
 
     const videoUrl = partyState.type === 'drive'
-        ? `https://lh3.googleusercontent.com/d/${partyState.videoSource}`
+        ? `https://drive.google.com/uc?id=${partyState.videoSource}&export=download`
         : getYoutubeEmbed(partyState.videoSource);
 
     return (
         <motion.div
             initial={{ opacity: 0, y: 100 }}
             animate={minimized ? {
+                opacity: 1,
                 height: 60,
                 width: 300,
                 bottom: 20,
@@ -95,6 +96,7 @@ const PartyOverlay = () => {
                 y: 0,
                 borderRadius: 12
             } : {
+                opacity: 1,
                 height: '100vh',
                 width: '100vw',
                 bottom: 0,

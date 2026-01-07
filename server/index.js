@@ -167,8 +167,16 @@ app.post('/api/party/config', authenticateToken, upload.single('video'), async (
 
         io.emit('party_update', partyState);
         res.json({ success: true, partyState });
+    }
+});
+
+app.get('/api/party/files', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    try {
+        const files = await driveService.listFiles(driveService.PARTY_FOLDER_ID, 'video');
+        res.json(files);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: "Failed to list party files" });
     }
 });
 

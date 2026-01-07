@@ -19,13 +19,15 @@ const AdminPanel = () => {
     const [newUser, setNewUser] = useState({ username: '', password: '', role: 'student' });
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [newVote, setNewVote] = useState({ title: '', options: ['', ''] });
-    const [partyConfig, setPartyConfig] = useState({ source: '', type: 'drive', active: false, isPlaying: false });
+    const [partyConfig, setPartyConfig] = useState({ active: false, source: '', type: 'drive', file: null });
+    const [partyFiles, setPartyFiles] = useState([]);
     const [uploadingParty, setUploadingParty] = useState(false);
 
     useEffect(() => {
         fetchUsers();
         fetchSubmissions();
         fetchVotes();
+        fetchPartyFiles(); // Fetch party files on component mount
 
         const socket = io();
         socket.on('party_update', (state) => {
@@ -48,6 +50,15 @@ const AdminPanel = () => {
         } catch (err) { }
     };
 
+    const fetchPartyFiles = async () => {
+        try {
+            const res = await axios.get('/api/party/files');
+            setPartyFiles(res.data);
+        } catch (err) {
+            console.error("Failed to fetch party files:", err);
+        }
+    };
+
     const handlePartyConfig = async (e) => {
         e.preventDefault();
         setUploadingParty(true);
@@ -59,6 +70,7 @@ const AdminPanel = () => {
         try {
             await axios.post('/api/party/config', formData);
             alert("Party configuration updated!");
+            fetchPartyFiles(); // Refresh files after potential upload
         } catch (err) {
             alert("Failed to update party config");
         } finally {
@@ -645,27 +657,53 @@ const AdminPanel = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-4">
-                                <label className="text-sm font-bold text-secondary uppercase tracking-widest">Video Stream Configuration</label>
-                                <div className="space-y-3">
+                                <div>
+                                    <label className="block text-secondary text-xs font-bold uppercase mb-2">Stream Source</label>
                                     <select
-                                        value={partyConfig.type}
-                                        onChange={(e) => setPartyConfig({ ...partyConfig, type: e.target.value })}
-                                        className="input-field"
+                                        value={partyConfig.type} // Controlled by type
+                                        onChange={(e) => setPartyConfig({ ...partyConfig, type: e.target.value, source: '' })} // Clear source when type changes
+                                        className="input-field w-full"
                                     >
-                                        <option value="drive">Google Drive Video (MP4)</option>
-                                        <option value="youtube">YouTube Live/Video URL</option>
+                                        <option value="drive">Google Drive File</option>
+                                        <option value="youtube">YouTube URL</option>
                                     </select>
+                                </div>
 
-                                    {partyConfig.type === 'youtube' ? (
-                                        <input
-                                            type="text"
-                                            placeholder="YouTube URL"
-                                            value={partyConfig.source}
-                                            onChange={(e) => setPartyConfig({ ...partyConfig, source: e.target.value })}
-                                            className="input-field"
-                                        />
-                                    ) : (
-                                        <div className="space-y-2">
+                                {partyConfig.type === 'drive' && (
+                                    <div>
+                                        <label className="block text-secondary text-xs font-bold uppercase mb-2">Select From Party Folder</label>
+                                        <select
+                                            onChange={(e) => {
+                                                if (e.target.value) {
+                                                    setPartyConfig({ ...partyConfig, source: e.target.value, type: 'drive' });
+                                                }
+                                            }}
+                                            className="input-field w-full mb-3"
+                                            value={partyConfig.source} // Control the select value
+                                        >
+                                            <option value="" disabled>-- Select a Video --</option>
+                                            {partyFiles.map(f => (
+                                                <option key={f.id} value={f.id}>{f.name}</option>
+                                            ))}
+                                        </select>
+                                        <div className="text-center text-secondary text-xs py-1">- OR Upload New -</div>
+                                    </div>
+                                )}
+
+                                <div>
+                                    <label className="block text-secondary text-xs font-bold uppercase mb-2">
+                                        {partyConfig.type === 'drive' ? 'Drive File ID (Manual)' : 'Video URL'}
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder={partyConfig.type === 'drive' ? 'Enter Google Drive File ID' : 'Enter YouTube URL'}
+                                        value={partyConfig.source}
+                                        onChange={(e) => setPartyConfig({ ...partyConfig, source: e.target.value })}
+                                        className="input-field w-full"
+                                    />
+                                    {partyConfig.type === 'drive' && (
+                                        <div className="mt-2">
+                                            <label className="block text-secondary text-xs font-bold uppercase mb-2">Upload New File</label>
                                             <input
                                                 type="text"
                                                 placeholder="Drive File ID (optional if uploading)"

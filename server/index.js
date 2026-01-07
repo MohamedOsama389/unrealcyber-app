@@ -167,6 +167,8 @@ app.post('/api/party/config', authenticateToken, upload.single('video'), async (
 
         io.emit('party_update', partyState);
         res.json({ success: true, partyState });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 

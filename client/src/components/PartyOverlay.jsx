@@ -211,9 +211,14 @@ const PartyOverlay = () => {
                                 />
                             )}
 
+                            {/* Interaction Shield for Non-Admins */}
+                            {user?.role !== 'admin' && (
+                                <div className="absolute inset-0 z-20 bg-transparent" />
+                            )}
+
                             {/* Admin Controls Overlay */}
                             {user?.role === 'admin' && partyState.type === 'drive' && (
-                                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-4">
+                                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-4 z-30">
                                     <button onClick={() => {
                                         if (videoRef.current.paused) videoRef.current.play();
                                         else videoRef.current.pause();

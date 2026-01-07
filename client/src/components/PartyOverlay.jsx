@@ -21,7 +21,14 @@ const PartyOverlay = () => {
         socketRef.current = io();
 
         socketRef.current.on('party_update', (state) => {
-            setPartyState(state);
+            setPartyState(prev => {
+                // If it was inactive and now it's active, reset local hidden/minimized state
+                if (!prev?.active && state.active) {
+                    setHidden(false);
+                    setMinimized(false);
+                }
+                return state;
+            });
         });
 
         socketRef.current.on('party_chat_update', (msgs) => {
@@ -59,12 +66,17 @@ const PartyOverlay = () => {
 
     const getYoutubeEmbed = (url) => {
         if (!url) return '';
-        let videoId = '';
-        if (url.includes('v=')) videoId = url.split('v=')[1].split('&')[0];
-        else if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1].split('?')[0];
-        else if (url.includes('embed/')) videoId = url.split('embed/')[1].split('?')[0];
+        try {
+            let videoId = '';
+            if (url.includes('v=')) videoId = url.split('v=')[1].split('&')[0];
+            else if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1].split('?')[0];
+            else if (url.includes('embed/')) videoId = url.split('embed/')[1].split('?')[0];
+            else videoId = url; // assume its just id
 
-        return videoId ? `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&rel=0` : url;
+            return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&controls=1&rel=0&origin=${window.location.origin}`;
+        } catch (e) {
+            return url;
+        }
     };
 
     const videoUrl = partyState.type === 'drive'
@@ -75,21 +87,25 @@ const PartyOverlay = () => {
         <motion.div
             initial={{ opacity: 0, y: 100 }}
             animate={minimized ? {
-                height: '60px',
-                width: '300px',
-                bottom: '20px',
-                right: '20px',
-                top: 'auto',
-                left: 'auto',
-                borderRadius: '12px'
+                height: 60,
+                width: 300,
+                bottom: 20,
+                right: 20,
+                x: 0,
+                y: 0,
+                borderRadius: 12
             } : {
                 height: '100vh',
                 width: '100vw',
                 bottom: 0,
                 right: 0,
-                top: 0,
-                left: 0,
-                borderRadius: '0px'
+                x: 0,
+                y: 0,
+                borderRadius: 0
+            }}
+            style={{
+                top: minimized ? 'auto' : 0,
+                left: minimized ? 'auto' : 0
             }}
             className="fixed z-[999] bg-black/90 flex flex-col md:flex-row items-stretch overflow-hidden shadow-2xl border border-white/10"
         >

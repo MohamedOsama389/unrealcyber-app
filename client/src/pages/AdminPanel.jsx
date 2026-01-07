@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Users, FileCheck, Search, Award, Trash2, Key, Star, Edit, Trash } from 'lucide-react';
+import { Shield, Users, FileCheck, Search, Award, Trash2, Key, Star, Edit, Trash, Music, Play, Square, Send, Globe } from 'lucide-react';
 import clsx from 'clsx';
 import StarRating from '../components/StarRating';
 
@@ -18,12 +18,47 @@ const AdminPanel = () => {
     const [newUser, setNewUser] = useState({ username: '', password: '', role: 'student' });
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [newVote, setNewVote] = useState({ title: '', options: ['', ''] });
+    const [partyConfig, setPartyConfig] = useState({ source: '', type: 'drive', active: false });
+    const [uploadingParty, setUploadingParty] = useState(false);
 
     useEffect(() => {
         fetchUsers();
         fetchSubmissions();
         fetchVotes();
+        fetchPartyState();
     }, []);
+
+    const fetchPartyState = async () => {
+        try {
+            const res = await axios.get('/api/health'); // Or a dedicated endpoint, but index.js sends it on connect
+            // For simplicity, let's assume we can GET the state or just rely on the toggle response
+        } catch (err) { }
+    };
+
+    const handlePartyConfig = async (e) => {
+        e.preventDefault();
+        setUploadingParty(true);
+        const formData = new FormData();
+        formData.append('source', partyConfig.source);
+        formData.append('type', partyConfig.type);
+        if (partyConfig.file) formData.append('video', partyConfig.file);
+
+        try {
+            await axios.post('/api/party/config', formData);
+            alert("Party configuration updated!");
+        } catch (err) {
+            alert("Failed to update party config");
+        } finally {
+            setUploadingParty(false);
+        }
+    };
+
+    const toggleParty = async () => {
+        try {
+            const res = await axios.post('/api/party/toggle');
+            setPartyConfig({ ...partyConfig, active: res.data.active });
+        } catch (err) { }
+    };
 
     const fetchVotes = async () => {
         try {
@@ -190,6 +225,16 @@ const AdminPanel = () => {
                 >
                     <Star size={20} />
                     <span>Poll Management</span>
+                </button>
+                <button
+                    onClick={() => setActiveTab('party')}
+                    className={clsx(
+                        "flex items-center space-x-2 px-6 py-3 rounded-xl font-bold transition-all",
+                        activeTab === 'party' ? "bg-pink-600 text-white shadow-lg shadow-pink-500/30" : "bg-panel text-secondary hover:bg-white/10 dark:hover:bg-slate-800 hover:text-primary border border-border"
+                    )}
+                >
+                    <Music size={20} />
+                    <span>Party Option</span>
                 </button>
             </div>
 
@@ -562,6 +607,97 @@ const AdminPanel = () => {
                         {votes.length === 0 && <p className="text-secondary text-center py-10 col-span-full">No polls created yet.</p>}
                     </div >
                 </div >
+            )}
+
+            {/* PARTY TAB */}
+            {activeTab === 'party' && (
+                <div className="space-y-6">
+                    <form onSubmit={handlePartyConfig} className="glass-panel p-6 border-l-4 border-l-pink-500 space-y-6">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-xl font-bold text-primary flex items-center">
+                                <Music className="mr-3 text-pink-500" size={24} /> Party Command Center
+                            </h3>
+                            <button
+                                type="button"
+                                onClick={toggleParty}
+                                className={clsx(
+                                    "px-6 py-2 rounded-full font-bold transition-all flex items-center gap-2",
+                                    partyConfig.active ? "bg-red-500 text-white animate-pulse" : "bg-green-500 text-white"
+                                )}
+                            >
+                                {partyConfig.active ? <Square size={16} /> : <Play size={16} />}
+                                {partyConfig.active ? 'STOP GLOBAL PARTY' : 'START GLOBAL PARTY'}
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-4">
+                                <label className="text-sm font-bold text-secondary uppercase tracking-widest">Video Stream Configuration</label>
+                                <div className="space-y-3">
+                                    <select
+                                        value={partyConfig.type}
+                                        onChange={(e) => setPartyConfig({ ...partyConfig, type: e.target.value })}
+                                        className="input-field"
+                                    >
+                                        <option value="drive">Google Drive Video (MP4)</option>
+                                        <option value="youtube">YouTube Live/Video URL</option>
+                                    </select>
+
+                                    {partyConfig.type === 'youtube' ? (
+                                        <input
+                                            type="text"
+                                            placeholder="YouTube URL"
+                                            value={partyConfig.source}
+                                            onChange={(e) => setPartyConfig({ ...partyConfig, source: e.target.value })}
+                                            className="input-field"
+                                        />
+                                    ) : (
+                                        <div className="space-y-2">
+                                            <input
+                                                type="text"
+                                                placeholder="Drive File ID (optional if uploading)"
+                                                value={partyConfig.source}
+                                                onChange={(e) => setPartyConfig({ ...partyConfig, source: e.target.value })}
+                                                className="input-field"
+                                            />
+                                            <div className="flex items-center gap-4">
+                                                <input
+                                                    type="file"
+                                                    onChange={(e) => setPartyConfig({ ...partyConfig, file: e.target.files[0] })}
+                                                    className="text-xs text-secondary"
+                                                    accept="video/*"
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                                <button
+                                    type="submit"
+                                    disabled={uploadingParty}
+                                    className="btn-primary w-full h-[48px]"
+                                >
+                                    {uploadingParty ? 'Broadcasting...' : 'Update Stream Resource'}
+                                </button>
+                            </div>
+
+                            <div className="bg-panel/50 border border-border p-6 rounded-2xl flex flex-col justify-center text-center">
+                                <Globe className="mx-auto text-pink-500 mb-4" size={48} />
+                                <h4 className="font-bold text-primary mb-2">Global Synchronization</h4>
+                                <p className="text-xs text-secondary leading-relaxed">
+                                    Starting a party will trigger a synchronized video overlay for every connected user.
+                                    Admins control playback globally.
+                                </p>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div className="glass-panel p-6 border border-border">
+                        <h4 className="font-bold text-primary mb-4 flex items-center gap-2">
+                            <Send size={18} className="text-cyan-400" /> Administrative Broadcast Chat (WIP)
+                        </h4>
+                        <p className="text-sm text-secondary italic">Dedicated slider chat will appear globally when party is active.</p>
+                    </div>
+                </div>
             )}
         </div >
     );

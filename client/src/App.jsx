@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
+import PartyOverlay from './components/PartyOverlay';
 import PageTitle from './components/PageTitle';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -47,6 +48,7 @@ function AppContent() {
           </Route>
         </Routes>
       </div>
+      <PartyOverlay />
     </div>
   );
 }

@@ -21,6 +21,16 @@ const io = new Server(server, {
         methods: ["GET", "POST"]
     }
 });
+
+// --- PARTY MODE STATE ---
+let partyState = {
+    active: false,
+    videoSource: '', // Drive ID or URL
+    currentTime: 0,
+    isPlaying: false,
+    type: 'drive', // 'drive' or 'youtube'
+    messages: []
+};
 // ... (keep middle content implicitly by not touching it, wait, replace_file_content replaces block)
 // I need two separate chunks or one large chunk. I will use multi_replace for safety.
 
@@ -134,6 +144,43 @@ app.post('/api/profile/upload-avatar', authenticateToken, upload.single('avatar'
         console.error("[AvatarUpload] Error:", err);
         res.status(500).json({ error: "Avatar upload failed", details: err.message });
     }
+});
+
+// --- PARTY MODE ENDPOINTS ---
+app.post('/api/party/config', authenticateToken, upload.single('video'), async (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    try {
+        const { source, type } = req.body;
+        let videoId = source;
+
+        if (req.file) {
+            videoId = await driveService.uploadPartyVideo(req.file.buffer, req.file.originalname, req.file.mimetype);
+        }
+
+        partyState = {
+            ...partyState,
+            videoSource: videoId,
+            type: type || 'drive',
+            currentTime: 0,
+            isPlaying: false
+        };
+
+        io.emit('party_update', partyState);
+        res.json({ success: true, partyState });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/party/toggle', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    partyState.active = !partyState.active;
+    if (!partyState.active) {
+        partyState.isPlaying = false;
+        partyState.messages = [];
+    }
+    io.emit('party_update', partyState);
+    res.json({ success: true, active: partyState.active });
 });
 
 // --- VOTING SYSTEM ---
@@ -673,9 +720,13 @@ app.delete('/api/users/:id', authenticateToken, (req, res) => {
     res.json({ success: true });
 });
 
-
 // --- CHAT (Socket.io) ---
 io.on('connection', (socket) => {
+    console.log('User connected to socket');
+
+    // Send initial party state
+    socket.emit('party_update', partyState);
+
     // Send recent messages
     const recent = db.prepare(`
         SELECT m.*, u.avatar_id, u.avatar_version 
@@ -699,6 +750,27 @@ io.on('connection', (socket) => {
             avatar_version: user?.avatar_version
         };
         io.emit('new_message', msg);
+    });
+
+    // --- PARTY SOCKETS ---
+    socket.on('party_action', (data) => {
+        // data: { action: 'play'|'pause'|'seek', time: number }
+        if (data.action === 'play') partyState.isPlaying = true;
+        if (data.action === 'pause') partyState.isPlaying = false;
+        if (data.time !== undefined) partyState.currentTime = data.time;
+
+        socket.broadcast.emit('party_update', partyState);
+    });
+
+    socket.on('party_chat', (data) => {
+        // data: { username, avatar_id, avatar_version, content }
+        const pocketMsg = {
+            ...data,
+            timestamp: new Date()
+        };
+        partyState.messages.push(pocketMsg);
+        if (partyState.messages.length > 100) partyState.messages.shift();
+        io.emit('party_chat_update', partyState.messages);
     });
 });
 

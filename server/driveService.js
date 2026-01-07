@@ -11,6 +11,7 @@ const VIDEOS_FOLDER_ID = '17a65IWgfvipnjSfKu6YYssCJwwUOOgvL';
 const FILES_FOLDER_ID = '14nYLGu1H9eqQNCHxk2JXot2G42WY2xN_';
 const DB_FOLDER_ID = '1AGAN36ErTOMF8-SwG2OxJXBQ9VySsVrc';
 const AVATAR_FOLDER_ID = '1_7gJgXHupwKb3lN-nJ3uEzMHzNGni7DO';
+const PARTY_FOLDER_ID = '1j6Ne5b-NC6Tl5sw-9s0K09N8AoT5jhra';
 
 let drive;
 let oauth2Client;
@@ -280,7 +281,7 @@ const restoreDatabase = async () => {
     }
 };
 
-const uploadAvatar = async (fileBuffer, fileName, mimeType) => {
+const uploadPartyVideo = async (fileBuffer, fileName, mimeType) => {
     try {
         if (!drive) throw new Error("Drive not initialized");
         const bufferStream = new stream.PassThrough();
@@ -288,8 +289,8 @@ const uploadAvatar = async (fileBuffer, fileName, mimeType) => {
 
         const res = await drive.files.create({
             resource: {
-                name: `avatar_${Date.now()}_${fileName}`,
-                parents: [AVATAR_FOLDER_ID],
+                name: `party_${Date.now()}_${fileName}`,
+                parents: [PARTY_FOLDER_ID],
             },
             media: {
                 mimeType: mimeType,
@@ -298,25 +299,14 @@ const uploadAvatar = async (fileBuffer, fileName, mimeType) => {
             fields: 'id',
         });
 
-        const avatarId = res.data.id;
-
-        // CRITICAL: Make the file public so it can be viewed via the uc?id= link
-        try {
-            await drive.permissions.create({
-                fileId: avatarId,
-                requestBody: {
-                    role: 'reader',
-                    type: 'anyone',
-                },
-            });
-            console.log(`[DriveService] Permissions set to public for avatar: ${avatarId}`);
-        } catch (perr) {
-            console.warn(`[DriveService] Failed to set permissions for avatar ${avatarId}. It might not be visible.`, perr.message);
-        }
-
-        return avatarId;
+        const videoId = res.data.id;
+        await drive.permissions.create({
+            fileId: videoId,
+            requestBody: { role: 'reader', type: 'anyone' },
+        });
+        return videoId;
     } catch (err) {
-        console.error("[DriveService] Avatar upload failed:", err);
+        console.error("[DriveService] Party video upload failed:", err);
         throw err;
     }
 };
@@ -332,7 +322,9 @@ module.exports = {
     backupDatabase,
     restoreDatabase,
     uploadAvatar,
+    uploadPartyVideo,
     VIDEOS_FOLDER_ID,
     FILES_FOLDER_ID,
-    AVATAR_FOLDER_ID
+    AVATAR_FOLDER_ID,
+    PARTY_FOLDER_ID
 };

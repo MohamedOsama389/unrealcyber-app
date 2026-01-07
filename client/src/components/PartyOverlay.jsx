@@ -225,13 +225,18 @@ const PartyOverlay = () => {
                                 />
                             ) : (
                                 <video
+                                    key={partyState.videoSource} // Force remount on source change
                                     ref={videoRef}
                                     src={`/api/party/video/${partyState.videoSource}`}
                                     className="w-full h-full object-contain"
                                     controls={user?.role === 'admin'}
+                                    preload="auto"
+                                    playsInline
+                                    crossOrigin="anonymous"
                                     onPlay={() => handleAction('play', videoRef.current.currentTime)}
                                     onPause={() => handleAction('pause', videoRef.current.currentTime)}
                                     onSeeked={() => handleAction('seek', videoRef.current.currentTime)}
+                                    onError={(e) => console.error("Video Error:", e.nativeEvent)}
                                 />
                             )}
 

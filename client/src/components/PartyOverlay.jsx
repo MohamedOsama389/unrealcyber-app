@@ -40,6 +40,27 @@ const PartyOverlay = () => {
         return () => socketRef.current.disconnect();
     }, []);
 
+    // Sync Native Video Element (for Drive files)
+    useEffect(() => {
+        if (partyState?.type === 'drive' && videoRef.current && partyState.videoSource) {
+            const video = videoRef.current;
+            const tolerance = 2; // tolerence in seconds
+
+            // Sync Play/Pause
+            if (partyState.isPlaying && video.paused) {
+                video.play().catch(e => console.log("Autoplay blocked:", e));
+            } else if (!partyState.isPlaying && !video.paused) {
+                video.pause();
+            }
+
+            // Sync Time if drifted
+            if (Math.abs(video.currentTime - partyState.currentTime) > tolerance) {
+                console.log(`Syncing time: local=${video.currentTime}, server=${partyState.currentTime}`);
+                video.currentTime = partyState.currentTime;
+            }
+        }
+    }, [partyState?.isPlaying, partyState?.currentTime, partyState?.type, partyState?.videoSource]);
+
     useEffect(() => {
         if (chatOpen) {
             chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -203,35 +224,25 @@ const PartyOverlay = () => {
                                     allowFullScreen
                                 />
                             ) : (
-                                <iframe
-                                    src={videoUrl}
-                                    className="w-full h-full"
-                                    allow="autoplay"
-                                    allowFullScreen
+                                <video
+                                    ref={videoRef}
+                                    src={`/api/party/video/${partyState.videoSource}`}
+                                    className="w-full h-full object-contain"
+                                    controls={user?.role === 'admin'}
+                                    onPlay={() => handleAction('play', videoRef.current.currentTime)}
+                                    onPause={() => handleAction('pause', videoRef.current.currentTime)}
+                                    onSeeked={() => handleAction('seek', videoRef.current.currentTime)}
                                 />
                             )}
 
-                            {/* Interaction Shield for Non-Admins */}
-                            {user?.role !== 'admin' && (
+                            {/* Interaction Shield for Non-Admins (Only for YouTube - Drive uses native controls logic) */}
+                            {user?.role !== 'admin' && partyState.type === 'youtube' && (
                                 <div className="absolute inset-0 z-20 bg-transparent" />
                             )}
 
-                            {/* Admin Controls Overlay */}
+                            {/* Admin Controls Overlay (Legacy/Backup - only needed for custom UI) */}
                             {user?.role === 'admin' && partyState.type === 'drive' && (
-                                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-4 z-30">
-                                    <button onClick={() => {
-                                        if (videoRef.current.paused) videoRef.current.play();
-                                        else videoRef.current.pause();
-                                    }} className="p-3 bg-cyan-500 rounded-full text-white">
-                                        {partyState.isPlaying ? <Pause size={20} /> : <Play size={20} />}
-                                    </button>
-                                    <div className="flex-1 h-1 bg-white/20 rounded-full relative">
-                                        <div
-                                            className="absolute inset-y-0 left-0 bg-cyan-500 rounded-full"
-                                            style={{ width: `${(partyState.currentTime / (videoRef.current?.duration || 1)) * 100}%` }}
-                                        />
-                                    </div>
-                                </div>
+                                <></> // HIDDEN: We use native controls for Drive now to ensure better UX
                             )}
                         </div>
 

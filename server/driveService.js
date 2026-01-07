@@ -341,6 +341,20 @@ const uploadPartyVideo = async (fileBuffer, fileName, mimeType) => {
     }
 };
 
+const getFileStream = async (fileId) => {
+    try {
+        if (!drive) throw new Error("Google Drive Service not initialized");
+        const response = await drive.files.get(
+            { fileId, alt: 'media' },
+            { responseType: 'stream' }
+        );
+        return response.data;
+    } catch (error) {
+        console.error("Error getting file stream:", error.message);
+        throw error;
+    }
+};
+
 module.exports = {
     uploadFile,
     listFiles,
@@ -353,6 +367,7 @@ module.exports = {
     restoreDatabase,
     uploadAvatar,
     uploadPartyVideo,
+    getFileStream, // Export new function
     VIDEOS_FOLDER_ID,
     FILES_FOLDER_ID,
     AVATAR_FOLDER_ID,

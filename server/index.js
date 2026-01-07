@@ -182,6 +182,17 @@ app.get('/api/party/files', authenticateToken, async (req, res) => {
     }
 });
 
+app.get('/api/party/video/:fileId', async (req, res) => {
+    try {
+        const stream = await driveService.getFileStream(req.params.fileId);
+        res.setHeader('Content-Type', 'video/mp4');
+        stream.pipe(res);
+    } catch (err) {
+        console.error("Video proxy error:", err);
+        res.sendStatus(500);
+    }
+});
+
 app.post('/api/party/toggle', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
     partyState.active = !partyState.active;

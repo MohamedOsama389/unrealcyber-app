@@ -281,6 +281,36 @@ const restoreDatabase = async () => {
     }
 };
 
+const uploadAvatar = async (fileBuffer, fileName, mimeType) => {
+    try {
+        if (!drive) throw new Error("Drive not initialized");
+        const bufferStream = new stream.PassThrough();
+        bufferStream.end(fileBuffer);
+
+        const res = await drive.files.create({
+            resource: {
+                name: `avatar_${Date.now()}_${fileName}`,
+                parents: [AVATAR_FOLDER_ID],
+            },
+            media: {
+                mimeType: mimeType,
+                body: bufferStream,
+            },
+            fields: 'id',
+        });
+
+        const avatarId = res.data.id;
+        await drive.permissions.create({
+            fileId: avatarId,
+            requestBody: { role: 'reader', type: 'anyone' },
+        });
+        return avatarId;
+    } catch (err) {
+        console.error("[DriveService] Avatar upload failed:", err);
+        throw err;
+    }
+};
+
 const uploadPartyVideo = async (fileBuffer, fileName, mimeType) => {
     try {
         if (!drive) throw new Error("Drive not initialized");

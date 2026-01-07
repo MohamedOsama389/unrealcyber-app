@@ -9,6 +9,7 @@ const PartyOverlay = () => {
     const { user } = useAuth();
     const [partyState, setPartyState] = useState(null);
     const [chatOpen, setChatOpen] = useState(true);
+    const [hasJoined, setHasJoined] = useState(false);
     const [minimized, setMinimized] = useState(false);
     const [hidden, setHidden] = useState(false);
     const [input, setInput] = useState('');
@@ -22,10 +23,11 @@ const PartyOverlay = () => {
 
         socketRef.current.on('party_update', (state) => {
             setPartyState(prev => {
-                // If it was inactive and now it's active, reset local hidden/minimized state
+                // If it was inactive and now it's active, reset local hidden/minimized/joined state
                 if (!prev?.active && state.active) {
                     setHidden(false);
                     setMinimized(false);
+                    setHasJoined(false);
                 }
                 return state;
             });
@@ -80,8 +82,41 @@ const PartyOverlay = () => {
     };
 
     const videoUrl = partyState.type === 'drive'
-        ? `https://drive.google.com/uc?id=${partyState.videoSource}&export=download`
+        ? `https://drive.google.com/file/d/${partyState.videoSource}/preview`
         : getYoutubeEmbed(partyState.videoSource);
+
+    if (!hasJoined && !minimized) {
+        return (
+            <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="fixed inset-0 z-[1000] bg-black/95 flex items-center justify-center p-6"
+            >
+                <div className="max-w-md w-full bg-panel border border-border p-8 rounded-3xl text-center shadow-2xl relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500" />
+                    <div className="w-20 h-20 bg-pink-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-pink-500/20">
+                        <Play size={40} className="text-pink-500 ml-1" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-primary mb-2">Live Broadcast Starting!</h2>
+                    <p className="text-secondary mb-8">An administrator has started a global party. Would you like to join the broadcast and chat with others?</p>
+                    <div className="flex flex-col gap-3">
+                        <button
+                            onClick={() => setHasJoined(true)}
+                            className="bg-pink-600 hover:bg-pink-500 text-white py-4 rounded-xl font-bold shadow-lg shadow-pink-500/20 transition-all active:scale-95"
+                        >
+                            JOIN BROADCAST NOW
+                        </button>
+                        <button
+                            onClick={() => setHidden(true)}
+                            className="text-secondary hover:text-primary transition-colors py-2 text-sm font-medium"
+                        >
+                            Maybe Later (Hide)
+                        </button>
+                    </div>
+                </div>
+            </motion.div>
+        );
+    }
 
     return (
         <motion.div
@@ -164,18 +199,15 @@ const PartyOverlay = () => {
                                 <iframe
                                     src={videoUrl}
                                     className="w-full h-full"
-                                    allow="autoplay; encrypted-media"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                     allowFullScreen
                                 />
                             ) : (
-                                <video
-                                    ref={videoRef}
+                                <iframe
                                     src={videoUrl}
-                                    autoPlay
-                                    muted={isMuted}
                                     className="w-full h-full"
-                                    onPlay={() => handleAction('play')}
-                                    onPause={() => handleAction('pause')}
+                                    allow="autoplay"
+                                    allowFullScreen
                                 />
                             )}
 

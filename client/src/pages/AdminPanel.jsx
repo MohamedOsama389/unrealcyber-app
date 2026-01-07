@@ -3,9 +3,10 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Users, FileCheck, Search, Award, Trash2, Key, Star, Edit, Trash, Music, Play, Square, Send, Globe } from 'lucide-react';
+import { Shield, Users, FileCheck, Search, Award, Trash2, Key, Star, Edit, Trash, Music, Play, Square, Send, Globe, Pause } from 'lucide-react';
 import clsx from 'clsx';
 import StarRating from '../components/StarRating';
+import io from 'socket.io-client';
 
 const AdminPanel = () => {
     const { user } = useAuth();
@@ -18,14 +19,26 @@ const AdminPanel = () => {
     const [newUser, setNewUser] = useState({ username: '', password: '', role: 'student' });
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [newVote, setNewVote] = useState({ title: '', options: ['', ''] });
-    const [partyConfig, setPartyConfig] = useState({ source: '', type: 'drive', active: false });
+    const [partyConfig, setPartyConfig] = useState({ source: '', type: 'drive', active: false, isPlaying: false });
     const [uploadingParty, setUploadingParty] = useState(false);
 
     useEffect(() => {
         fetchUsers();
         fetchSubmissions();
         fetchVotes();
-        fetchPartyState();
+
+        const socket = io();
+        socket.on('party_update', (state) => {
+            setPartyConfig(prev => ({
+                ...prev,
+                active: state.active,
+                isPlaying: state.isPlaying,
+                type: state.type,
+                source: state.videoSource
+            }));
+        });
+
+        return () => socket.disconnect();
     }, []);
 
     const fetchPartyState = async () => {
@@ -683,10 +696,32 @@ const AdminPanel = () => {
                             <div className="bg-panel/50 border border-border p-6 rounded-2xl flex flex-col justify-center text-center">
                                 <Globe className="mx-auto text-pink-500 mb-4" size={48} />
                                 <h4 className="font-bold text-primary mb-2">Global Synchronization</h4>
-                                <p className="text-xs text-secondary leading-relaxed">
+                                <p className="text-xs text-secondary leading-relaxed mb-6">
                                     Starting a party will trigger a synchronized video overlay for every connected user.
                                     Admins control playback globally.
                                 </p>
+                                {partyConfig.active && (
+                                    <div className="flex flex-col gap-3">
+                                        <div className="flex items-center justify-center gap-2">
+                                            <button
+                                                onClick={() => {
+                                                    const action = partyConfig.isPlaying ? 'pause' : 'play';
+                                                    axios.post('/api/socket-relay', { event: 'party_action', data: { action } });
+                                                }}
+                                                className="flex-1 bg-cyan-600 hover:bg-cyan-500 text-white py-2 rounded-lg font-bold text-sm transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                {partyConfig.isPlaying ? <Pause size={16} /> : <Play size={16} />}
+                                                {partyConfig.isPlaying ? 'GLOBAL PAUSE' : 'GLOBAL PLAY'}
+                                            </button>
+                                        </div>
+                                        <button
+                                            onClick={() => axios.post('/api/socket-relay', { event: 'party_action', data: { action: 'sync' } })}
+                                            className="bg-white/5 hover:bg-white/10 text-white/60 py-2 rounded-lg text-xs transition-colors"
+                                        >
+                                            RE-SYNC ALL PLAYERS
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </form>

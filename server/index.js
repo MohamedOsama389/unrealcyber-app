@@ -183,6 +183,20 @@ app.post('/api/party/toggle', authenticateToken, (req, res) => {
     res.json({ success: true, active: partyState.active });
 });
 
+app.post('/api/socket-relay', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    const { event, data } = req.body;
+
+    if (event === 'party_action') {
+        if (data.action === 'play') partyState.isPlaying = true;
+        if (data.action === 'pause') partyState.isPlaying = false;
+        // Broadcast the updated state
+        io.emit('party_update', partyState);
+    }
+
+    res.json({ success: true });
+});
+
 // --- VOTING SYSTEM ---
 app.get('/api/votes/active', authenticateToken, (req, res) => {
     const votes = db.prepare('SELECT * FROM votes WHERE is_active = 1').all();

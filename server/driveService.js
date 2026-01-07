@@ -341,14 +341,19 @@ const uploadPartyVideo = async (fileBuffer, fileName, mimeType) => {
     }
 };
 
-const getFileStream = async (fileId) => {
+const getFileStream = async (fileId, range = null) => {
     try {
         if (!drive) throw new Error("Google Drive Service not initialized");
-        const response = await drive.files.get(
-            { fileId, alt: 'media' },
-            { responseType: 'stream' }
-        );
-        return response.data;
+
+        const params = { fileId, alt: 'media' };
+        const options = { responseType: 'stream' };
+
+        if (range) {
+            options.headers = { Range: range };
+        }
+
+        const response = await drive.files.get(params, options);
+        return response;
     } catch (error) {
         console.error("Error getting file stream:", error.message);
         throw error;

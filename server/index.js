@@ -184,11 +184,23 @@ app.get('/api/party/files', authenticateToken, async (req, res) => {
 
 app.get('/api/party/video/:fileId', async (req, res) => {
     try {
-        const stream = await driveService.getFileStream(req.params.fileId);
-        res.setHeader('Content-Type', 'video/mp4');
-        stream.pipe(res);
+        const range = req.headers.range;
+        const response = await driveService.getFileStream(req.params.fileId, range);
+
+        // Forward headers from Drive API to Client
+        if (response.headers['content-length']) res.setHeader('Content-Length', response.headers['content-length']);
+        if (response.headers['content-type']) res.setHeader('Content-Type', response.headers['content-type']);
+        if (response.headers['content-range']) res.setHeader('Content-Range', response.headers['content-range']);
+        if (response.headers['accept-ranges']) res.setHeader('Accept-Ranges', response.headers['accept-ranges']);
+
+        // Set status code based on Drive response (usually 200 or 206)
+        res.status(response.status);
+
+        response.data.pipe(res);
     } catch (err) {
-        console.error("Video proxy error:", err);
+        console.error("Video proxy error:", err.response ? err.response.status : err.message);
+        // Handle 416 Range Not Satisfiable explicitly if needed, otherwise 500
+        if (err.response && err.response.status === 416) return res.sendStatus(416);
         res.sendStatus(500);
     }
 });

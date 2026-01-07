@@ -806,7 +806,7 @@ io.on('connection', (socket) => {
         if (data.action === 'pause') partyState.isPlaying = false;
         if (data.time !== undefined) partyState.currentTime = data.time;
 
-        socket.broadcast.emit('party_update', partyState);
+        io.emit('party_update', partyState);
     });
 
     socket.on('party_chat', (data) => {

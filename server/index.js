@@ -187,11 +187,20 @@ app.get('/api/party/video/:fileId', async (req, res) => {
         const range = req.headers.range;
         const response = await driveService.getFileStream(req.params.fileId, range);
 
-        // Forward headers from Drive API to Client
-        if (response.headers['content-length']) res.setHeader('Content-Length', response.headers['content-length']);
-        if (response.headers['content-type']) res.setHeader('Content-Type', response.headers['content-type']);
-        if (response.headers['content-range']) res.setHeader('Content-Range', response.headers['content-range']);
-        if (response.headers['accept-ranges']) res.setHeader('Accept-Ranges', response.headers['accept-ranges']);
+        // Forward headers from Drive API to Client (Handle case-insensitivity)
+        const headers = response.headers;
+        const getHeader = (key) => headers[key] || headers[key.toLowerCase()];
+
+        const contentLength = getHeader('Content-Length');
+        const contentType = getHeader('Content-Type');
+        const contentRange = getHeader('Content-Range');
+
+        if (contentLength) res.setHeader('Content-Length', contentLength);
+        res.setHeader('Content-Type', contentType || 'video/mp4'); // Fallback to mp4
+        if (contentRange) res.setHeader('Content-Range', contentRange);
+
+        // Always advertise Range support
+        res.setHeader('Accept-Ranges', 'bytes');
 
         // Set status code based on Drive response (usually 200 or 206)
         res.status(response.status);

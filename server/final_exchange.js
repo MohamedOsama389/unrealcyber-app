@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 
 const CREDENTIALS_PATH = path.join(__dirname, '../client_secret_1028956746376-n64suev71rvp27qbpj573ec3efctj75k.apps.googleusercontent.com.json');
-const CODE = "4/0ATX87lP3uq0LLdNamxQWGgILx94ChVg_RIcBSVSFEM8f2iCZmpLbUG6FoXbAf6mOG1s7tg";
+const CODE = "4/0ASc3gC0-P3Pf91nhJqphSpk3RUWJ20myfFc_EpIs27bBnE2Gm6RoWVYTMjkth-acqI18DA";
 
 async function exchange() {
     try {
@@ -24,7 +24,8 @@ async function exchange() {
         console.log("Tokens written to final_tokens.json");
 
     } catch (err) {
-        console.error("Error exchanging token:", err);
+        console.error("Error exchanging token:", JSON.stringify(err, null, 2));
+        console.error(err);
     }
 }
 

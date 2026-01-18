@@ -12,6 +12,7 @@ const multer = require('multer');
 const driveService = require('./driveService');
 const { initBot } = require('./bot');
 
+let botInstance;
 const upload = multer({ storage: multer.memoryStorage() });
 
 const app = express();
@@ -433,6 +434,53 @@ app.delete('/api/tasks/:id', authenticateToken, (req, res) => {
     db.prepare('DELETE FROM student_uploads WHERE task_id = ?').run(id); // Clean up uploads first
     db.prepare('DELETE FROM tasks WHERE id = ?').run(id);
     res.json({ success: true });
+});
+
+// Admin Confirm/Notify
+app.post('/api/tasks/confirm/:uploadId', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    const { uploadId } = req.params;
+
+    try {
+        const upload = db.prepare('SELECT u.username, t.title FROM student_uploads u JOIN tasks t ON u.task_id = t.id WHERE u.id = ?').get(uploadId);
+        if (!upload) return res.status(404).json({ error: "Upload not found" });
+
+        const student = db.prepare('SELECT id FROM users WHERE username = ?').get(upload.username);
+        if (student) {
+            const teleUser = db.prepare('SELECT telegram_id FROM telegram_users WHERE website_user_id = ?').get(student.id);
+            if (teleUser && botInstance && botInstance.sendCongrats) {
+                await botInstance.sendCongrats(teleUser.telegram_id, upload.title);
+            }
+        }
+        res.json({ success: true });
+    } catch (err) {
+        console.error("Confirm Fail:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Admin Deny/Notify
+app.post('/api/tasks/deny/:uploadId', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    const { uploadId } = req.params;
+    const { reason } = req.body;
+
+    try {
+        const upload = db.prepare('SELECT u.username, t.title FROM student_uploads u JOIN tasks t ON u.task_id = t.id WHERE u.id = ?').get(uploadId);
+        if (!upload) return res.status(404).json({ error: "Upload not found" });
+
+        const student = db.prepare('SELECT id FROM users WHERE username = ?').get(upload.username);
+        if (student) {
+            const teleUser = db.prepare('SELECT telegram_id FROM telegram_users WHERE website_user_id = ?').get(student.id);
+            if (teleUser && botInstance && botInstance.sendDenial) {
+                await botInstance.sendDenial(teleUser.telegram_id, upload.title, reason || "No reason specified.");
+            }
+        }
+        res.json({ success: true });
+    } catch (err) {
+        console.error("Deny Fail:", err);
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // Student upload to GDrive
@@ -934,7 +982,7 @@ const startServer = async () => {
         db = require('./database');
 
         // Initialize Telegram Bot
-        initBot(db);
+        botInstance = initBot(db);
 
         // Check for avatar_version column
         try {

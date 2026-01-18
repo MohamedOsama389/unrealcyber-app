@@ -14,13 +14,7 @@ function initBot(db) {
     const bot = new Telegraf(token);
     const siteUrl = process.env.SITE_BASE_URL || "https://unrealcyberacademy.up.railway.app";
 
-    const SUBJECTS = [
-        { key: 'arabic', label: 'Arabic' },
-        { key: 'social_studies', label: 'Social Studies' },
-        { key: 'geometry', label: 'Geometry' },
-        { key: 'english', label: 'English' },
-        { key: 'general', label: 'General' }
-    ];
+    const SUBJECTS = ['arabic', 'social_studies', 'geometry', 'english', 'general'];
 
     // --- HELPERS ---
 
@@ -44,6 +38,25 @@ function initBot(db) {
         return db.prepare('SELECT * FROM tasks WHERE subject = ? ORDER BY created_at DESC LIMIT 1').get(subject);
     };
 
+    const convertTo24h = (timeStr) => {
+        const match = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+        if (!match) return null;
+        let [_, hours, minutes, ampm] = match;
+        hours = parseInt(hours);
+        if (ampm.toUpperCase() === 'PM' && hours < 12) hours += 12;
+        if (ampm.toUpperCase() === 'AM' && hours === 12) hours = 0;
+        return `${String(hours).padStart(2, '0')}:${minutes}`;
+    };
+
+    const convertTo12h = (time24h) => {
+        if (!time24h) return "Not set";
+        let [hours, minutes] = time24h.split(':');
+        hours = parseInt(hours);
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12;
+        return `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
+    };
+
     function sendMission(chatOrCtx, mission) {
         const telegramId = chatOrCtx.chat ? chatOrCtx.chat.id : chatOrCtx;
         const linkedUser = getLinkedUser(telegramId);
@@ -63,7 +76,7 @@ function initBot(db) {
         if (chatOrCtx.reply) {
             chatOrCtx.replyWithMarkdown(message, keyboard);
         } else {
-            bot.telegram.sendMessage(chatOrCtx, message, { parse_mode: 'Markdown', ...keyboard });
+            bot.telegram.sendMessage(chatOrCtx, message, { parse_mode: 'Markdown', ...keyboard }).catch(e => console.error("Error sending mission:", e));
         }
     }
 
@@ -74,9 +87,9 @@ function initBot(db) {
         const linkedUser = getLinkedUser(ctx.from.id);
 
         if (linkedUser) {
-            ctx.reply(`Welcome back, ${linkedUser.username}! 🛡️\n\nYour account is linked to Unreal Cyber Academy.\n\nCommands:\n/subjects - Manage subscriptions\n/mission - Get latest mission\n/time - Set reminder time\n/summary - Get weekly summary`);
+            ctx.reply(`Welcome back, ${linkedUser.username}! 🛡️\n\nYour account is linked. Use /time to change reminder settings.`);
         } else {
-            ctx.reply(`Welcome to Unreal Cyber Academy Bot! 🛡️\n\nTo personalize your experience, please link your website account.\n\nUse /login to start.`);
+            ctx.reply(`Welcome to Unreal Cyber Academy Bot! 🛡️\n\nPlease link your website account to receive daily missions.\n\nUse /login to start.`);
         }
     });
 
@@ -92,14 +105,7 @@ function initBot(db) {
 
     bot.command('time', (ctx) => {
         sessions[ctx.from.id] = { step: 'time' };
-        ctx.reply("What time would you like to receive your daily reminders? (Format HH:mm, e.g., 18:30)");
-    });
-
-    bot.command('subjects', (ctx) => {
-        const keyboard = Markup.inlineKeyboard(
-            SUBJECTS.map(s => [Markup.button.callback(`Toggle ${s.label}`, `sub_${s.key}`)])
-        );
-        ctx.reply("Manage your subscriptions:", keyboard);
+        ctx.reply("What time would you like to receive daily missions? (Format HH:mm AM/PM, e.g., 06:00 PM)");
     });
 
     bot.command('mission', (ctx) => {
@@ -115,7 +121,7 @@ function initBot(db) {
         sendWeeklySummaryToUser(ctx.from.id);
     });
 
-    // --- MESSAGE HANDLER (Login Flow & Time) ---
+    // --- MESSAGE HANDLER ---
 
     bot.on('text', async (ctx) => {
         const session = sessions[ctx.from.id];
@@ -125,9 +131,7 @@ function initBot(db) {
 
         if (session.step === 'username') {
             const user = db.prepare('SELECT * FROM users WHERE username = ?').get(text);
-            if (!user) {
-                return ctx.reply("User not found. Please check your username and try /login again.");
-            }
+            if (!user) return ctx.reply("User not found. Try /login again.");
             session.username = text;
             session.step = 'password';
             ctx.reply("Enter your password:");
@@ -138,45 +142,31 @@ function initBot(db) {
 
             if (valid) {
                 db.prepare('UPDATE telegram_users SET website_user_id = ? WHERE telegram_id = ?').run(user.id, String(ctx.from.id));
-                delete sessions[ctx.from.id];
-                ctx.reply(`✅ Success! You are now linked as *${user.username}*.\n\nUse /subjects to choose what you want to follow.`, { parse_mode: 'Markdown' });
+                // Auto-subscribe to all subjects
+                SUBJECTS.forEach(sub => {
+                    db.prepare('INSERT OR IGNORE INTO telegram_subscriptions (telegram_id, subject) VALUES (?, ?)').run(String(ctx.from.id), sub);
+                });
+
+                session.step = 'time';
+                ctx.reply(`✅ Linked as *${user.username}*!\n\nNow, tell me what time should I remind you about your daily missions?\n(Use format HH:mm AM/PM, e.g., 07:30 AM)`, { parse_mode: 'Markdown' });
             } else {
                 delete sessions[ctx.from.id];
-                ctx.reply("❌ Invalid password. Please try /login again.");
+                ctx.reply("❌ Invalid password. Use /login to try again.");
             }
         }
         else if (session.step === 'time') {
-            if (/^([01]\d|2[0-3]):([0-5]\d)$/.test(text)) {
-                db.prepare('UPDATE telegram_subscriptions SET reminder_time = ? WHERE telegram_id = ?').run(text, String(ctx.from.id));
+            const time24 = convertTo24h(text);
+            if (time24) {
+                db.prepare('UPDATE telegram_subscriptions SET reminder_time = ? WHERE telegram_id = ?').run(time24, String(ctx.from.id));
                 delete sessions[ctx.from.id];
-                ctx.reply(`✅ Reminder time updated to ${text}. (Note: This applies to all your subjects)`);
+                ctx.reply(`✅ All set! I'll remind you at ${text} every day. 🥋`);
             } else {
-                ctx.reply("Invalid format. Please use HH:mm (e.g., 19:00).");
+                ctx.reply("Invalid format. Please use HH:mm AM/PM (e.g., 06:00 PM).");
             }
         }
     });
 
     // --- CALLBACKS ---
-
-    bot.action(/sub_(.+)/, async (ctx) => {
-        const subject = ctx.match[1];
-        const telegramId = String(ctx.from.id);
-
-        const existing = db.prepare('SELECT * FROM telegram_subscriptions WHERE telegram_id = ? AND subject = ?').get(telegramId, subject);
-
-        if (existing) {
-            db.prepare('DELETE FROM telegram_subscriptions WHERE telegram_id = ? AND subject = ?').run(telegramId, subject);
-            await ctx.answerCbQuery(`Unsubscribed from ${subject}`);
-            await ctx.reply(`❌ You are no longer subscribed to ${subject.replace('_', ' ')}.`);
-        } else {
-            db.prepare('INSERT INTO telegram_subscriptions (telegram_id, subject) VALUES (?, ?)').run(telegramId, subject);
-            await ctx.answerCbQuery(`Subscribed to ${subject}`);
-            await ctx.reply(`✅ Subscribed to ${subject.replace('_', ' ')}!`);
-
-            const mission = getLatestMission(subject);
-            if (mission) sendMission(ctx, mission);
-        }
-    });
 
     bot.action(/done_(.+)/, async (ctx) => {
         const missionId = ctx.match[1];
@@ -184,11 +174,10 @@ function initBot(db) {
         const mission = db.prepare('SELECT * FROM tasks WHERE id = ?').get(missionId);
 
         if (!mission) return ctx.answerCbQuery("Mission not found.");
+        db.prepare('INSERT OR IGNORE INTO telegram_completions (telegram_id, subject, mission_id) VALUES (?, ?, ?)').run(telegramId, mission.subject, missionId);
 
-        db.prepare('INSERT INTO telegram_completions (telegram_id, subject, mission_id) VALUES (?, ?, ?)').run(telegramId, mission.subject, missionId);
-
-        await ctx.answerCbQuery("Awesome! Progress saved.");
-        ctx.editMessageText(ctx.callbackQuery.message.text + "\n\n✅ *Status: Marked as Done*", { parse_mode: 'Markdown' });
+        await ctx.answerCbQuery("Progress saved!");
+        ctx.editMessageText(ctx.callbackQuery.message.text + "\n\n✅ *Status: Completed*", { parse_mode: 'Markdown' });
     });
 
     // --- CRON JOBS ---
@@ -199,14 +188,11 @@ function initBot(db) {
         const currentTime = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Cairo' });
 
         const subs = db.prepare('SELECT * FROM telegram_subscriptions WHERE reminder_time = ? AND enabled = 1').all(currentTime);
-
         for (const sub of subs) {
             const mission = getLatestMission(sub.subject);
             if (mission) {
                 const done = db.prepare('SELECT * FROM telegram_completions WHERE telegram_id = ? AND mission_id = ?').get(sub.telegram_id, mission.id);
-                if (!done) {
-                    sendMission(sub.telegram_id, mission);
-                }
+                if (!done) sendMission(sub.telegram_id, mission);
             }
         }
     });
@@ -259,8 +245,20 @@ function initBot(db) {
         bot.telegram.sendMessage(telegramId, summaryMsg, { parse_mode: 'Markdown' });
     }
 
+    // --- EXTERNAL NOTIFICATIONS ---
+
+    bot.sendCongrats = (telegramId, taskTitle) => {
+        const msg = `🎉 *CONGRATULATIONS!* 🏆\n\nYour submission for mission "*${taskTitle}*" has been approved by the Commander!\n\nExcellent work, keep it up! 🛡️`;
+        return bot.telegram.sendMessage(telegramId, msg, { parse_mode: 'Markdown' });
+    };
+
+    bot.sendDenial = (telegramId, taskTitle, reason) => {
+        const msg = `❌ *MISSION UPDATE*\n\nYour submission for "*${taskTitle}*" needs improvement.\n\n📝 *Commander's Feedback:* ${reason}\n\nPlease check the Mission Center and try again! 🥋`;
+        return bot.telegram.sendMessage(telegramId, msg, { parse_mode: 'Markdown' });
+    };
+
     bot.launch();
-    console.log("Telegram Bot Initialized with Advanced Features");
+    console.log("Telegram Bot v2.0 Initialized (12h format & Proactive flow)");
 
     process.once('SIGINT', () => bot.stop('SIGINT'));
     process.once('SIGTERM', () => bot.stop('SIGTERM'));

@@ -8,7 +8,8 @@ import StarRating from '../components/StarRating';
 // Sub-component for Admin Reviewing inside Tasks
 const AdminTaskReviews = ({ taskId }) => {
     const [submissions, setSubmissions] = useState([]);
-    const [grading, setGrading] = useState({ id: null, rating: 0, admin_notes: '' });
+    const [denyReason, setDenyReason] = useState('');
+    const [actionMsg, setActionMsg] = useState('');
 
     useEffect(() => {
         fetchSubs();
@@ -17,12 +18,31 @@ const AdminTaskReviews = ({ taskId }) => {
     const fetchSubs = async () => {
         try {
             const res = await axios.get('/api/tasks/uploads');
-            // Filter client-side or backend, here client-side for simplicity matching TaskID
             const relevant = res.data.filter(s => s.task_id === taskId);
             setSubmissions(relevant);
         } catch (err) {
             console.error("Failed to load subs");
         }
+    };
+
+    const handleConfirm = async (id) => {
+        try {
+            await axios.post(`/api/tasks/confirm/${id}`);
+            setActionMsg('Student notified of success! 🎉');
+            setTimeout(() => setActionMsg(''), 3000);
+            fetchSubs();
+        } catch (err) { console.error(err); }
+    };
+
+    const handleDeny = async (id) => {
+        if (!denyReason) return alert("Please provide a reason for denial.");
+        try {
+            await axios.post(`/api/tasks/deny/${id}`, { reason: denyReason });
+            setActionMsg('Student notified of denial. ❌');
+            setDenyReason('');
+            setTimeout(() => setActionMsg(''), 3000);
+            fetchSubs();
+        } catch (err) { console.error(err); }
     };
 
     const submitGrade = async (e) => {
@@ -45,44 +65,78 @@ const AdminTaskReviews = ({ taskId }) => {
     if (submissions.length === 0) return <p className="text-xs text-secondary italic">No submissions yet.</p>;
 
     return (
-        <div className="space-y-3">
+        <div className="space-y-4">
+            {actionMsg && <div className="text-[10px] text-cyan-400 font-bold animate-pulse mb-2">{actionMsg}</div>}
             {submissions.map(sub => (
-                <div key={sub.id} className="bg-panel p-3 rounded border border-border">
-                    <div className="flex justify-between text-xs mb-2">
-                        <span className="text-cyan-400 font-bold">{sub.username}</span>
+                <div key={sub.id} className="bg-panel p-4 rounded-xl border border-border shadow-inner">
+                    <div className="flex justify-between text-xs mb-3">
+                        <span className="text-cyan-400 font-bold flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-cyan-500 animate-ping"></div>
+                            {sub.username}
+                        </span>
                         <div className="flex space-x-2">
                             <span className="text-secondary">{new Date(sub.uploaded_at).toLocaleDateString()}</span>
-                            <button onClick={() => handleDelete(sub.id)} className="text-red-400 hover:text-red-300 font-bold">&times;</button>
+                            <button onClick={() => handleDelete(sub.id)} className="text-red-400 hover:text-red-300 font-bold transition-colors">
+                                <Trash2 size={12} />
+                            </button>
                         </div>
                     </div>
-                    <div className="text-xs text-secondary mb-2 truncate">
-                        <a href={sub.upload_link} target="_blank" className="underline hover:text-cyan-300">View File</a>
+
+                    <div className="text-xs text-secondary mb-3 flex items-center justify-between">
+                        <a href={sub.upload_link} target="_blank" className="underline hover:text-cyan-300 flex items-center gap-1">
+                            <ExternalLink size={10} /> View Submission
+                        </a>
+                    </div>
+
+                    {/* TELEGRAM ACTIONS */}
+                    <div className="grid grid-cols-1 gap-2 mb-4">
+                        <button
+                            onClick={() => handleConfirm(sub.id)}
+                            className="w-full py-1.5 bg-green-600/20 text-green-400 border border-green-600/30 rounded-lg text-[10px] font-bold hover:bg-green-600 hover:text-white transition-all"
+                        >
+                            ✅ Confirm & Notify Bot
+                        </button>
+
+                        <div className="flex gap-2">
+                            <input
+                                className="flex-1 bg-app border border-border rounded-lg text-[10px] px-2 text-primary"
+                                placeholder="Deny reason..."
+                                value={grading.id === sub.id ? '' : denyReason}
+                                onChange={(e) => setDenyReason(e.target.value)}
+                            />
+                            <button
+                                onClick={() => handleDeny(sub.id)}
+                                className="px-3 py-1.5 bg-red-600/20 text-red-400 border border-red-600/30 rounded-lg text-[10px] font-bold hover:bg-red-600 hover:text-white transition-all"
+                            >
+                                ❌ Deny
+                            </button>
+                        </div>
                     </div>
 
                     {grading.id === sub.id ? (
-                        <form onSubmit={submitGrade} className="mt-2 bg-panel border border-border p-2 rounded">
+                        <form onSubmit={submitGrade} className="mt-2 bg-panel border border-border p-3 rounded-xl">
                             <StarRating rating={grading.rating} setRating={r => setGrading({ ...grading, rating: r })} />
                             <input
-                                className="w-full bg-app text-primary text-xs p-1 rounded mt-1 mb-1 border border-border"
+                                className="w-full bg-app text-primary text-xs p-2 rounded-lg mt-2 mb-2 border border-border"
                                 value={grading.admin_notes}
                                 onChange={e => setGrading({ ...grading, admin_notes: e.target.value })}
-                                placeholder="Feedback..."
+                                placeholder="Internal feedback..."
                             />
-                            <div className="flex justify-end space-x-1">
-                                <button type="button" onClick={() => setGrading({ id: null })} className="px-2 py-1 bg-panel border border-border text-[10px] rounded text-primary">Cancel</button>
-                                <button type="submit" className="px-2 py-1 bg-green-600 text-[10px] rounded text-white">Save</button>
+                            <div className="flex justify-end space-x-2">
+                                <button type="button" onClick={() => setGrading({ id: null })} className="px-3 py-1 bg-panel border border-border text-[10px] rounded-lg text-primary">Cancel</button>
+                                <button type="submit" className="px-3 py-1 bg-cyan-600 text-[10px] rounded-lg text-white font-bold">Save Rating</button>
                             </div>
                         </form>
                     ) : (
-                        <div className="flex justify-between items-center mt-2 border-t border-border pt-1">
+                        <div className="flex justify-between items-center mt-2 border-t border-border pt-2">
                             <div>
                                 {sub.rating ? (
                                     <div className="flex items-center space-x-1">
                                         <StarRating rating={sub.rating} readonly size={12} />
                                     </div>
-                                ) : <span className="text-[10px] text-yellow-500">Unrated</span>}
+                                ) : <span className="text-[10px] text-yellow-500 italic">Pending Review</span>}
                             </div>
-                            <button onClick={() => setGrading({ id: sub.id, rating: sub.rating || 0, admin_notes: sub.admin_notes || '' })} className="text-[10px] text-secondary hover:text-primary">Rate/Edit</button>
+                            <button onClick={() => setGrading({ id: sub.id, rating: sub.rating || 0, admin_notes: sub.admin_notes || '' })} className="text-[10px] text-secondary hover:text-cyan-400 transition-colors">Rate/Edit</button>
                         </div>
                     )}
                 </div>
@@ -102,10 +156,12 @@ const Tasks = () => {
     const [mySubmissions, setMySubmissions] = useState([]);
 
     useEffect(() => {
-        fetchTasks();
-        fetchSettings();
-        if (user.role === 'student') fetchMySubmissions();
-    }, []);
+        if (user) {
+            fetchTasks();
+            fetchSettings();
+            if (user.role === 'student') fetchMySubmissions();
+        }
+    }, [user]);
 
     const fetchSettings = async () => {
         try {
@@ -195,6 +251,8 @@ const Tasks = () => {
             setMessage('Failed to delete mission');
         }
     };
+
+    if (!user) return <div className="p-8 text-center text-secondary">Loading Secure Mission Data...</div>;
 
     return (
         <div className="p-8 max-w-6xl mx-auto">

@@ -252,6 +252,7 @@ const Tasks = () => {
     const handleCreateTask = async (e) => {
         e.preventDefault();
         try {
+            await axios.post('/api/tasks', newTask);
             setMessage('Task created!');
             setNewTask({ title: '', drive_link: '', notes: '', subject: '' });
             fetchTasks();

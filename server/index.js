@@ -10,6 +10,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const driveService = require('./driveService');
+const { initBot } = require('./bot');
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -342,10 +343,87 @@ app.get('/api/tasks', authenticateToken, (req, res) => {
     res.json(tasks);
 });
 
+// NEW MISSIONS ENDPOINTS
+app.get('/api/missions', (req, res) => {
+    try {
+        console.log("[API] GET /api/missions hit");
+        const tasks = db.prepare('SELECT * FROM tasks ORDER BY created_at DESC').all();
+        const tasksWithLinks = tasks.map(t => ({
+            ...t,
+            website_link: "https://unrealcyberacademy.up.railway.app/tasks"
+        }));
+        res.json(tasksWithLinks);
+    } catch (err) {
+        console.error("[API Error] /api/missions:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/missions/latest', (req, res) => {
+    try {
+        const { subject } = req.query;
+        let task;
+        if (subject) {
+            task = db.prepare('SELECT * FROM tasks WHERE subject = ? ORDER BY created_at DESC LIMIT 1').get(subject);
+        } else {
+            task = db.prepare('SELECT * FROM tasks ORDER BY created_at DESC LIMIT 1').get();
+        }
+
+        if (!task) return res.json(null);
+
+        res.json({
+            ...task,
+            website_link: "https://unrealcyberacademy.up.railway.app/tasks"
+        });
+    } catch (err) {
+        console.error("[API Error] /api/missions/latest:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/missions/:id', (req, res) => {
+    try {
+        const task = db.prepare('SELECT * FROM tasks WHERE id = ?').get(req.params.id);
+        if (!task) return res.status(404).json({ error: "Mission not found" });
+        res.json({
+            ...task,
+            website_link: "https://unrealcyberacademy.up.railway.app/tasks"
+        });
+    } catch (err) {
+        console.error("[API Error] /api/missions/:id:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.post('/api/tasks', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
-    const { title, drive_link, notes } = req.body;
-    db.prepare('INSERT INTO tasks (title, drive_link, notes) VALUES (?, ?, ?)').run(title, drive_link, notes);
+    const { title, drive_link, notes, subject } = req.body;
+    db.prepare('INSERT INTO tasks (title, drive_link, notes, subject) VALUES (?, ?, ?, ?)').run(title, drive_link, notes, subject || 'general');
+    res.json({ success: true });
+});
+
+// --- SETTINGS ---
+app.get('/api/settings', (req, res) => {
+    try {
+        const settings = db.prepare('SELECT * FROM site_settings').all();
+        const settingsMap = {};
+        settings.forEach(s => settingsMap[s.key] = s.value);
+        res.json(settingsMap);
+    } catch (err) {
+        console.error("[API Error] /api/settings (GET):", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/settings', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    const { telegram_enabled, telegram_link } = req.body;
+    if (telegram_enabled !== undefined) {
+        db.prepare('UPDATE site_settings SET value = ? WHERE key = ?').run(String(telegram_enabled), 'telegram_enabled');
+    }
+    if (telegram_link !== undefined) {
+        db.prepare('UPDATE site_settings SET value = ? WHERE key = ?').run(telegram_link, 'telegram_link');
+    }
     res.json({ success: true });
 });
 
@@ -855,6 +933,9 @@ const startServer = async () => {
         // Initialize DB AFTER restore
         db = require('./database');
 
+        // Initialize Telegram Bot
+        initBot(db);
+
         // Check for avatar_version column
         try {
             const userInfo = db.prepare("PRAGMA table_info(users)").all();
@@ -878,14 +959,100 @@ const startServer = async () => {
                 console.log("Adding missing name to folders_meta...");
                 db.prepare('ALTER TABLE folders_meta ADD COLUMN name TEXT').run();
             }
-            const videoInfo = db.prepare("PRAGMA table_info(videos)").all();
-            const hasResources = videoInfo.some(col => col.name === 'resources');
             if (!hasResources) {
                 console.log("Adding missing resources to videos...");
                 db.prepare('ALTER TABLE videos ADD COLUMN resources TEXT').run();
             }
+
+            // Telegram Migrations
+            const taskInfo = db.prepare("PRAGMA table_info(tasks)").all();
+            if (!taskInfo.some(col => col.name === 'subject')) {
+                console.log("Adding missing subject to tasks...");
+                db.prepare("ALTER TABLE tasks ADD COLUMN subject TEXT NOT NULL DEFAULT 'general'").run();
+            }
+
+            db.exec(`
+                CREATE TABLE IF NOT EXISTS telegram_users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    telegram_id TEXT UNIQUE NOT NULL,
+                    username TEXT,
+                    first_name TEXT,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE TABLE IF NOT EXISTS telegram_subscriptions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    telegram_id TEXT NOT NULL,
+                    subject TEXT NOT NULL,
+                    reminder_time TEXT DEFAULT '18:00',
+                    enabled INTEGER DEFAULT 1,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE TABLE IF NOT EXISTS telegram_completions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    telegram_id TEXT NOT NULL,
+                    subject TEXT NOT NULL,
+                    mission_id INTEGER NOT NULL,
+                    completed_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE TABLE IF NOT EXISTS site_settings (
+                    key TEXT PRIMARY KEY,
+                    value TEXT NOT NULL
+                );
+                INSERT OR IGNORE INTO site_settings (key, value) VALUES ('telegram_enabled', 'true');
+                INSERT OR IGNORE INTO site_settings (key, value) VALUES ('telegram_link', 'https://t.me/UnrealCyber_bot?start=fromWebsite');
+            `);
         } catch (e) {
             console.error("Database migration check failed", e);
+        }
+
+        // --- TELEGRAM MIGRATIONS ---
+        try {
+            const taskInfo = db.prepare("PRAGMA table_info(tasks)").all();
+            if (!taskInfo.some(col => col.name === 'subject')) {
+                console.log("Adding missing subject to tasks...");
+                db.prepare("ALTER TABLE tasks ADD COLUMN subject TEXT NOT NULL DEFAULT 'general'").run();
+            }
+
+            const teleUserInfo = db.prepare("PRAGMA table_info(telegram_users)").all();
+            if (teleUserInfo.length > 0 && !teleUserInfo.some(col => col.name === 'website_user_id')) {
+                console.log("Adding website_user_id to telegram_users...");
+                db.prepare("ALTER TABLE telegram_users ADD COLUMN website_user_id INTEGER").run();
+            }
+
+            db.exec(`
+                CREATE TABLE IF NOT EXISTS telegram_users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    telegram_id TEXT UNIQUE NOT NULL,
+                    website_user_id INTEGER,
+                    username TEXT,
+                    first_name TEXT,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE TABLE IF NOT EXISTS telegram_subscriptions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    telegram_id TEXT NOT NULL,
+                    subject TEXT NOT NULL,
+                    reminder_time TEXT DEFAULT '18:00',
+                    enabled INTEGER DEFAULT 1,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE TABLE IF NOT EXISTS telegram_completions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    telegram_id TEXT NOT NULL,
+                    subject TEXT NOT NULL,
+                    mission_id INTEGER NOT NULL,
+                    completed_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE TABLE IF NOT EXISTS site_settings (
+                    key TEXT PRIMARY KEY,
+                    value TEXT NOT NULL
+                );
+                INSERT OR IGNORE INTO site_settings (key, value) VALUES ('telegram_enabled', 'true');
+                INSERT OR IGNORE INTO site_settings (key, value) VALUES ('telegram_link', 'https://t.me/UnrealCyber_bot?start=fromWebsite');
+            `);
+            console.log("Telegram migrations complete.");
+        } catch (e) {
+            console.error("Telegram migrations failed", e);
         }
 
         server.listen(PORT, '0.0.0.0', () => {

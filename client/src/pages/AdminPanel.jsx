@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Users, FileCheck, Search, Award, Trash2, Key, Star, Edit, Trash, Music, Play, Square, Send, Globe, Pause } from 'lucide-react';
+import { Shield, Users, FileCheck, Search, Award, Trash2, Key, Star, Edit, Trash, Music, Play, Square, Send, Globe, Pause, Settings } from 'lucide-react';
 import clsx from 'clsx';
 import StarRating from '../components/StarRating';
 import io from 'socket.io-client';
@@ -22,12 +22,14 @@ const AdminPanel = () => {
     const [partyConfig, setPartyConfig] = useState({ active: false, source: '', type: 'drive', file: null });
     const [partyFiles, setPartyFiles] = useState([]);
     const [uploadingParty, setUploadingParty] = useState(false);
+    const [siteSettings, setSiteSettings] = useState({ telegram_enabled: 'false', telegram_link: '' });
 
     useEffect(() => {
         fetchUsers();
         fetchSubmissions();
         fetchVotes();
         fetchPartyFiles(); // Fetch party files on component mount
+        fetchSiteSettings();
 
         const socket = io();
         socket.on('party_update', (state) => {
@@ -132,6 +134,21 @@ const AdminPanel = () => {
         } catch (err) {
             console.error("Failed to fetch users");
         }
+    };
+
+    const fetchSiteSettings = async () => {
+        try {
+            const res = await axios.get('/api/settings');
+            setSiteSettings(res.data);
+        } catch (err) { console.error(err); }
+    };
+
+    const updateSiteSettings = async (e) => {
+        e.preventDefault();
+        try {
+            await axios.put('/api/settings', siteSettings);
+            alert("Settings updated!");
+        } catch (err) { alert("Failed to update settings"); }
     };
 
     const fetchSubmissions = async () => {
@@ -260,6 +277,16 @@ const AdminPanel = () => {
                 >
                     <Music size={20} />
                     <span>Party Option</span>
+                </button>
+                <button
+                    onClick={() => setActiveTab('settings')}
+                    className={clsx(
+                        "flex items-center space-x-2 px-6 py-3 rounded-xl font-bold transition-all",
+                        activeTab === 'settings' ? "bg-slate-600 text-white shadow-lg shadow-slate-500/30" : "bg-panel text-secondary hover:bg-white/10 dark:hover:bg-slate-800 hover:text-primary border border-border"
+                    )}
+                >
+                    <Settings size={20} />
+                    <span>Bot Settings</span>
                 </button>
             </div>
 
@@ -769,6 +796,68 @@ const AdminPanel = () => {
                             <Send size={18} className="text-cyan-400" /> Administrative Broadcast Chat (WIP)
                         </h4>
                         <p className="text-sm text-secondary italic">Dedicated slider chat will appear globally when party is active.</p>
+                    </div>
+                </div>
+            )}
+
+            {/* SETTINGS TAB */}
+            {activeTab === 'settings' && (
+                <div className="space-y-6">
+                    <form onSubmit={updateSiteSettings} className="glass-panel p-6 border-l-4 border-l-slate-500 space-y-6">
+                        <h3 className="text-xl font-bold text-primary flex items-center">
+                            <Settings className="mr-3 text-slate-400" size={24} /> Global Bot Configuration
+                        </h3>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-secondary text-xs font-bold uppercase mb-2">Telegram Integration</label>
+                                <div className="flex items-center space-x-4 p-4 bg-panel rounded-xl border border-border">
+                                    <span className="text-sm text-primary flex-1">Enable Bot Button on Website</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSiteSettings({ ...siteSettings, telegram_enabled: siteSettings.telegram_enabled === 'true' ? 'false' : 'true' })}
+                                        className={clsx(
+                                            "w-12 h-6 rounded-full transition-all relative",
+                                            siteSettings.telegram_enabled === 'true' ? "bg-green-600" : "bg-slate-700"
+                                        )}
+                                    >
+                                        <div className={clsx(
+                                            "absolute top-1 w-4 h-4 bg-white rounded-full transition-all",
+                                            siteSettings.telegram_enabled === 'true' ? "left-7" : "left-1"
+                                        )} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-secondary text-xs font-bold uppercase mb-2">Telegram Bot Link</label>
+                                <input
+                                    type="text"
+                                    value={siteSettings.telegram_link}
+                                    onChange={(e) => setSiteSettings({ ...siteSettings, telegram_link: e.target.value })}
+                                    className="input-field w-full"
+                                    placeholder="https://t.me/YourBot"
+                                />
+                                <p className="text-[10px] text-secondary mt-1 italic">Tip: Use ?start=fromWebsite to track origins.</p>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end">
+                            <button type="submit" className="btn-primary px-10 h-[48px]">
+                                Save Critical Settings
+                            </button>
+                        </div>
+                    </form>
+
+                    <div className="bg-panel/30 border border-border p-6 rounded-2xl">
+                        <h4 className="font-bold text-primary mb-2 flex items-center gap-2">
+                            <Shield size={16} className="text-cyan-400" /> Environment Checklist
+                        </h4>
+                        <ul className="text-xs text-secondary space-y-2 list-disc pl-4">
+                            <li>Make sure <code className="text-cyan-400">TELEGRAM_BOT_TOKEN</code> is set in Railway.</li>
+                            <li>Ensure <code className="text-cyan-400">SITE_BASE_URL</code> is set to your Railway app domain.</li>
+                            <li>Database persistence is handled by Google Drive backups.</li>
+                        </ul>
                     </div>
                 </div>
             )}

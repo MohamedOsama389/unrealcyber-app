@@ -1,7 +1,8 @@
 const Database = require('better-sqlite3');
 const bcrypt = require('bcryptjs');
 
-const db = new Database('database.db');
+const path = require('path');
+const db = new Database(path.join(__dirname, '../database.db'));
 
 // Enable WAL mode for better performance
 db.pragma('journal_mode = WAL');

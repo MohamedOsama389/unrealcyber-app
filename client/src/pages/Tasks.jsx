@@ -94,16 +94,25 @@ const AdminTaskReviews = ({ taskId }) => {
 const Tasks = () => {
     const { user } = useAuth();
     const [tasks, setTasks] = useState([]);
-    const [newTask, setNewTask] = useState({ title: '', drive_link: '', notes: '' });
+    const [newTask, setNewTask] = useState({ title: '', drive_link: '', notes: '', subject: 'general' });
     const [uploadData, setUploadData] = useState({ task_id: null, file: null, notes: '' });
     const [message, setMessage] = useState('');
+    const [settings, setSettings] = useState({ telegram_enabled: 'false', telegram_link: '' });
 
     const [mySubmissions, setMySubmissions] = useState([]);
 
     useEffect(() => {
         fetchTasks();
+        fetchSettings();
         if (user.role === 'student') fetchMySubmissions();
     }, []);
+
+    const fetchSettings = async () => {
+        try {
+            const res = await axios.get('/api/settings');
+            setSettings(res.data);
+        } catch (err) { console.error(err); }
+    };
 
     const fetchTasks = async () => {
         try {
@@ -130,7 +139,7 @@ const Tasks = () => {
         try {
             await axios.post('/api/tasks', newTask);
             setMessage('Task created!');
-            setNewTask({ title: '', drive_link: '', notes: '' });
+            setNewTask({ title: '', drive_link: '', notes: '', subject: 'general' });
             fetchTasks();
             setTimeout(() => setMessage(''), 3000);
         } catch (err) {
@@ -189,14 +198,30 @@ const Tasks = () => {
 
     return (
         <div className="p-8 max-w-6xl mx-auto">
-            <motion.h1
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="text-3xl font-bold mb-8 flex items-center space-x-3"
-            >
-                <CheckSquare className="text-cyan-400" />
-                <span>Mission Center</span>
-            </motion.h1>
+            <div className="flex justify-between items-center mb-8">
+                <motion.h1
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="text-3xl font-bold flex items-center space-x-3"
+                >
+                    <CheckSquare className="text-cyan-400" />
+                    <span>Mission Center</span>
+                </motion.h1>
+
+                {settings.telegram_enabled === 'true' && (
+                    <motion.a
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        href={settings.telegram_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-full shadow-lg shadow-cyan-500/20 transition-all flex items-center justify-center"
+                        title="Join Telegram Academy"
+                    >
+                        <Send size={20} />
+                    </motion.a>
+                )}
+            </div>
 
             {message && (
                 <div className="mb-6 p-4 bg-cyan-500/10 border border-cyan-500/30 rounded-lg text-cyan-300">
@@ -219,12 +244,24 @@ const Tasks = () => {
                             className="input-field"
                             required
                         />
+                        <select
+                            value={newTask.subject}
+                            onChange={(e) => setNewTask({ ...newTask, subject: e.target.value })}
+                            className="input-field"
+                            required
+                        >
+                            <option value="general">General</option>
+                            <option value="arabic">Arabic</option>
+                            <option value="social_studies">Social Studies</option>
+                            <option value="geometry">Geometry</option>
+                            <option value="english">English</option>
+                        </select>
                         <input
                             type="text"
                             placeholder="Google Drive Resources Link"
                             value={newTask.drive_link}
                             onChange={(e) => setNewTask({ ...newTask, drive_link: e.target.value })}
-                            className="input-field"
+                            className="input-field md:col-span-2"
                         />
                         <textarea
                             placeholder="Mission Brief / Notes"

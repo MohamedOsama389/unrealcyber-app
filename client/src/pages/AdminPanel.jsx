@@ -10,10 +10,12 @@ import io from 'socket.io-client';
 
 const AdminPanel = () => {
     const { user } = useAuth();
-    const [activeTab, setActiveTab] = useState('users'); // 'users', 'submissions', 'votes'
+    const [activeTab, setActiveTab] = useState('users'); // 'users', 'submissions', 'votes', 'database'
     const [users, setUsers] = useState([]);
     const [submissions, setSubmissions] = useState([]);
     const [votes, setVotes] = useState([]);
+    const [dbFile, setDbFile] = useState(null);
+    const [dbStatus, setDbStatus] = useState({ local: 'OK', drive: 'Pending' });
     const [editingVote, setEditingVote] = useState(null); // Added for editing
     const [grading, setGrading] = useState({ id: null, rating: 0, admin_notes: '' });
     const [newUser, setNewUser] = useState({ username: '', password: '', role: 'student' });
@@ -151,6 +153,25 @@ const AdminPanel = () => {
             await axios.put('/api/settings', siteSettings);
             alert("Settings updated!");
         } catch (err) { alert("Failed to update settings"); }
+    };
+
+    const handleDbUpload = async (e) => {
+        e.preventDefault();
+        if (!dbFile) return alert("Please select a database.db file first.");
+        if (!window.confirm("WARNING: This will overwrite the current database. All existing data will be replaced. Proceed?")) return;
+
+        const formData = new FormData();
+        formData.append('db', dbFile);
+
+        try {
+            const res = await axios.post('/api/admin/upload-db', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            alert(res.data.message);
+            setDbFile(null);
+        } catch (err) {
+            alert("Database upload failed: " + (err.response?.data?.error || err.message));
+        }
     };
 
     const fetchSubmissions = async () => {
@@ -308,6 +329,16 @@ const AdminPanel = () => {
                 >
                     <Award size={20} />
                     <span>Recruit Stats</span>
+                </button>
+                <button
+                    onClick={() => setActiveTab('database')}
+                    className={clsx(
+                        "flex items-center space-x-2 px-6 py-3 rounded-xl font-bold transition-all",
+                        activeTab === 'database' ? "bg-cyan-600 text-white shadow-lg shadow-cyan-500/30" : "bg-panel text-secondary hover:bg-white/10 dark:hover:bg-slate-800 hover:text-primary border border-border"
+                    )}
+                >
+                    <Globe size={20} />
+                    <span>Database</span>
                 </button>
             </div>
 
@@ -552,6 +583,61 @@ const AdminPanel = () => {
                         </motion.div>
                     ))}
                 </div>
+            )}
+            {/* DATABASE TAB */}
+            {activeTab === 'database' && (
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+                    <section className="bg-panel border border-border p-6 rounded-2xl">
+                        <h2 className="text-xl font-bold text-primary flex items-center mb-4">
+                            <Globe className="mr-2 text-cyan-400" /> Database Management
+                        </h2>
+                        <p className="text-xs text-secondary mb-6 leading-relaxed">
+                            Manage your local and cloud database backups. You can manually restore the system by uploading a valid <code className="text-cyan-400 font-bold">database.db</code> file.
+                        </p>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                            <div className="bg-app/50 p-4 rounded-xl border border-border">
+                                <span className="text-[10px] uppercase font-bold text-secondary mb-1 block">Local Storage Status</span>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                    <span className="text-sm font-bold text-primary">Active (12h Rotation)</span>
+                                </div>
+                            </div>
+                            <div className="bg-app/50 p-4 rounded-xl border border-border">
+                                <span className="text-[10px] uppercase font-bold text-secondary mb-1 block">Google Drive Sync</span>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></div>
+                                    <span className="text-sm font-bold text-primary">Standby / Fallback</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleDbUpload} className="bg-cyan-600/5 border-2 border-dashed border-cyan-500/30 p-8 rounded-2xl text-center">
+                            <Globe size={40} className="mx-auto text-cyan-500/50 mb-4" />
+                            <h3 className="text-lg font-bold text-primary mb-2">Manual Recovery</h3>
+                            <p className="text-xs text-secondary mb-6">Drop your <code className="bg-app px-2 py-1 rounded">database.db</code> here to overwrite the entire system.</p>
+
+                            <input
+                                type="file"
+                                accept=".db"
+                                onChange={(e) => setDbFile(e.target.files[0])}
+                                className="hidden"
+                                id="db-upload"
+                            />
+                            <div className="flex flex-col items-center gap-4">
+                                <label htmlFor="db-upload" className="cursor-pointer px-6 py-2 bg-app border border-cyan-500/50 text-cyan-400 text-xs font-bold rounded-lg hover:bg-cyan-500 hover:text-white transition-all">
+                                    {dbFile ? dbFile.name : 'Select database.db'}
+                                </label>
+
+                                {dbFile && (
+                                    <button type="submit" className="px-8 py-3 bg-red-600 text-white text-sm font-black uppercase tracking-wider rounded-xl shadow-lg shadow-red-500/20 hover:scale-105 active:scale-95 transition-all">
+                                        Execute Restore Now
+                                    </button>
+                                )}
+                            </div>
+                        </form>
+                    </section>
+                </motion.div>
             )}
             {activeTab === 'votes' && (
                 <div className="space-y-6">

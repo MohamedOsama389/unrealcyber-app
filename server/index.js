@@ -438,13 +438,14 @@ app.delete('/api/tasks/:id', authenticateToken, (req, res) => {
     res.json({ success: true });
 });
 
-// Admin Confirm/Notify
+// Admin// Confirm and notify (Unified with Rating & Notes)
 app.post('/api/tasks/confirm/:uploadId', authenticateToken, async (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
     const { uploadId } = req.params;
+    const { rating, notes } = req.body;
 
     try {
-        console.log(`[Admin] Confirming upload ${uploadId}...`);
+        console.log(`[Admin] Unified Confirmation for upload ${uploadId}...`);
         const upload = db.prepare(`
             SELECT u.id as student_id, u.username, t.title 
             FROM student_uploads su 
@@ -458,16 +459,16 @@ app.post('/api/tasks/confirm/:uploadId', authenticateToken, async (req, res) => 
             return res.status(404).json({ error: "Upload not found" });
         }
 
-        // Update status to confirmed
-        db.prepare('UPDATE student_uploads SET status = ? WHERE id = ?').run('confirmed', uploadId);
-        console.log(`[Admin] Status updated to confirmed for upload ${uploadId}`);
+        // Update status, rating, and notes
+        db.prepare('UPDATE student_uploads SET status = ?, rating = ?, admin_notes = ? WHERE id = ?').run('confirmed', rating || 0, notes || "", uploadId);
+        console.log(`[Admin] Status updated to confirmed for upload ${uploadId} (Rating: ${rating})`);
 
         if (upload.student_id) {
             const teleUser = db.prepare('SELECT telegram_id FROM telegram_users WHERE website_user_id = ?').get(upload.student_id);
             if (teleUser && botInstance && botInstance.sendCongrats) {
                 console.log(`[Admin] Notifying student ${upload.username} (ID: ${upload.student_id}) via Telegram...`);
                 try {
-                    await botInstance.sendCongrats(teleUser.telegram_id, upload.title);
+                    await botInstance.sendCongrats(teleUser.telegram_id, upload.title, rating, notes);
                     console.log(`[Admin] Telegram notification sent to ${teleUser.telegram_id}`);
                 } catch (botErr) {
                     console.error(`[Admin] Failed to send Telegram notification:`, botErr.message);
@@ -476,7 +477,7 @@ app.post('/api/tasks/confirm/:uploadId', authenticateToken, async (req, res) => 
                 console.warn(`[Admin] Could not notify via bot. teleUser: ${!!teleUser}, botInstance: ${!!botInstance}, studentId: ${upload.student_id}`);
             }
         }
-        res.json({ success: true, message: "Mission confirmed and student notified." });
+        res.json({ success: true, message: "Mission confirmed, rated, and student notified." });
     } catch (err) {
         console.error("Confirm Fail:", err);
         res.status(500).json({ error: err.message });
@@ -1031,6 +1032,35 @@ io.on('connection', (socket) => {
 // --- HEALTH CHECK (Railway/Rentals) ---
 app.get('/health', (req, res) => {
     res.status(200).send('OK');
+});
+
+// Manual DB Upload
+app.post('/api/admin/upload-db', authenticateToken, upload.single('db'), (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+
+    try {
+        const DB_PATH = path.join(__dirname, '../database.db');
+        // Close existing connection if possible
+        if (db && typeof db.close === 'function') {
+            try { db.close(); } catch (e) { console.error("Error closing DB:", e); }
+        }
+
+        console.log("[Admin] Manually replacing database.db with uploaded file...");
+        fs.writeFileSync(DB_PATH, req.file.buffer);
+
+        // Re-require or process exit to reload
+        console.log("[Admin] DB replaced. Restarting server or reloading DB engine is recommended.");
+
+        res.json({ success: true, message: "Database uploaded and replaced. The server will now use the new data. A manual restart on Railway might be needed for full consistency." });
+
+        // Optional: Trigger a restart if in production or just re-init
+        // For now, most Node.js SQLite libs will pick up the new file on next query if path is same,
+        // but it's safer to have the app restart.
+    } catch (err) {
+        console.error("[Admin] Manual DB upload failed:", err);
+        res.status(500).json({ error: "Failed to replace database file: " + err.message });
+    }
 });
 
 // --- REACT ROUTER CATCH-ALL ---

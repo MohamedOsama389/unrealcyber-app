@@ -373,6 +373,7 @@ module.exports = {
     uploadAvatar,
     uploadPartyVideo,
     getFileStream, // Export new function
+    TASKS_FOLDER_ID,
     VIDEOS_FOLDER_ID,
     FILES_FOLDER_ID,
     AVATAR_FOLDER_ID,

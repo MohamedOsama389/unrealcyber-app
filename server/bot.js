@@ -243,8 +243,13 @@ function initBot(db) {
 
     // --- EXTERNAL NOTIFICATIONS ---
 
-    bot.sendCongrats = (telegramId, taskTitle) => {
-        const msg = `🎉 *CONGRATULATIONS!* 🏆\n\nYour submission for mission "*${taskTitle}*" has been approved by the Commander!\n\nExcellent work, keep it up! 🛡️`;
+    bot.sendCongrats = (telegramId, taskTitle, rating = 0, notes = "") => {
+        const stars = "⭐".repeat(rating) || "Approved";
+        const msg = `🎉 *CONGRATULATIONS!* 🏆\n\n` +
+            `Your submission for mission "*${taskTitle}*" has been approved by the Commander!\n\n` +
+            `🔥 *Performance:* ${stars}\n` +
+            (notes ? `💬 *Commander Notes:* _${notes}_\n\n` : "") +
+            `Excellent work, keep it up! 🛡️`;
         return bot.telegram.sendMessage(telegramId, msg, { parse_mode: 'Markdown' });
     };
 

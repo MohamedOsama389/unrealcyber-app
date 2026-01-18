@@ -9,6 +9,7 @@ import StarRating from '../components/StarRating';
 const AdminTaskReviews = ({ taskId }) => {
     const [submissions, setSubmissions] = useState([]);
     const [grading, setGrading] = useState({ id: null, rating: 0, admin_notes: '' });
+    const [previewRating, setPreviewRating] = useState({}); // { subId: rating }
     const [denyReasons, setDenyReasons] = useState({});
     const [actionMsg, setActionMsg] = useState('');
     const [showReviewed, setShowReviewed] = useState(false);
@@ -28,9 +29,16 @@ const AdminTaskReviews = ({ taskId }) => {
     };
 
     const handleConfirm = async (id) => {
+        const rating = previewRating[id] || 0;
+        const notes = denyReasons[id] || ''; // Use the same input field for confirmation notes if needed, or separate it
+
+        if (rating === 0) return alert("Please select a star rating before confirming.");
+
         try {
-            const res = await axios.post(`/api/tasks/confirm/${id}`);
+            const res = await axios.post(`/api/tasks/confirm/${id}`, { rating, notes });
             setActionMsg(res.data.message || 'Mission Confirmed! 🎉');
+            setDenyReasons({ ...denyReasons, [id]: '' });
+            setPreviewRating({ ...previewRating, [id]: 0 });
             setTimeout(() => setActionMsg(''), 3000);
             fetchSubs();
         } catch (err) {
@@ -107,55 +115,47 @@ const AdminTaskReviews = ({ taskId }) => {
                         </div>
                     </div>
 
-                    {/* TELEGRAM ACTIONS */}
-                    <div className="grid grid-cols-1 gap-2 mb-4">
-                        <button
-                            onClick={() => handleConfirm(sub.id)}
-                            className="w-full py-1.5 bg-green-600/20 text-green-400 border border-green-600/30 rounded-lg text-[10px] font-bold hover:bg-green-600 hover:text-white transition-all"
-                        >
-                            ✅ Confirm & Notify Bot
-                        </button>
-
-                        <div className="flex gap-2">
-                            <input
-                                className="flex-1 bg-app border border-border rounded-lg text-[10px] px-2 text-primary focus:border-cyan-500 outline-none"
-                                placeholder="Deny reason..."
-                                value={denyReasons[sub.id] || ''}
-                                onChange={(e) => setDenyReasons({ ...denyReasons, [sub.id]: e.target.value })}
+                    {/* UNIFIED ADMIN ACTIONS */}
+                    <div className="bg-app/30 p-3 rounded-lg border border-border/50 mb-3">
+                        <div className="flex flex-col items-center gap-3 mb-3">
+                            <span className="text-[10px] font-bold text-secondary uppercase tracking-widest">Rate Mission Performance</span>
+                            <StarRating
+                                rating={previewRating[sub.id] || 0}
+                                setRating={r => setPreviewRating({ ...previewRating, [sub.id]: r })}
+                                size={20}
                             />
+                        </div>
+
+                        <textarea
+                            className="w-full bg-app border border-border rounded-lg text-xs p-2 text-primary focus:border-cyan-500 outline-none mb-3 h-16"
+                            placeholder="Approval notes or denial reason..."
+                            value={denyReasons[sub.id] || ''}
+                            onChange={(e) => setDenyReasons({ ...denyReasons, [sub.id]: e.target.value })}
+                        />
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                onClick={() => handleConfirm(sub.id)}
+                                className={`py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${(previewRating[sub.id] || 0) > 0
+                                        ? 'bg-cyan-600 hover:bg-cyan-500 text-white shadow-lg shadow-cyan-500/20'
+                                        : 'bg-secondary/20 text-secondary cursor-not-allowed border border-border'
+                                    }`}
+                            >
+                                Publish & Confirm
+                            </button>
                             <button
                                 onClick={() => handleDeny(sub.id)}
-                                className="px-3 py-1.5 bg-red-600/20 text-red-400 border border-red-600/30 rounded-lg text-[10px] font-bold hover:bg-red-600 hover:text-white transition-all"
+                                className="py-2 bg-red-600/10 text-red-500 border border-red-600/20 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all"
                             >
-                                ❌ Deny
+                                Deny Mission
                             </button>
                         </div>
                     </div>
 
-                    {grading.id === sub.id ? (
-                        <form onSubmit={submitGrade} className="mt-2 bg-panel border border-border p-3 rounded-xl">
-                            <StarRating rating={grading.rating} setRating={r => setGrading({ ...grading, rating: r })} />
-                            <input
-                                className="w-full bg-app text-primary text-xs p-2 rounded-lg mt-2 mb-2 border border-border"
-                                value={grading.admin_notes}
-                                onChange={e => setGrading({ ...grading, admin_notes: e.target.value })}
-                                placeholder="Internal feedback..."
-                            />
-                            <div className="flex justify-end space-x-2">
-                                <button type="button" onClick={() => setGrading({ id: null })} className="px-3 py-1 bg-panel border border-border text-[10px] rounded-lg text-primary">Cancel</button>
-                                <button type="submit" className="px-3 py-1 bg-cyan-600 text-[10px] rounded-lg text-white font-bold">Save Rating</button>
-                            </div>
-                        </form>
-                    ) : (
-                        <div className="flex justify-between items-center mt-2 border-t border-border pt-2">
-                            <div>
-                                {sub.rating ? (
-                                    <div className="flex items-center space-x-1">
-                                        <StarRating rating={sub.rating} readonly size={12} />
-                                    </div>
-                                ) : <span className="text-[10px] text-yellow-500 italic">Pending Review</span>}
-                            </div>
-                            <button onClick={() => setGrading({ id: sub.id, rating: sub.rating || 0, admin_notes: sub.admin_notes || '' })} className="text-[10px] text-secondary hover:text-cyan-400 transition-colors">Rate/Edit</button>
+                    {/* Internal Rating (Old) - Hidden but kept for reference if needed */}
+                    {false && (
+                        <div className="mt-2 border-t border-border pt-2 flex justify-between items-center opacity-30 italic text-[8px]">
+                            Rating exists in unified action above.
                         </div>
                     )}
                 </div>
@@ -468,9 +468,27 @@ const Tasks = () => {
                                             </div>
                                         </div>
 
+                                        {getSubForTask(task.id).status === 'confirmed' && (
+                                            <div className="mt-4 pt-4 border-t border-cyan-500/20 animate-in fade-in duration-700">
+                                                <div className="flex items-center gap-3 mb-3">
+                                                    <span className="text-[11px] font-black text-cyan-400 uppercase tracking-widest">Performance Score:</span>
+                                                    <StarRating rating={getSubForTask(task.id).rating} readonly size={14} />
+                                                </div>
+                                                {getSubForTask(task.id).admin_notes && (
+                                                    <div className="relative">
+                                                        <div className="absolute -left-2 top-0 bottom-0 w-1 bg-cyan-500/30 rounded-full"></div>
+                                                        <p className="text-secondary text-xs italic leading-relaxed pl-3">
+                                                            "{getSubForTask(task.id).admin_notes}"
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
                                         {getSubForTask(task.id).status === 'denied' && (
-                                            <div className="mt-2 text-xs text-red-400 bg-red-500/10 p-2 rounded border border-red-500/20">
-                                                <span className="font-bold">Reason:</span> {getSubForTask(task.id).admin_notes || "No specific reason provided."}
+                                            <div className="mt-2 text-xs text-red-400 bg-red-500/10 p-3 rounded-lg border border-red-500/20">
+                                                <span className="font-bold underline mb-1 block">Feedback from Instructor:</span>
+                                                <p className="italic">"{getSubForTask(task.id).admin_notes || "No specific reason provided."}"</p>
                                             </div>
                                         )}
 

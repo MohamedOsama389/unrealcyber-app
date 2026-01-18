@@ -137,8 +137,8 @@ const AdminTaskReviews = ({ taskId }) => {
                             <button
                                 onClick={() => handleConfirm(sub.id)}
                                 className={`py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${(previewRating[sub.id] || 0) > 0
-                                        ? 'bg-cyan-600 hover:bg-cyan-500 text-white shadow-lg shadow-cyan-500/20'
-                                        : 'bg-secondary/20 text-secondary cursor-not-allowed border border-border'
+                                    ? 'bg-cyan-600 hover:bg-cyan-500 text-white shadow-lg shadow-cyan-500/20'
+                                    : 'bg-secondary/20 text-secondary cursor-not-allowed border border-border'
                                     }`}
                             >
                                 Publish & Confirm
@@ -187,6 +187,9 @@ const AdminTaskReviews = ({ taskId }) => {
                                                 <ExternalLink size={8} /> Link
                                             </a>
                                         </div>
+                                        {sub.admin_notes && (
+                                            <p className="text-[8px] text-secondary mt-1 italic max-w-[150px] truncate">"{sub.admin_notes}"</p>
+                                        )}
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <StarRating rating={sub.rating || 0} readonly size={10} />

@@ -6,31 +6,16 @@ import { CheckSquare, Upload, FileText, ExternalLink, Plus, Trash2, Send } from 
 import StarRating from '../components/StarRating';
 
 // Sub-component for Admin Reviewing inside Tasks
-const AdminTaskReviews = ({ taskId }) => {
-    const [submissions, setSubmissions] = useState([]);
+const AdminTaskReviews = ({ taskId, submissions = [], onAction }) => {
     const [grading, setGrading] = useState({ id: null, rating: 0, admin_notes: '' });
     const [previewRating, setPreviewRating] = useState({}); // { subId: rating }
     const [denyReasons, setDenyReasons] = useState({});
     const [actionMsg, setActionMsg] = useState('');
     const [showReviewed, setShowReviewed] = useState(false);
 
-    useEffect(() => {
-        fetchSubs();
-    }, [taskId]);
-
-    const fetchSubs = async () => {
-        try {
-            const res = await axios.get('/api/tasks/uploads');
-            const relevant = res.data.filter(s => s.task_id === taskId);
-            setSubmissions(relevant);
-        } catch (err) {
-            console.error("Failed to load subs");
-        }
-    };
-
     const handleConfirm = async (id) => {
         const rating = previewRating[id] || 0;
-        const notes = denyReasons[id] || ''; // Use the same input field for confirmation notes if needed, or separate it
+        const notes = denyReasons[id] || '';
 
         if (rating === 0) return alert("Please select a star rating before confirming.");
 
@@ -40,7 +25,7 @@ const AdminTaskReviews = ({ taskId }) => {
             setDenyReasons({ ...denyReasons, [id]: '' });
             setPreviewRating({ ...previewRating, [id]: 0 });
             setTimeout(() => setActionMsg(''), 3000);
-            fetchSubs();
+            if (onAction) onAction();
         } catch (err) {
             console.error(err);
             alert("Failed to confirm: " + (err.response?.data?.error || err.message));
@@ -55,7 +40,7 @@ const AdminTaskReviews = ({ taskId }) => {
             setActionMsg(res.data.message || 'Mission Denied. ❌');
             setDenyReasons({ ...denyReasons, [id]: '' });
             setTimeout(() => setActionMsg(''), 3000);
-            fetchSubs();
+            if (onAction) onAction();
         } catch (err) {
             console.error(err);
             alert("Failed to deny: " + (err.response?.data?.error || err.message));
@@ -67,7 +52,7 @@ const AdminTaskReviews = ({ taskId }) => {
         try {
             await axios.post('/api/tasks/rate', grading);
             setGrading({ id: null, rating: 0, admin_notes: '' });
-            fetchSubs();
+            if (onAction) onAction();
         } catch (err) { console.error(err); }
     };
 
@@ -75,7 +60,7 @@ const AdminTaskReviews = ({ taskId }) => {
         if (!confirm("Remove this student submission?")) return;
         try {
             await axios.delete(`/api/tasks/upload/${id}`);
-            fetchSubs();
+            if (onAction) onAction();
         } catch (err) { console.error(err); }
     };
 
@@ -216,12 +201,14 @@ const Tasks = () => {
     const [settings, setSettings] = useState({ telegram_enabled: 'false', telegram_link: '' });
 
     const [mySubmissions, setMySubmissions] = useState([]);
+    const [allSubmissions, setAllSubmissions] = useState([]);
 
     useEffect(() => {
         if (user) {
             fetchTasks();
             fetchSettings();
             if (user.role === 'student') fetchMySubmissions();
+            if (user.role === 'admin') fetchAllSubmissions();
         }
     }, [user]);
 
@@ -248,6 +235,22 @@ const Tasks = () => {
         } catch (err) {
             console.error("Failed to fetch submissions");
         }
+    };
+
+    const fetchAllSubmissions = async () => {
+        try {
+            const res = await axios.get('/api/tasks/uploads');
+            setAllSubmissions(res.data);
+        } catch (err) {
+            console.error("Failed to fetch all submissions");
+        }
+    };
+
+    const getTaskStatus = (taskId) => {
+        const subs = allSubmissions.filter(s => s.task_id === taskId);
+        if (subs.length === 0) return 'empty';
+        if (subs.some(s => s.status === 'pending' || !s.status)) return 'pending';
+        return 'resolved';
     };
 
     const getSubForTask = (taskId) => mySubmissions.find(s => s.task_id === taskId);
@@ -393,187 +396,225 @@ const Tasks = () => {
             )}
 
             {/* TASK LIST */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {tasks.map((task) => (
-                    <motion.div
-                        key={task.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="glass-panel p-6 flex flex-col justify-between"
-                    >
-                        <div>
-                            <div className="flex justify-between items-start mb-2">
-                                <h3 className="text-xl font-bold text-primary">{task.title}</h3>
-                                {user.role === 'admin' && (
-                                    <button
-                                        onClick={() => handleDeleteTask(task.id)}
-                                        className="text-secondary opacity-50 hover:text-red-500 hover:opacity-100 transition-all p-1"
-                                        title="Delete Mission"
-                                    >
-                                        <Trash2 size={18} />
-                                    </button>
-                                )}
-                            </div>
-                            <p className="text-secondary text-sm mb-4 whitespace-pre-wrap">{task.notes}</p>
-
-                            {task.drive_link && (
-                                <a
-                                    href={task.drive_link}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center text-cyan-400 hover:text-cyan-300 mb-6 text-sm"
-                                >
-                                    <ExternalLink size={14} className="mr-1" />
-                                    Access Resources (GDrive)
-                                </a>
-                            )}
+            <div className="space-y-12">
+                {/* 1. NEEDS ATTENTION (Pending Submissions) */}
+                {user.role === 'admin' && tasks.some(t => getTaskStatus(t.id) === 'pending') && (
+                    <section>
+                        <h2 className="text-sm font-black text-cyan-400 uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></div>
+                            Needs Attention / Awaiting Review
+                        </h2>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {tasks.filter(t => getTaskStatus(t.id) === 'pending').map((task) => (
+                                <TaskCard key={task.id} task={task} user={user} getTaskStatus={getTaskStatus} allSubmissions={allSubmissions} fetchAllSubmissions={fetchAllSubmissions} getSubForTask={getSubForTask} handleDeleteTask={handleDeleteTask} uploadData={uploadData} setUploadData={setUploadData} handleUpload={handleUpload} handleDelete={handleDelete} />
+                            ))}
                         </div>
+                    </section>
+                )}
 
-                        {/* ADMIN REVIEW SECTION IN TASKS */}
-                        {user.role === 'admin' && (
-                            <div className="mt-4 pt-4 border-t border-border">
-                                <h4 className="text-xs font-bold text-secondary uppercase mb-3">Student Submissions</h4>
-                                <AdminTaskReviews taskId={task.id} />
-                            </div>
-                        )}
+                {/* 2. MAIN MISSION BOARD (Empty Missions / Students View) */}
+                <section>
+                    {user.role === 'admin' && (
+                        <h2 className="text-sm font-black text-secondary uppercase tracking-[0.3em] mb-6">
+                            Mission Board / Active Assignments
+                        </h2>
+                    )}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {(user.role === 'admin' ? tasks.filter(t => getTaskStatus(t.id) === 'empty') : tasks).map((task) => (
+                            <TaskCard key={task.id} task={task} user={user} getTaskStatus={getTaskStatus} allSubmissions={allSubmissions} fetchAllSubmissions={fetchAllSubmissions} getSubForTask={getSubForTask} handleDeleteTask={handleDeleteTask} uploadData={uploadData} setUploadData={setUploadData} handleUpload={handleUpload} handleDelete={handleDelete} />
+                        ))}
+                    </div>
+                </section>
 
-                        {user.role === 'student' && (
-                            <div className="mt-4 pt-4 border-t border-border">
-                                {getSubForTask(task.id) && !uploadData.isReupload ? (
-                                    <div className={`bg-panel p-4 rounded-lg border ${getSubForTask(task.id).status === 'denied' ? 'border-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.1)]' : 'border-border'}`}>
-                                        <div className="flex justify-between items-start mb-2">
-                                            <span className={`${getSubForTask(task.id).status === 'denied' ? 'text-red-400' : 'text-green-400'} text-sm font-bold flex items-center`}>
-                                                {getSubForTask(task.id).status === 'denied' ? (
-                                                    <><Trash2 size={16} className="mr-2" /> Mission Denied</>
-                                                ) : (
-                                                    <><CheckSquare size={16} className="mr-2" /> Mission Submitted</>
-                                                )}
-                                            </span>
-                                            <div className="flex items-center space-x-3">
-                                                <span className="text-xs text-secondary">{new Date(getSubForTask(task.id).uploaded_at).toLocaleDateString()}</span>
-                                                {getSubForTask(task.id).status === 'denied' ? (
-                                                    <button
-                                                        onClick={() => setUploadData({ ...uploadData, task_id: task.id, isReupload: true })}
-                                                        className="px-2 py-1 bg-cyan-600 hover:bg-cyan-500 text-white rounded text-[10px] font-bold flex items-center gap-1 transition-all"
-                                                        title="Re-upload Solutions"
-                                                    >
-                                                        🔄 Re-upload
-                                                    </button>
-                                                ) : (
-                                                    <button
-                                                        onClick={() => handleDelete(getSubForTask(task.id).id)}
-                                                        className="w-6 h-6 flex items-center justify-center rounded-full bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all"
-                                                        title="Retract Submission"
-                                                    >
-                                                        &times;
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        {getSubForTask(task.id).status === 'confirmed' && (
-                                            <div className="mt-4 pt-4 border-t border-cyan-500/20 animate-in fade-in duration-700">
-                                                <div className="flex items-center gap-3 mb-3">
-                                                    <span className="text-[11px] font-black text-cyan-400 uppercase tracking-widest">Performance Score:</span>
-                                                    <StarRating rating={getSubForTask(task.id).rating} readonly size={14} />
-                                                </div>
-                                                {getSubForTask(task.id).admin_notes && (
-                                                    <div className="relative">
-                                                        <div className="absolute -left-2 top-0 bottom-0 w-1 bg-cyan-500/30 rounded-full"></div>
-                                                        <p className="text-secondary text-xs italic leading-relaxed pl-3">
-                                                            "{getSubForTask(task.id).admin_notes}"
-                                                        </p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-
-                                        {getSubForTask(task.id).status === 'denied' && (
-                                            <div className="mt-2 text-xs text-red-400 bg-red-500/10 p-3 rounded-lg border border-red-500/20">
-                                                <span className="font-bold underline mb-1 block">Feedback from Instructor:</span>
-                                                <p className="italic">"{getSubForTask(task.id).admin_notes || "No specific reason provided."}"</p>
-                                            </div>
-                                        )}
-
-                                        <div className="text-[10px] text-secondary italic text-right opacity-50 mt-1">
-                                            {getSubForTask(task.id).status === 'denied' ? 'Review feedback above and re-submit.' : 'Delete to upload a new file'}
-                                        </div>
-                                        <p className="text-xs text-secondary mb-2 truncate">Link: {getSubForTask(task.id).upload_link}</p>
-
-                                        {getSubForTask(task.id).rating ? (
-                                            <div className="mt-3 pt-3 border-t border-border">
-                                                <div className="flex items-center space-x-2 text-yellow-400 text-sm font-bold mb-1">
-                                                    <span>Performance Rating:</span>
-                                                    <StarRating rating={getSubForTask(task.id).rating} readonly />
-                                                </div>
-                                                <p className="text-sm text-secondary italic">"{getSubForTask(task.id).admin_notes}"</p>
-                                            </div>
-                                        ) : (
-                                            <p className="text-xs text-yellow-500 italic mt-2">Pending Commander Review...</p>
-                                        )}
-                                    </div>
-                                ) : (
-                                    uploadData.task_id === task.id ? (
-                                        <form onSubmit={handleUpload} className="space-y-3">
-                                            <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-cyan-500 transition-colors cursor-pointer relative bg-panel">
-                                                <input
-                                                    type="file"
-                                                    onChange={(e) => setUploadData({ ...uploadData, file: e.target.files[0] })}
-                                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                                    required
-                                                />
-                                                <div className="text-secondary">
-                                                    {uploadData.file ? (
-                                                        <span className="text-cyan-400 font-bold">{uploadData.file.name}</span>
-                                                    ) : (
-                                                        <>
-                                                            <Upload className="mx-auto mb-2 text-secondary opacity-30" />
-                                                            <span>Drop Mission File or Click to Upload</span>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <textarea
-                                                placeholder="Notes for instructor..."
-                                                value={uploadData.notes}
-                                                onChange={(e) => setUploadData({ ...uploadData, notes: e.target.value })}
-                                                className="input-field py-2 text-sm h-16"
-                                            />
-                                            <div className="flex space-x-2">
-                                                <button type="submit" className="px-4 py-2 bg-green-600 rounded-lg text-sm font-bold hover:bg-green-500">
-                                                    Submit
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setUploadData({ task_id: null, file: null, notes: '' })}
-                                                    className="px-4 py-2 bg-panel border border-border rounded-lg text-sm font-bold hover:bg-white/10 dark:hover:bg-slate-700 text-primary"
-                                                >
-                                                    Cancel
-                                                </button>
-                                            </div>
-                                        </form>
-                                    ) : (
-                                        <button
-                                            onClick={() => setUploadData({ ...uploadData, task_id: task.id })}
-                                            className="w-full py-2 bg-panel hover:bg-white/10 dark:hover:bg-slate-700 border border-border rounded-lg flex items-center justify-center text-primary transition-colors"
-                                        >
-                                            <Upload size={16} className="mr-2" />
-                                            Upload Solution
-                                        </button>
-                                    )
-                                )}
-                            </div>
-                        )}
-                    </motion.div>
-                ))}
+                {/* 3. RESOLVED HISTORY (Fully Reviewed) */}
+                {user.role === 'admin' && tasks.some(t => getTaskStatus(t.id) === 'resolved') && (
+                    <section className="opacity-60 grayscale-[0.5] hover:opacity-100 hover:grayscale-0 transition-all duration-500">
+                        <h2 className="text-sm font-black text-secondary uppercase tracking-[0.3em] mb-6">
+                            Resolved Missions / History
+                        </h2>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {tasks.filter(t => getTaskStatus(t.id) === 'resolved').map((task) => (
+                                <TaskCard key={task.id} task={task} user={user} getTaskStatus={getTaskStatus} allSubmissions={allSubmissions} fetchAllSubmissions={fetchAllSubmissions} getSubForTask={getSubForTask} handleDeleteTask={handleDeleteTask} uploadData={uploadData} setUploadData={setUploadData} handleUpload={handleUpload} handleDelete={handleDelete} />
+                            ))}
+                        </div>
+                    </section>
+                )}
 
                 {tasks.length === 0 && (
-                    <div className="col-span-full text-center py-12 text-secondary opacity-50">
+                    <div className="text-center py-12 text-secondary opacity-50">
                         No active missions assigned yet.
                     </div>
                 )}
             </div>
         </div>
+    );
+};
+
+// Extracted TaskCard to avoid duplication
+const TaskCard = ({ task, user, getTaskStatus, allSubmissions, fetchAllSubmissions, getSubForTask, handleDeleteTask, uploadData, setUploadData, handleUpload, handleDelete }) => {
+    return (
+        <motion.div
+            layout
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`glass-panel p-6 flex flex-col justify-between ${user.role === 'admin' && getTaskStatus(task.id) === 'pending' ? 'border-cyan-500/50 ring-1 ring-cyan-500/20' : ''}`}
+        >
+            <div>
+                <div className="flex justify-between items-start mb-2">
+                    <h3 className="text-xl font-bold text-primary">{task.title}</h3>
+                    {user.role === 'admin' && (
+                        <button
+                            onClick={() => handleDeleteTask(task.id)}
+                            className="text-secondary opacity-50 hover:text-red-500 hover:opacity-100 transition-all p-1"
+                            title="Delete Mission"
+                        >
+                            <Trash2 size={18} />
+                        </button>
+                    )}
+                </div>
+                <p className="text-secondary text-sm mb-4 whitespace-pre-wrap">{task.notes}</p>
+
+                {task.drive_link && (
+                    <a
+                        href={task.drive_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center text-cyan-400 hover:text-cyan-300 mb-6 text-sm"
+                    >
+                        <ExternalLink size={14} className="mr-1" />
+                        Access Resources (GDrive)
+                    </a>
+                )}
+            </div>
+
+            {/* ADMIN REVIEW SECTION IN TASKS */}
+            {user.role === 'admin' && (
+                <div className="mt-4 pt-4 border-t border-border">
+                    <h4 className="text-xs font-bold text-secondary uppercase mb-3">Student Submissions</h4>
+                    <AdminTaskReviews
+                        taskId={task.id}
+                        submissions={allSubmissions.filter(s => s.task_id === task.id)}
+                        onAction={fetchAllSubmissions}
+                    />
+                </div>
+            )}
+
+            {user.role === 'student' && (
+                <div className="mt-4 pt-4 border-t border-border">
+                    {getSubForTask(task.id) && !uploadData.isReupload ? (
+                        <div className={`bg-panel p-4 rounded-lg border ${getSubForTask(task.id).status === 'denied' ? 'border-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.1)]' : 'border-border'}`}>
+                            <div className="flex justify-between items-start mb-2">
+                                <span className={`${getSubForTask(task.id).status === 'denied' ? 'text-red-400' : 'text-green-400'} text-sm font-bold flex items-center`}>
+                                    {getSubForTask(task.id).status === 'denied' ? (
+                                        <><Trash2 size={16} className="mr-2" /> Mission Denied</>
+                                    ) : (
+                                        <><CheckSquare size={16} className="mr-2" /> Mission Submitted</>
+                                    )}
+                                </span>
+                                <div className="flex items-center space-x-3">
+                                    <span className="text-xs text-secondary">{new Date(getSubForTask(task.id).uploaded_at).toLocaleDateString()}</span>
+                                    {getSubForTask(task.id).status === 'denied' ? (
+                                        <button
+                                            onClick={() => setUploadData({ ...uploadData, task_id: task.id, isReupload: true })}
+                                            className="px-2 py-1 bg-cyan-600 hover:bg-cyan-500 text-white rounded text-[10px] font-bold flex items-center gap-1 transition-all"
+                                            title="Re-upload Solutions"
+                                        >
+                                            🔄 Re-upload
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => handleDelete(getSubForTask(task.id).id)}
+                                            className="w-6 h-6 flex items-center justify-center rounded-full bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all"
+                                            title="Retract Submission"
+                                        >
+                                            &times;
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
+                            {getSubForTask(task.id).status === 'confirmed' && (
+                                <div className="mt-4 pt-4 border-t border-cyan-500/20 animate-in fade-in duration-700">
+                                    <div className="flex items-center gap-3 mb-3">
+                                        <span className="text-[11px] font-black text-cyan-400 uppercase tracking-widest">Performance Score:</span>
+                                        <StarRating rating={getSubForTask(task.id).rating} readonly size={14} />
+                                    </div>
+                                    {getSubForTask(task.id).admin_notes && (
+                                        <div className="relative">
+                                            <div className="absolute -left-2 top-0 bottom-0 w-1 bg-cyan-500/30 rounded-full"></div>
+                                            <p className="text-secondary text-xs italic leading-relaxed pl-3">
+                                                "{getSubForTask(task.id).admin_notes}"
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {getSubForTask(task.id).status === 'denied' && (
+                                <div className="mt-2 text-xs text-red-400 bg-red-500/10 p-3 rounded-lg border border-red-500/20">
+                                    <span className="font-bold underline mb-1 block">Feedback from Instructor:</span>
+                                    <p className="italic">"{getSubForTask(task.id).admin_notes || "No specific reason provided."}"</p>
+                                </div>
+                            )}
+
+                            <div className="text-[10px] text-secondary italic text-right opacity-50 mt-1">
+                                {getSubForTask(task.id).status === 'denied' ? 'Review feedback above and re-submit.' : 'Delete to upload a new file'}
+                            </div>
+                            <p className="text-xs text-secondary mb-2 truncate">Link: {getSubForTask(task.id).upload_link}</p>
+                        </div>
+                    ) : (
+                        uploadData.task_id === task.id ? (
+                            <form onSubmit={handleUpload} className="space-y-3">
+                                <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-cyan-500 transition-colors cursor-pointer relative bg-panel">
+                                    <input
+                                        type="file"
+                                        onChange={(e) => setUploadData({ ...uploadData, file: e.target.files[0] })}
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                        required
+                                    />
+                                    <div className="text-secondary">
+                                        {uploadData.file ? (
+                                            <span className="text-cyan-400 font-bold">{uploadData.file.name}</span>
+                                        ) : (
+                                            <>
+                                                <Upload className="mx-auto mb-2 text-secondary opacity-30" />
+                                                <span>Drop Mission File or Click to Upload</span>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                                <textarea
+                                    placeholder="Notes for instructor..."
+                                    value={uploadData.notes}
+                                    onChange={(e) => setUploadData({ ...uploadData, notes: e.target.value })}
+                                    className="input-field py-2 text-sm h-16"
+                                />
+                                <div className="flex space-x-2">
+                                    <button type="submit" className="px-4 py-2 bg-green-600 rounded-lg text-sm font-bold hover:bg-green-500">
+                                        Submit
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setUploadData({ task_id: null, file: null, notes: '' })}
+                                        className="px-4 py-2 bg-panel border border-border rounded-lg text-sm font-bold hover:bg-white/10 dark:hover:bg-slate-700 text-primary"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        ) : (
+                            <button
+                                onClick={() => setUploadData({ ...uploadData, task_id: task.id })}
+                                className="w-full py-2 bg-panel hover:bg-white/10 dark:hover:bg-slate-700 border border-border rounded-lg flex items-center justify-center text-primary transition-colors"
+                            >
+                                <Upload size={16} className="mr-2" />
+                                Upload Solution
+                            </button>
+                        )
+                    )}
+                </div>
+            )}
+        </motion.div>
     );
 };
 

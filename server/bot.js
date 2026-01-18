@@ -33,19 +33,24 @@ function initBot(db) {
         }
         return null;
     };
-
-    const getLatestMission = (subject) => {
-        return db.prepare('SELECT * FROM tasks WHERE subject = ? ORDER BY created_at DESC LIMIT 1').get(subject);
-    };
-
     const convertTo24h = (timeStr) => {
-        const match = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-        if (!match) return null;
-        let [_, hours, minutes, ampm] = match;
-        hours = parseInt(hours);
-        if (ampm.toUpperCase() === 'PM' && hours < 12) hours += 12;
-        if (ampm.toUpperCase() === 'AM' && hours === 12) hours = 0;
-        return `${String(hours).padStart(2, '0')}:${minutes}`;
+        // Handle HH:mm AM/PM
+        const match12 = timeStr.match(/^(\d{1,2})[:.](\d{2})\s*(AM|PM)$/i);
+        if (match12) {
+            let [_, hours, minutes, ampm] = match12;
+            hours = parseInt(hours);
+            if (ampm.toUpperCase() === 'PM' && hours < 12) hours += 12;
+            if (ampm.toUpperCase() === 'AM' && hours === 12) hours = 0;
+            return `${String(hours).padStart(2, '0')}:${minutes}`;
+        }
+
+        // Handle pure 24h format (HH:mm)
+        const match24 = timeStr.match(/^([01]\d|2[0-3])[:.]?([0-5]\d)$/);
+        if (match24) {
+            return `${match24[1]}:${match24[2]}`;
+        }
+
+        return null;
     };
 
     const convertTo12h = (time24h) => {
@@ -181,14 +186,41 @@ function initBot(db) {
     // Dynamic Daily Reminders (Runs every minute to check if any user needs a reminder)
     cron.schedule('* * * * *', () => {
         const now = new Date();
-        const currentTime = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Cairo' });
+        const fmt = new Intl.DateTimeFormat('en-GB', {
+            hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Africa/Cairo'
+        });
+        const parts = fmt.formatToParts(now);
+        const hour = parts.find(p => p.type === 'hour').value;
+        const minute = parts.find(p => p.type === 'minute').value;
+        const currentTime = `${hour}:${minute}`;
 
-        const subs = db.prepare('SELECT * FROM telegram_subscriptions WHERE reminder_time = ? AND enabled = 1').all(currentTime);
-        for (const sub of subs) {
-            const mission = getLatestMission(sub.subject);
+        // Get unique users who have a reminder set for this minute
+        const usersToRemind = db.prepare(`
+            SELECT DISTINCT telegram_id 
+            FROM telegram_subscriptions 
+            WHERE reminder_time = ? AND enabled = 1
+        `).all(currentTime);
+
+        if (usersToRemind.length > 0) {
+            console.log(`[Bot] ${usersToRemind.length} users scheduled for ${currentTime}`);
+
+            // Get the absolute latest mission as the "Daily Mission"
+            const mission = db.prepare('SELECT * FROM tasks ORDER BY created_at DESC LIMIT 1').get();
+
             if (mission) {
-                const done = db.prepare('SELECT * FROM telegram_completions WHERE telegram_id = ? AND mission_id = ?').get(sub.telegram_id, mission.id);
-                if (!done) sendMission(sub.telegram_id, mission);
+                for (const user of usersToRemind) {
+                    const tid = user.telegram_id;
+                    const done = db.prepare('SELECT * FROM telegram_completions WHERE telegram_id = ? AND mission_id = ?').get(tid, mission.id);
+
+                    if (!done) {
+                        console.log(`[Bot] Sending daily mission reminder to ${tid}: ${mission.title}`);
+                        sendMission(tid, mission);
+                    } else {
+                        // console.log(`[Bot] User ${tid} already completed the latest mission.`);
+                    }
+                }
+            } else {
+                console.warn("[Bot] No missions found in database to send as reminder.");
             }
         }
     });

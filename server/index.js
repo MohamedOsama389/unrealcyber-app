@@ -1041,89 +1041,57 @@ const startServer = async () => {
         // Initialize Telegram Bot
         botInstance = initBot(db);
 
-        // Check for avatar_version column
+        // Run migrations
         try {
+            console.log("Running database migrations...");
+
+            // 1. users table
             const userInfo = db.prepare("PRAGMA table_info(users)").all();
-            const hasVersion = userInfo.some(col => col.name === 'avatar_version');
-            if (!hasVersion) {
+            if (!userInfo.some(col => col.name === 'avatar_version')) {
                 console.log("Adding missing avatar_version to users...");
                 db.prepare('ALTER TABLE users ADD COLUMN avatar_version INTEGER DEFAULT 0').run();
             }
-        } catch (e) { console.error("Avatar version migration failed", e); }
 
-        // Run migrations
-        try {
-            const info = db.prepare("PRAGMA table_info(folders_meta)").all();
-            const hasParentId = info.some(col => col.name === 'parent_id');
-            const hasName = info.some(col => col.name === 'name');
-            if (!hasParentId) {
+            // 2. folders_meta table
+            const foldersInfo = db.prepare("PRAGMA table_info(folders_meta)").all();
+            if (!foldersInfo.some(col => col.name === 'parent_id')) {
                 console.log("Adding missing parent_id to folders_meta...");
                 db.prepare('ALTER TABLE folders_meta ADD COLUMN parent_id TEXT').run();
             }
-            if (!hasName) {
+            if (!foldersInfo.some(col => col.name === 'name')) {
                 console.log("Adding missing name to folders_meta...");
                 db.prepare('ALTER TABLE folders_meta ADD COLUMN name TEXT').run();
             }
-            if (!hasResources) {
+
+            // 3. videos table
+            const videosInfo = db.prepare("PRAGMA table_info(videos)").all();
+            if (!videosInfo.some(col => col.name === 'resources')) {
                 console.log("Adding missing resources to videos...");
                 db.prepare('ALTER TABLE videos ADD COLUMN resources TEXT').run();
             }
 
-            // Telegram Migrations
+            // 4. tasks table
             const taskInfo = db.prepare("PRAGMA table_info(tasks)").all();
             if (!taskInfo.some(col => col.name === 'subject')) {
                 console.log("Adding missing subject to tasks...");
                 db.prepare("ALTER TABLE tasks ADD COLUMN subject TEXT NOT NULL DEFAULT 'general'").run();
             }
 
-            db.exec(`
-                CREATE TABLE IF NOT EXISTS telegram_users (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    telegram_id TEXT UNIQUE NOT NULL,
-                    username TEXT,
-                    first_name TEXT,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                );
-                CREATE TABLE IF NOT EXISTS telegram_subscriptions (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    telegram_id TEXT NOT NULL,
-                    subject TEXT NOT NULL,
-                    reminder_time TEXT DEFAULT '18:00',
-                    enabled INTEGER DEFAULT 1,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                );
-                CREATE TABLE IF NOT EXISTS telegram_completions (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    telegram_id TEXT NOT NULL,
-                    subject TEXT NOT NULL,
-                    mission_id INTEGER NOT NULL,
-                    completed_at DATETIME DEFAULT CURRENT_TIMESTAMP
-                );
-                CREATE TABLE IF NOT EXISTS site_settings (
-                    key TEXT PRIMARY KEY,
-                    value TEXT NOT NULL
-                );
-                INSERT OR IGNORE INTO site_settings (key, value) VALUES ('telegram_enabled', 'true');
-                INSERT OR IGNORE INTO site_settings (key, value) VALUES ('telegram_link', 'https://t.me/UnrealCyber_bot?start=fromWebsite');
-            `);
-        } catch (e) {
-            console.error("Database migration check failed", e);
-        }
-
-        // --- TELEGRAM MIGRATIONS ---
-        try {
-            const taskInfo = db.prepare("PRAGMA table_info(tasks)").all();
-            if (!taskInfo.some(col => col.name === 'subject')) {
-                console.log("Adding missing subject to tasks...");
-                db.prepare("ALTER TABLE tasks ADD COLUMN subject TEXT NOT NULL DEFAULT 'general'").run();
+            // 5. student_uploads table (MISSING STATUS FIX)
+            const uploadInfo = db.prepare("PRAGMA table_info(student_uploads)").all();
+            if (!uploadInfo.some(col => col.name === 'status')) {
+                console.log("Adding missing status to student_uploads...");
+                db.prepare("ALTER TABLE student_uploads ADD COLUMN status TEXT DEFAULT 'pending'").run();
             }
 
+            // 6. telegram_users table
             const teleUserInfo = db.prepare("PRAGMA table_info(telegram_users)").all();
             if (teleUserInfo.length > 0 && !teleUserInfo.some(col => col.name === 'website_user_id')) {
                 console.log("Adding website_user_id to telegram_users...");
                 db.prepare("ALTER TABLE telegram_users ADD COLUMN website_user_id INTEGER").run();
             }
 
+            // 7. Initialize tables
             db.exec(`
                 CREATE TABLE IF NOT EXISTS telegram_users (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1155,9 +1123,10 @@ const startServer = async () => {
                 INSERT OR IGNORE INTO site_settings (key, value) VALUES ('telegram_enabled', 'true');
                 INSERT OR IGNORE INTO site_settings (key, value) VALUES ('telegram_link', 'https://t.me/UnrealCyber_bot?start=fromWebsite');
             `);
-            console.log("Telegram migrations complete.");
+
+            console.log("Migrations check complete.");
         } catch (e) {
-            console.error("Telegram migrations failed", e);
+            console.error("Database migration check failed", e);
         }
 
         server.listen(PORT, '0.0.0.0', () => {

@@ -32,6 +32,7 @@ const Dashboard = () => {
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
     const [tempImage, setTempImage] = useState(null);
     const [showCropper, setShowCropper] = useState(false);
+    const [settings, setSettings] = useState({ telegram_enabled: 'false', telegram_link: '' });
 
     // Party Re-join Logic
     const [partyActive, setPartyActive] = useState(false);
@@ -93,6 +94,10 @@ const Dashboard = () => {
                 // Get Active Votes
                 const votesRes = await axios.get('/api/votes/active');
                 setActiveVotes(votesRes.data);
+
+                // Get Settings
+                const settingsRes = await axios.get('/api/settings');
+                setSettings(settingsRes.data);
             } catch (error) {
                 console.error("Error fetching dashboard data:", error);
             }
@@ -258,14 +263,38 @@ const Dashboard = () => {
                             <Award size={14} className="text-white" />
                         </label>
                     </div>
-                    <div>
-                        <h1 className="text-4xl md:text-5xl font-bold text-primary mb-1">
-                            Welcome, <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">{user.username}</span>
-                        </h1>
-                        <p className="text-lg text-secondary flex items-center">
-                            <Award className="mr-2 text-yellow-500" size={18} />
-                            Academy Member • <span className="text-cyan-400 ml-1">v2.0</span>
-                        </p>
+                    <div className="flex flex-col md:flex-row items-center gap-4">
+                        {settings.telegram_enabled === 'true' && (
+                            <motion.a
+                                href={settings.telegram_link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                whileHover={{ scale: 1.1 }}
+                                className="group relative flex items-center justify-center p-3 bg-panel border border-cyan-500/30 rounded-2xl hover:bg-cyan-500/10 transition-all shadow-lg hover:shadow-cyan-500/20"
+                            >
+                                <img src="/telegram_logo.png" alt="Telegram" className="w-10 h-10 object-contain" />
+
+                                {/* TOOLTIP */}
+                                <div className="absolute top-full mt-3 right-0 w-48 p-2 bg-slate-900 border border-border rounded-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 text-center shadow-xl">
+                                    <p className="text-[10px] text-primary font-bold leading-tight">
+                                        don't forget to join the telegram bot for daily check up
+                                    </p>
+                                    <div className="absolute -top-1 right-5 w-2 h-2 bg-slate-900 border-l border-t border-border transform rotate-45"></div>
+                                </div>
+                            </motion.a>
+                        )}
+
+                        <div className="flex flex-col items-center md:items-end">
+                            <h1 className="text-3xl font-bold text-primary">
+                                Welcome, <span className="text-cyan-400">{user.username}</span>
+                            </h1>
+                            <p className="text-secondary flex items-center gap-2">
+                                <Activity size={14} className="text-cyan-500" />
+                                Academy OS v2.0 • {new Date().toLocaleDateString()}
+                            </p>
+                        </div>
                     </div>
                 </div>
 

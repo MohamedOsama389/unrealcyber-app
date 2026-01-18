@@ -443,7 +443,14 @@ app.post('/api/tasks/confirm/:uploadId', authenticateToken, async (req, res) => 
 
     try {
         console.log(`[Admin] Confirming upload ${uploadId}...`);
-        const upload = db.prepare('SELECT u.username, t.title FROM student_uploads u JOIN tasks t ON u.task_id = t.id WHERE u.id = ?').get(uploadId);
+        const upload = db.prepare(`
+            SELECT u.id as student_id, u.username, t.title 
+            FROM student_uploads su 
+            JOIN users u ON su.student_id = u.id 
+            JOIN tasks t ON su.task_id = t.id 
+            WHERE su.id = ?
+        `).get(uploadId);
+
         if (!upload) {
             console.error(`[Admin] Upload ${uploadId} not found`);
             return res.status(404).json({ error: "Upload not found" });
@@ -453,20 +460,18 @@ app.post('/api/tasks/confirm/:uploadId', authenticateToken, async (req, res) => 
         db.prepare('UPDATE student_uploads SET status = ? WHERE id = ?').run('confirmed', uploadId);
         console.log(`[Admin] Status updated to confirmed for upload ${uploadId}`);
 
-        const student = db.prepare('SELECT id FROM users WHERE username = ?').get(upload.username);
-        if (student) {
-            const teleUser = db.prepare('SELECT telegram_id FROM telegram_users WHERE website_user_id = ?').get(student.id);
+        if (upload.student_id) {
+            const teleUser = db.prepare('SELECT telegram_id FROM telegram_users WHERE website_user_id = ?').get(upload.student_id);
             if (teleUser && botInstance && botInstance.sendCongrats) {
-                console.log(`[Admin] Notifying student ${upload.username} via Telegram...`);
+                console.log(`[Admin] Notifying student ${upload.username} (ID: ${upload.student_id}) via Telegram...`);
                 try {
                     await botInstance.sendCongrats(teleUser.telegram_id, upload.title);
                     console.log(`[Admin] Telegram notification sent to ${teleUser.telegram_id}`);
                 } catch (botErr) {
                     console.error(`[Admin] Failed to send Telegram notification:`, botErr.message);
-                    // We don't return 500 here because the DB update succeeded.
                 }
             } else {
-                console.warn(`[Admin] Could not notify via bot. teleUser: ${!!teleUser}, botInstance: ${!!botInstance}`);
+                console.warn(`[Admin] Could not notify via bot. teleUser: ${!!teleUser}, botInstance: ${!!botInstance}, studentId: ${upload.student_id}`);
             }
         }
         res.json({ success: true, message: "Mission confirmed and student notified." });
@@ -484,7 +489,14 @@ app.post('/api/tasks/deny/:uploadId', authenticateToken, async (req, res) => {
 
     try {
         console.log(`[Admin] Denying upload ${uploadId} for reason: ${reason}...`);
-        const upload = db.prepare('SELECT u.username, t.title FROM student_uploads u JOIN tasks t ON u.task_id = t.id WHERE u.id = ?').get(uploadId);
+        const upload = db.prepare(`
+            SELECT u.id as student_id, u.username, t.title 
+            FROM student_uploads su 
+            JOIN users u ON su.student_id = u.id 
+            JOIN tasks t ON su.task_id = t.id 
+            WHERE su.id = ?
+        `).get(uploadId);
+
         if (!upload) {
             console.error(`[Admin] Upload ${uploadId} not found`);
             return res.status(404).json({ error: "Upload not found" });
@@ -494,11 +506,10 @@ app.post('/api/tasks/deny/:uploadId', authenticateToken, async (req, res) => {
         db.prepare('UPDATE student_uploads SET status = ? WHERE id = ?').run('denied', uploadId);
         console.log(`[Admin] Status updated to denied for upload ${uploadId}`);
 
-        const student = db.prepare('SELECT id FROM users WHERE username = ?').get(upload.username);
-        if (student) {
-            const teleUser = db.prepare('SELECT telegram_id FROM telegram_users WHERE website_user_id = ?').get(student.id);
+        if (upload.student_id) {
+            const teleUser = db.prepare('SELECT telegram_id FROM telegram_users WHERE website_user_id = ?').get(upload.student_id);
             if (teleUser && botInstance && botInstance.sendDenial) {
-                console.log(`[Admin] Sending denial notification to student ${upload.username}...`);
+                console.log(`[Admin] Sending denial notification to student ${upload.username} (ID: ${upload.student_id})...`);
                 try {
                     await botInstance.sendDenial(teleUser.telegram_id, upload.title, reason || "No reason specified.");
                     console.log(`[Admin] Denial notification sent to ${teleUser.telegram_id}`);
@@ -506,7 +517,7 @@ app.post('/api/tasks/deny/:uploadId', authenticateToken, async (req, res) => {
                     console.error(`[Admin] Failed to send bot denial:`, botErr.message);
                 }
             } else {
-                console.warn(`[Admin] Could not notify via bot (denial). teleUser: ${!!teleUser}`);
+                console.warn(`[Admin] Could not notify via bot (denial). teleUser: ${!!teleUser}, studentId: ${upload.student_id}`);
             }
         }
         res.json({ success: true, message: "Mission denied and student notified." });
@@ -551,13 +562,15 @@ app.post('/api/tasks/upload', authenticateToken, upload.single('file'), async (r
 
         if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
-        // Flattened structure: Upload directly to TASKS_FOLDER_ID
-        // Rename file to include student and task info for easy identification on Drive
-        const descriptiveName = `${studentName} - ${task.title} - ${req.file.originalname}`;
-        const tempFile = { ...req.file, originalname: descriptiveName };
+        // Nested structure: TASKS_FOLDER_ID -> [Student Name] -> [Mission Name]
+        let studentFolderId = await driveService.findFolder(studentName, driveService.TASKS_FOLDER_ID);
+        if (!studentFolderId) studentFolderId = await driveService.createFolder(studentName, driveService.TASKS_FOLDER_ID);
 
-        console.log(`[Drive] Uploading ${descriptiveName} directly to folder ${driveService.TASKS_FOLDER_ID}...`);
-        const driveFile = await driveService.uploadFile(tempFile, driveService.TASKS_FOLDER_ID);
+        let taskFolderId = await driveService.findFolder(task.title, studentFolderId);
+        if (!taskFolderId) taskFolderId = await driveService.createFolder(task.title, studentFolderId);
+
+        console.log(`[Drive] Uploading to folder: ${studentName}/${task.title}...`);
+        const driveFile = await driveService.uploadFile(req.file, taskFolderId);
 
         // Ensure user exists in local table (legacy check)
         const dummyHash = "$2a$10$Ephemera1DBPlaceho1derHa5h";

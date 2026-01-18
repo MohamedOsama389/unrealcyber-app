@@ -9,7 +9,7 @@ import StarRating from '../components/StarRating';
 const AdminTaskReviews = ({ taskId }) => {
     const [submissions, setSubmissions] = useState([]);
     const [grading, setGrading] = useState({ id: null, rating: 0, admin_notes: '' });
-    const [denyReason, setDenyReason] = useState('');
+    const [denyReasons, setDenyReasons] = useState({}); // Submission-specific reasons { subId: reason }
     const [actionMsg, setActionMsg] = useState('');
 
     useEffect(() => {
@@ -28,22 +28,29 @@ const AdminTaskReviews = ({ taskId }) => {
 
     const handleConfirm = async (id) => {
         try {
-            await axios.post(`/api/tasks/confirm/${id}`);
-            setActionMsg('Student notified of success! 🎉');
+            const res = await axios.post(`/api/tasks/confirm/${id}`);
+            setActionMsg(res.data.message || 'Mission Confirmed! 🎉');
             setTimeout(() => setActionMsg(''), 3000);
             fetchSubs();
-        } catch (err) { console.error(err); }
+        } catch (err) {
+            console.error(err);
+            alert("Failed to confirm: " + (err.response?.data?.error || err.message));
+        }
     };
 
     const handleDeny = async (id) => {
-        if (!denyReason) return alert("Please provide a reason for denial.");
+        const reason = denyReasons[id];
+        if (!reason) return alert("Please provide a reason for denial.");
         try {
-            await axios.post(`/api/tasks/deny/${id}`, { reason: denyReason });
-            setActionMsg('Student notified of denial. ❌');
-            setDenyReason('');
+            const res = await axios.post(`/api/tasks/deny/${id}`, { reason });
+            setActionMsg(res.data.message || 'Mission Denied. ❌');
+            setDenyReasons({ ...denyReasons, [id]: '' });
             setTimeout(() => setActionMsg(''), 3000);
             fetchSubs();
-        } catch (err) { console.error(err); }
+        } catch (err) {
+            console.error(err);
+            alert("Failed to deny: " + (err.response?.data?.error || err.message));
+        }
     };
 
     const submitGrade = async (e) => {
@@ -83,10 +90,15 @@ const AdminTaskReviews = ({ taskId }) => {
                         </div>
                     </div>
 
-                    <div className="text-xs text-secondary mb-3 flex items-center justify-between">
-                        <a href={sub.upload_link} target="_blank" className="underline hover:text-cyan-300 flex items-center gap-1">
+                    <div className="text-xs mb-3 flex items-center justify-between">
+                        <a href={sub.upload_link} target="_blank" className="underline text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-bold">
                             <ExternalLink size={10} /> View Submission
                         </a>
+                        <div className="flex items-center gap-2">
+                            {sub.status === 'confirmed' && <span className="px-2 py-0.5 bg-green-500/20 text-green-400 rounded text-[9px] font-black border border-green-500/30 uppercase">Confirmed</span>}
+                            {sub.status === 'denied' && <span className="px-2 py-0.5 bg-red-500/20 text-red-400 rounded text-[9px] font-black border border-red-500/30 uppercase">Denied</span>}
+                            {(!sub.status || sub.status === 'pending') && <span className="px-2 py-0.5 bg-yellow-500/20 text-yellow-500 rounded text-[9px] font-black border border-yellow-500/30 uppercase">Pending</span>}
+                        </div>
                     </div>
 
                     {/* TELEGRAM ACTIONS */}
@@ -100,10 +112,10 @@ const AdminTaskReviews = ({ taskId }) => {
 
                         <div className="flex gap-2">
                             <input
-                                className="flex-1 bg-app border border-border rounded-lg text-[10px] px-2 text-primary"
+                                className="flex-1 bg-app border border-border rounded-lg text-[10px] px-2 text-primary focus:border-cyan-500 outline-none"
                                 placeholder="Deny reason..."
-                                value={grading.id === sub.id ? '' : denyReason}
-                                onChange={(e) => setDenyReason(e.target.value)}
+                                value={denyReasons[sub.id] || ''}
+                                onChange={(e) => setDenyReasons({ ...denyReasons, [sub.id]: e.target.value })}
                             />
                             <button
                                 onClick={() => handleDeny(sub.id)}

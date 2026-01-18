@@ -13,7 +13,6 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const driveService = require('./driveService');
-const { initBot } = require('./bot');
 
 let botInstance;
 const upload = multer({ storage: multer.memoryStorage() });

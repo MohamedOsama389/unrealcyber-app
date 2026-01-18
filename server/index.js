@@ -1075,6 +1075,13 @@ const startServer = async () => {
         // Local DB Init & Restore
         backupService.init();
 
+        // FALLBACK: If database.db still doesn't exist after local init, try Drive restore
+        const dbPath = path.join(__dirname, '../database.db');
+        if (!fs.existsSync(dbPath)) {
+            console.log("[System] Local database and backup not found. Attempting Drive restore...");
+            await driveService.restoreDatabase();
+        }
+
         // Initialize DB AFTER local check
         db = require('./database');
 
@@ -1172,13 +1179,15 @@ const startServer = async () => {
         server.listen(PORT, '0.0.0.0', () => {
             console.log(`Server running on port ${PORT} (Bound to 0.0.0.0 for Railway)`);
 
-            // SCHEDULE LOCAL BACKUPS (Every 12 hours)
+            // SCHEDULE BACKUPS (Every 12 hours)
             setInterval(() => {
                 backupService.performBackup();
+                driveService.backupDatabase(); // Re-enabled Drive backup
             }, 12 * 60 * 60 * 1000);
 
-            // Initial backup on start
+            // Initial backups on start
             backupService.performBackup();
+            driveService.backupDatabase(); // Re-enabled Drive backup
 
             console.log(`Environment: ${process.env.NODE_ENV}`);
             console.log(`Health Check: Server is ready.`);

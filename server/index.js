@@ -2,9 +2,11 @@ const express = require('express');
 const cors = require('cors');
 const http = require('http'); // Keep http for server creation
 const { Server } = require('socket.io'); // Keep Server for socket.io initialization
-const bot = require('./bot');
+const fs = require('fs');
+const path = require('path');
+const botImport = require('./bot');
 const backupService = require('./backupService');
-const { initBot } = bot; // Destructure initBot from the bot module
+const { initBot } = botImport; // Destructure initBot from the bot module
 // Removed top-level db require
 let db;
 
@@ -40,8 +42,6 @@ let partyState = {
 
 app.use(cors());
 app.use(express.json());
-
-const path = require('path');
 
 const SECRET_KEY = "UNREAL_CYBER_SECRET_KEY_2026"; // In prod, use .env
 

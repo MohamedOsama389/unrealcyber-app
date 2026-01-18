@@ -1,7 +1,10 @@
 const express = require('express');
 const cors = require('cors');
-const http = require('http');
-const { Server } = require('socket.io');
+const http = require('http'); // Keep http for server creation
+const { Server } = require('socket.io'); // Keep Server for socket.io initialization
+const bot = require('./bot');
+const backupService = require('./backupService');
+const { initBot } = bot; // Destructure initBot from the bot module
 // Removed top-level db require
 let db;
 
@@ -572,9 +575,9 @@ app.post('/api/tasks/upload', authenticateToken, upload.single('file'), async (r
         console.log(`[Drive] Uploading to folder: ${studentName}/${task.title}...`);
         const driveFile = await driveService.uploadFile(req.file, taskFolderId);
 
-        // Ensure user exists in local table (legacy check)
-        const dummyHash = "$2a$10$Ephemera1DBPlaceho1derHa5h";
-        db.prepare('INSERT OR IGNORE INTO users (id, username, password, role) VALUES (?, ?, ?, ?)').run(req.user.id, req.user.username, dummyHash, req.user.role);
+        // Cleanup: If there was a previous submission (pending or denied), delete it to avoid duplicates
+        // This ensures the student is "re-uploading" and not just piling up files.
+        db.prepare('DELETE FROM student_uploads WHERE task_id = ? AND student_id = ?').run(task_id, req.user.id);
 
         db.prepare('INSERT INTO student_uploads (task_id, student_id, upload_link, notes, status) VALUES (?, ?, ?, ?, ?)').run(task_id, req.user.id, driveFile.webViewLink, notes, 'pending');
 
@@ -1040,15 +1043,10 @@ const PORT = Number(process.env.PORT) || 8080;
 
 const startServer = async () => {
     try {
-        // Restore DB logic
-        if (driveService.isInitialized()) {
-            console.log("Drive initialized, attempting to restore database...");
-            await driveService.restoreDatabase();
-        } else {
-            console.log("Drive NOT initialized, skipping restore.");
-        }
+        // Local DB Init & Restore
+        backupService.init();
 
-        // Initialize DB AFTER restore
+        // Initialize DB AFTER local check
         db = require('./database');
 
         // Initialize Telegram Bot
@@ -1145,10 +1143,13 @@ const startServer = async () => {
         server.listen(PORT, '0.0.0.0', () => {
             console.log(`Server running on port ${PORT} (Bound to 0.0.0.0 for Railway)`);
 
-            // SCHEDULE BACKUPS (Every 12 hours)
+            // SCHEDULE LOCAL BACKUPS (Every 12 hours)
             setInterval(() => {
-                driveService.backupDatabase();
+                backupService.performBackup();
             }, 12 * 60 * 60 * 1000);
+
+            // Initial backup on start
+            backupService.performBackup();
 
             console.log(`Environment: ${process.env.NODE_ENV}`);
             console.log(`Health Check: Server is ready.`);

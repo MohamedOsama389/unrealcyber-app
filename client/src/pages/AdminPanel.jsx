@@ -23,6 +23,7 @@ const AdminPanel = () => {
     const [partyFiles, setPartyFiles] = useState([]);
     const [uploadingParty, setUploadingParty] = useState(false);
     const [siteSettings, setSiteSettings] = useState({ telegram_enabled: 'false', telegram_link: '' });
+    const [stats, setStats] = useState([]);
 
     useEffect(() => {
         fetchUsers();
@@ -30,6 +31,7 @@ const AdminPanel = () => {
         fetchVotes();
         fetchPartyFiles(); // Fetch party files on component mount
         fetchSiteSettings();
+        fetchStats();
 
         const socket = io();
         socket.on('party_update', (state) => {
@@ -160,6 +162,15 @@ const AdminPanel = () => {
         }
     };
 
+    const fetchStats = async () => {
+        try {
+            const res = await axios.get('/api/admin/stats');
+            setStats(res.data);
+        } catch (err) {
+            console.error("Failed to fetch stats");
+        }
+    };
+
     const toggleRole = async (userId, currentRole) => {
         const newRole = currentRole === 'admin' ? 'student' : 'admin';
         try {
@@ -287,6 +298,16 @@ const AdminPanel = () => {
                 >
                     <Settings size={20} />
                     <span>Bot Settings</span>
+                </button>
+                <button
+                    onClick={() => setActiveTab('stats')}
+                    className={clsx(
+                        "flex items-center space-x-2 px-6 py-3 rounded-xl font-bold transition-all",
+                        activeTab === 'stats' ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/30" : "bg-panel text-secondary hover:bg-white/10 dark:hover:bg-slate-800 hover:text-primary border border-border"
+                    )}
+                >
+                    <Award size={20} />
+                    <span>Recruit Stats</span>
                 </button>
             </div>
 
@@ -796,6 +817,86 @@ const AdminPanel = () => {
                             <Send size={18} className="text-cyan-400" /> Administrative Broadcast Chat (WIP)
                         </h4>
                         <p className="text-sm text-secondary italic">Dedicated slider chat will appear globally when party is active.</p>
+                    </div>
+                </div>
+            )}
+
+            {/* STATISTICS TAB */}
+            {activeTab === 'stats' && (
+                <div className="space-y-6">
+                    <div className="glass-panel p-6 border-l-4 border-l-indigo-500">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-xl font-bold text-primary flex items-center">
+                                <Award size={24} className="mr-3 text-indigo-400" /> Recruit Performance Metrics
+                            </h3>
+                            <button
+                                onClick={fetchStats}
+                                className="px-4 py-2 bg-panel border border-border hover:bg-white/5 rounded-lg text-xs font-bold transition-colors"
+                            >
+                                Refresh Data
+                            </button>
+                        </div>
+
+                        <div className="overflow-hidden rounded-2xl border border-border">
+                            <table className="w-full text-left">
+                                <thead className="bg-panel border-b border-border text-secondary uppercase text-[10px] tracking-wider font-black">
+                                    <tr>
+                                        <th className="p-4">Recruit</th>
+                                        <th className="p-4 text-center">Total Missions</th>
+                                        <th className="p-4 text-center text-green-400">Confirmed</th>
+                                        <th className="p-4 text-center text-yellow-500">Pending</th>
+                                        <th className="p-4 text-center text-red-500">Denied</th>
+                                        <th className="p-4 text-right pr-6">Efficiency</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-border">
+                                    {stats.map((s, idx) => {
+                                        const efficiency = s.total_missions > 0
+                                            ? Math.round((s.confirmed / s.total_missions) * 100)
+                                            : 0;
+                                        return (
+                                            <tr key={idx} className="hover:bg-white/5 transition-colors">
+                                                <td className="p-4 font-bold text-primary">{s.username}</td>
+                                                <td className="p-4 text-center text-secondary font-mono">{s.total_missions}</td>
+                                                <td className="p-4 text-center">
+                                                    <span className="px-2 py-1 bg-green-500/10 text-green-400 rounded-lg text-xs font-bold border border-green-500/20">
+                                                        {s.confirmed}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4 text-center">
+                                                    <span className="px-2 py-1 bg-yellow-500/10 text-yellow-500 rounded-lg text-xs font-bold border border-yellow-500/20">
+                                                        {s.pending}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4 text-center">
+                                                    <span className="px-2 py-1 bg-red-500/10 text-red-500 rounded-lg text-xs font-bold border border-red-500/20">
+                                                        {s.denied}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4 text-right pr-6">
+                                                    <div className="flex items-center justify-end gap-3">
+                                                        <div className="w-24 h-1.5 bg-panel rounded-full overflow-hidden border border-border">
+                                                            <div
+                                                                className="h-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]"
+                                                                style={{ width: `${efficiency}%` }}
+                                                            />
+                                                        </div>
+                                                        <span className="font-mono text-xs font-bold text-primary">{efficiency}%</span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                    {stats.length === 0 && (
+                                        <tr>
+                                            <td colSpan="6" className="p-12 text-center text-secondary italic">
+                                                No mission data detected in the database.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             )}

@@ -69,14 +69,10 @@ function initBot(db) {
             `🔗 [Access Resources](${mission.drive_link || siteUrl + '/tasks'})\n` +
             `🌍 [Open Mission Center](${siteUrl}/tasks)`;
 
-        const keyboard = Markup.inlineKeyboard([
-            [Markup.button.callback('✅ Mark as Done', `done_${mission.id}`)]
-        ]);
-
         if (chatOrCtx.reply) {
-            chatOrCtx.replyWithMarkdown(message, keyboard);
+            chatOrCtx.replyWithMarkdown(message);
         } else {
-            bot.telegram.sendMessage(chatOrCtx, message, { parse_mode: 'Markdown', ...keyboard }).catch(e => console.error("Error sending mission:", e));
+            bot.telegram.sendMessage(chatOrCtx, message, { parse_mode: 'Markdown' }).catch(e => console.error("Error sending mission:", e));
         }
     }
 

@@ -445,6 +445,9 @@ app.post('/api/tasks/confirm/:uploadId', authenticateToken, async (req, res) => 
         const upload = db.prepare('SELECT u.username, t.title FROM student_uploads u JOIN tasks t ON u.task_id = t.id WHERE u.id = ?').get(uploadId);
         if (!upload) return res.status(404).json({ error: "Upload not found" });
 
+        // Update status to confirmed
+        db.prepare('UPDATE student_uploads SET status = ? WHERE id = ?').run('confirmed', uploadId);
+
         const student = db.prepare('SELECT id FROM users WHERE username = ?').get(upload.username);
         if (student) {
             const teleUser = db.prepare('SELECT telegram_id FROM telegram_users WHERE website_user_id = ?').get(student.id);
@@ -469,6 +472,9 @@ app.post('/api/tasks/deny/:uploadId', authenticateToken, async (req, res) => {
         const upload = db.prepare('SELECT u.username, t.title FROM student_uploads u JOIN tasks t ON u.task_id = t.id WHERE u.id = ?').get(uploadId);
         if (!upload) return res.status(404).json({ error: "Upload not found" });
 
+        // Update status to denied
+        db.prepare('UPDATE student_uploads SET status = ? WHERE id = ?').run('denied', uploadId);
+
         const student = db.prepare('SELECT id FROM users WHERE username = ?').get(upload.username);
         if (student) {
             const teleUser = db.prepare('SELECT telegram_id FROM telegram_users WHERE website_user_id = ?').get(student.id);
@@ -479,6 +485,30 @@ app.post('/api/tasks/deny/:uploadId', authenticateToken, async (req, res) => {
         res.json({ success: true });
     } catch (err) {
         console.error("Deny Fail:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- ADMIN STATS ---
+app.get('/api/admin/stats', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    try {
+        const stats = db.prepare(`
+            SELECT 
+                u.username,
+                COUNT(s.id) as total_missions,
+                SUM(CASE WHEN s.status = 'confirmed' THEN 1 ELSE 0 END) as confirmed,
+                SUM(CASE WHEN s.status = 'pending' THEN 1 ELSE 0 END) as pending,
+                SUM(CASE WHEN s.status = 'denied' THEN 1 ELSE 0 END) as denied
+            FROM users u
+            LEFT JOIN student_uploads s ON u.id = s.student_id
+            WHERE u.role = 'student'
+            GROUP BY u.id
+            ORDER BY confirmed DESC
+        `).all();
+        res.json(stats);
+    } catch (err) {
+        console.error("Stats Fail:", err);
         res.status(500).json({ error: err.message });
     }
 });

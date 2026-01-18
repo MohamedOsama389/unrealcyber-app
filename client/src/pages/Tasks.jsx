@@ -8,6 +8,7 @@ import StarRating from '../components/StarRating';
 // Sub-component for Admin Reviewing inside Tasks
 const AdminTaskReviews = ({ taskId }) => {
     const [submissions, setSubmissions] = useState([]);
+    const [grading, setGrading] = useState({ id: null, rating: 0, admin_notes: '' });
     const [denyReason, setDenyReason] = useState('');
     const [actionMsg, setActionMsg] = useState('');
 

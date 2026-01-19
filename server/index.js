@@ -1083,7 +1083,7 @@ app.post('/api/admin/download-db', authenticateToken, async (req, res) => {
 });
 
 // Manual DB Upload
-app.post('/api/admin/upload-db', authenticateToken, upload.single('db'), (req, res) => {
+app.post('/api/admin/upload-db', authenticateToken, upload.single('db'), async (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 

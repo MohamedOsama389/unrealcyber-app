@@ -1062,6 +1062,14 @@ app.post('/api/admin/download-db', authenticateToken, async (req, res) => {
             return res.status(401).json({ error: "Invalid password for database access." });
         }
 
+        // IMPORTANT: Flush WAL to database.db file before download
+        try {
+            db.pragma('wal_checkpoint(FULL)');
+            console.log("[Admin] WAL checkpoint completed for download.");
+        } catch (e) {
+            console.error("[Admin] WAL checkpoint failed:", e);
+        }
+
         const DB_PATH = path.join(__dirname, '../database.db');
         if (!fs.existsSync(DB_PATH)) {
             return res.status(404).json({ error: "Database file not found on server." });
@@ -1081,18 +1089,49 @@ app.post('/api/admin/upload-db', authenticateToken, upload.single('db'), (req, r
 
     try {
         const DB_PATH = path.join(__dirname, '../database.db');
-        // Close existing connection if possible
-        if (db && typeof db.close === 'function') {
-            try { db.close(); } catch (e) { console.error("Error closing DB:", e); }
+        const WAL_PATH = path.join(__dirname, '../database.db-wal');
+        const SHM_PATH = path.join(__dirname, '../database.db-shm');
+
+        console.log("[Admin] Initiating database replacement sequence...");
+
+        // 1. Force close the database connection
+        if (db) {
+            try {
+                db.close();
+                console.log("[Admin] Database connection closed.");
+            } catch (e) {
+                console.error("[Admin] error closing DB (continuing anyway):", e);
+            }
         }
 
-        console.log("[Admin] Manually replacing database.db with uploaded file...");
+        // 2. Clean up WAL/SHM files to prevent corruption/locks
+        [DB_PATH, WAL_PATH, SHM_PATH].forEach(p => {
+            if (fs.existsSync(p)) {
+                try {
+                    fs.unlinkSync(p);
+                    console.log(`[Admin] Removed: ${path.basename(p)}`);
+                } catch (e) {
+                    console.error(`[Admin] Could not remove ${path.basename(p)}:`, e.message);
+                }
+            }
+        });
+
+        // 3. Write the new database file
         fs.writeFileSync(DB_PATH, req.file.buffer);
+        console.log("[Admin] New database.db written successfully.");
 
-        // Re-require or process exit to reload
-        console.log("[Admin] DB replaced. Restarting server or reloading DB engine is recommended.");
+        // 4. Respond to client
+        res.json({
+            success: true,
+            message: "Database replaced successfully! The system will now reboot in 2 seconds to apply changes. Please refresh the page shortly."
+        });
 
-        res.json({ success: true, message: "Database uploaded and replaced. The server will now use the new data. A manual restart on Railway might be needed for full consistency." });
+        // 5. Force process exit after a short delay (Railway/PM2 will auto-restart)
+        setTimeout(() => {
+            console.log("[Admin] Rebooting server for database consistency...");
+            process.exit(0);
+        }, 2000);
+
     } catch (err) {
         console.error("[Admin] Manual DB upload failed:", err);
         res.status(500).json({ error: "Failed to replace database file: " + err.message });

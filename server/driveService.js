@@ -352,13 +352,25 @@ const restoreManualMaster = async () => {
         );
 
         return new Promise((resolve) => {
-            response.data
-                .on('end', () => {
-                    console.log("[DriveService] Manual Master restoration complete.");
+            let errorOccurred = false;
+
+            dest.on('finish', () => {
+                if (!errorOccurred) {
+                    console.log("[DriveService] Manual Master restoration complete (File Flushed).");
                     resolve(true);
-                })
+                }
+            });
+
+            dest.on('error', (err) => {
+                console.error("[DriveService] Error writing master file:", err);
+                errorOccurred = true;
+                resolve(false);
+            });
+
+            response.data
                 .on('error', err => {
                     console.error("[DriveService] Error downloading master:", err);
+                    errorOccurred = true;
                     resolve(false);
                 })
                 .pipe(dest);

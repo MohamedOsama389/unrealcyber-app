@@ -1158,8 +1158,15 @@ const startServer = async () => {
         if (!fs.existsSync(dbPath)) {
             console.log("[System] Local database missing. Attempting Manual Master restore...");
             const restored = await driveService.restoreManualMaster();
-            if (!restored) {
-                console.log("[System] No Manual Master found. Seeding fresh database.");
+
+            if (restored) {
+                if (fs.existsSync(dbPath) && fs.statSync(dbPath).size > 0) {
+                    console.log(`[System] Manual Master restored successfully. Size: ${fs.statSync(dbPath).size} bytes.`);
+                } else {
+                    console.error("[System] Manual Master restore reported success but file is empty or missing!");
+                }
+            } else {
+                console.log("[System] No Manual Master found (or failed). Seeding fresh database.");
             }
         }
 

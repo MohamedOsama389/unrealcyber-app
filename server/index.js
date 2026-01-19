@@ -1171,7 +1171,22 @@ const startServer = async () => {
         }
 
         // Initialize DB AFTER local check
-        db = require('./database');
+        try {
+            db = require('./database');
+        } catch (dbErr) {
+            console.error("FATAL: Failed to load database.db. It might be corrupt.", dbErr);
+            const corruptPath = path.join(__dirname, '../database.db');
+            if (fs.existsSync(corruptPath)) {
+                console.log("[System] Deleting corrupt database file to allow fresh start...");
+                fs.unlinkSync(corruptPath);
+                // Clear module cache to allow re-requiring
+                delete require.cache[require.resolve('./database')];
+                db = require('./database');
+                console.log("[System] Fresh database initialized after corruption recovery.");
+            } else {
+                throw dbErr; // If file doesn't exist but require failed, real error.
+            }
+        }
 
         // Initialize Telegram Bot
         botInstance = initBot(db);

@@ -520,23 +520,42 @@ const uploadSQLDump = async () => {
  */
 const restoreSQLDump = async () => {
     try {
-        if (!drive) return false;
+        if (!drive) {
+            console.log("[DriveService] Drive not initialized.");
+            return false;
+        }
         const DB_PATH = path.join(__dirname, '../database.db');
 
         console.log("[DriveService] Checking for SQL dump in Drive...");
-        const res = await drive.files.list({
-            q: `'${DB_FOLDER_ID}' in parents and name = 'database_dump.sql' and trashed=false`,
-            fields: 'files(id, name)',
-            pageSize: 1
-        });
+
+        // Retry up to 3 times with delays (Drive API might have propagation delay)
+        let res;
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            res = await drive.files.list({
+                q: `'${DB_FOLDER_ID}' in parents and name = 'database_dump.sql' and trashed=false`,
+                fields: 'files(id, name, modifiedTime)',
+                pageSize: 1,
+                orderBy: 'modifiedTime desc'
+            });
+
+            if (res.data.files.length > 0) {
+                console.log(`[DriveService] SQL dump found on attempt ${attempt}`);
+                break;
+            }
+
+            if (attempt < 3) {
+                console.log(`[DriveService] SQL dump not found, retrying in 2 seconds (attempt ${attempt}/3)...`);
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+        }
 
         if (res.data.files.length === 0) {
-            console.log("[DriveService] No SQL dump found on Drive.");
+            console.log("[DriveService] No SQL dump found on Drive after 3 attempts.");
             return false;
         }
 
         const dumpFile = res.data.files[0];
-        console.log(`[DriveService] SQL dump detected: ${dumpFile.name}`);
+        console.log(`[DriveService] SQL dump detected: ${dumpFile.name} (ID: ${dumpFile.id})`);
         console.log(`[DriveService] Downloading SQL dump...`);
 
         const response = await drive.files.get(
@@ -555,6 +574,7 @@ const restoreSQLDump = async () => {
         return true;
     } catch (err) {
         console.error("[DriveService] SQL dump restore failed:", err.message);
+        console.error("[DriveService] Full error:", err);
         return false;
     }
 };

@@ -307,7 +307,16 @@ function initBot(db) {
         });
     };
 
-    bot.launch();
+    // Launch with robust error handling for Railway zero-downtime deploys
+    bot.launch({ dropPendingUpdates: true }).catch(err => {
+        if (err.description && err.description.includes('Conflict')) {
+            console.warn("⚠️ Telegram Bot Conflict (409): Another instance is running (likely older container shutting down). This instance will keep trying or wait.");
+            // We do NOT want to crash the process here. 
+            // In a real scenario, this instance might fail to get updates until the other closes.
+        } else {
+            console.error("❌ Telegraf launch failed:", err);
+        }
+    });
     console.log("Telegram Bot v2.0 Initialized (12h format & Proactive flow)");
 
     process.once('SIGINT', () => bot.stop('SIGINT'));

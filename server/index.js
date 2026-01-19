@@ -1120,14 +1120,14 @@ app.post('/api/admin/upload-db', authenticateToken, upload.single('db'), async (
         fs.writeFileSync(DB_PATH, req.file.buffer);
         console.log("[Admin] New database.db written successfully.");
 
-        // 4. SYNC TO DRIVE (Manual Master)
-        console.log("[Admin] Syncing uploaded database to Drive Manual Master...");
-        await driveService.uploadManualMaster();
+        // 4. SYNC TO DRIVE AS SQL DUMP (More reliable than binary)
+        console.log("[Admin] Syncing uploaded database to Drive as SQL dump...");
+        await driveService.uploadSQLDump();
 
         // 5. Respond to client
         res.json({
             success: true,
-            message: "Database replaced and synced to Drive! The system will now reboot in 2 seconds to apply changes. Please refresh the page shortly."
+            message: "Database replaced and synced to Drive as SQL! The system will now reboot in 2 seconds to apply changes. Please refresh the page shortly."
         });
 
         // 6. Force process exit after a short delay
@@ -1156,17 +1156,17 @@ const startServer = async () => {
 
         const dbPath = path.join(__dirname, '../database.db');
         if (!fs.existsSync(dbPath)) {
-            console.log("[System] Local database missing. Attempting Manual Master restore...");
-            const restored = await driveService.restoreManualMaster();
+            console.log("[System] Local database missing. Attempting SQL dump restore...");
+            const restored = await driveService.restoreSQLDump();
 
             if (restored) {
                 if (fs.existsSync(dbPath) && fs.statSync(dbPath).size > 0) {
-                    console.log(`[System] Manual Master restored successfully. Size: ${fs.statSync(dbPath).size} bytes.`);
+                    console.log(`[System] SQL dump restored successfully. Size: ${fs.statSync(dbPath).size} bytes.`);
                 } else {
-                    console.error("[System] Manual Master restore reported success but file is empty or missing!");
+                    console.error("[System] SQL dump restore reported success but file is empty or missing!");
                 }
             } else {
-                console.log("[System] No Manual Master found (or failed). Seeding fresh database.");
+                console.log("[System] No SQL dump found (or failed). Seeding fresh database.");
             }
         }
 

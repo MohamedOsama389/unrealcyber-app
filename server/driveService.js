@@ -460,6 +460,105 @@ const getFileStream = async (fileId, range = null) => {
     }
 };
 
+/**
+ * Upload database as SQL dump to Google Drive
+ */
+const uploadSQLDump = async () => {
+    try {
+        if (!drive) return;
+        const DB_PATH = path.join(__dirname, '../database.db');
+        if (!fs.existsSync(DB_PATH)) return;
+
+        console.log("[DriveService] Exporting database to SQL dump...");
+        const { exportDatabaseToSQL } = require('./sqlDumpService');
+        const sqlDump = exportDatabaseToSQL(DB_PATH);
+
+        console.log(`[DriveService] SQL dump size: ${sqlDump.length} characters`);
+        console.log("[DriveService] Uploading SQL dump to Drive...");
+
+        // Find existing SQL dump if any
+        const resList = await drive.files.list({
+            q: `'${DB_FOLDER_ID}' in parents and name = 'database_dump.sql' and trashed=false`,
+            fields: 'files(id)'
+        });
+
+        const fileMetadata = {
+            name: 'database_dump.sql',
+            parents: [DB_FOLDER_ID],
+        };
+
+        const bufferStream = new stream.PassThrough();
+        bufferStream.end(Buffer.from(sqlDump, 'utf-8'));
+
+        const media = {
+            mimeType: 'text/plain',
+            body: bufferStream,
+        };
+
+        if (resList.data.files.length > 0) {
+            const fileId = resList.data.files[0].id;
+            await drive.files.update({
+                fileId: fileId,
+                media: media
+            });
+            console.log("[DriveService] SQL dump updated:", fileId);
+        } else {
+            const resCreate = await drive.files.create({
+                resource: fileMetadata,
+                media: media,
+                fields: 'id',
+            });
+            console.log("[DriveService] SQL dump created:", resCreate.data.id);
+        }
+    } catch (err) {
+        console.error("[DriveService] SQL dump upload failed:", err.message);
+    }
+};
+
+/**
+ * Restore database from SQL dump in Google Drive
+ */
+const restoreSQLDump = async () => {
+    try {
+        if (!drive) return false;
+        const DB_PATH = path.join(__dirname, '../database.db');
+
+        console.log("[DriveService] Checking for SQL dump in Drive...");
+        const res = await drive.files.list({
+            q: `'${DB_FOLDER_ID}' in parents and name = 'database_dump.sql' and trashed=false`,
+            fields: 'files(id, name)',
+            pageSize: 1
+        });
+
+        if (res.data.files.length === 0) {
+            console.log("[DriveService] No SQL dump found on Drive.");
+            return false;
+        }
+
+        const dumpFile = res.data.files[0];
+        console.log(`[DriveService] SQL dump detected: ${dumpFile.name}`);
+        console.log(`[DriveService] Downloading SQL dump...`);
+
+        const response = await drive.files.get(
+            { fileId: dumpFile.id, alt: 'media' },
+            { responseType: 'text' }
+        );
+
+        const sqlDump = response.data;
+        console.log(`[DriveService] SQL dump downloaded: ${sqlDump.length} characters`);
+        console.log("[DriveService] Importing SQL dump to database...");
+
+        const { importDatabaseFromSQL } = require('./sqlDumpService');
+        importDatabaseFromSQL(DB_PATH, sqlDump);
+
+        console.log("[DriveService] SQL dump restoration complete.");
+        return true;
+    } catch (err) {
+        console.error("[DriveService] SQL dump restore failed:", err.message);
+        return false;
+    }
+};
+
 module.exports = {
     uploadFile,
     listFiles,
@@ -472,6 +571,8 @@ module.exports = {
     restoreDatabase,
     uploadManualMaster,
     restoreManualMaster,
+    uploadSQLDump,
+    restoreSQLDump,
     uploadAvatar,
     uploadPartyVideo,
     getFileStream, // Export new function

@@ -1116,17 +1116,21 @@ app.post('/api/admin/upload-db', authenticateToken, upload.single('db'), (req, r
             }
         });
 
-        // 3. Write the new database file
+        // 3. Write the new database file locally
         fs.writeFileSync(DB_PATH, req.file.buffer);
         console.log("[Admin] New database.db written successfully.");
 
-        // 4. Respond to client
+        // 4. SYNC TO DRIVE (Manual Master)
+        console.log("[Admin] Syncing uploaded database to Drive Manual Master...");
+        await driveService.uploadManualMaster();
+
+        // 5. Respond to client
         res.json({
             success: true,
-            message: "Database replaced successfully! The system will now reboot in 2 seconds to apply changes. Please refresh the page shortly."
+            message: "Database replaced and synced to Drive! The system will now reboot in 2 seconds to apply changes. Please refresh the page shortly."
         });
 
-        // 5. Force process exit after a short delay (Railway/PM2 will auto-restart)
+        // 6. Force process exit after a short delay
         setTimeout(() => {
             console.log("[Admin] Rebooting server for database consistency...");
             process.exit(0);
@@ -1152,7 +1156,11 @@ const startServer = async () => {
 
         const dbPath = path.join(__dirname, '../database.db');
         if (!fs.existsSync(dbPath)) {
-            console.log("[System] No database file found. Manual upload required.");
+            console.log("[System] Local database missing. Attempting Manual Master restore...");
+            const restored = await driveService.restoreManualMaster();
+            if (!restored) {
+                console.log("[System] No Manual Master found. Seeding fresh database.");
+            }
         }
 
         // Initialize DB AFTER local check

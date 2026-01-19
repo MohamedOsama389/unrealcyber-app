@@ -281,6 +281,94 @@ const restoreDatabase = async () => {
     }
 };
 
+const uploadManualMaster = async () => {
+    try {
+        if (!drive) return;
+        const DB_PATH = path.join(__dirname, '../database.db');
+        if (!fs.existsSync(DB_PATH)) return;
+
+        console.log("[DriveService] Syncing Manual Master to Drive...");
+
+        // Find existing manual master if any
+        const resList = await drive.files.list({
+            q: `'${DB_FOLDER_ID}' in parents and name = 'manual_master_database.db' and trashed=false`,
+            fields: 'files(id)'
+        });
+
+        const fileMetadata = {
+            name: 'manual_master_database.db',
+            parents: [DB_FOLDER_ID],
+        };
+        const media = {
+            mimeType: 'application/x-sqlite3',
+            body: fs.createReadStream(DB_PATH),
+        };
+
+        if (resList.data.files.length > 0) {
+            const fileId = resList.data.files[0].id;
+            await drive.files.update({
+                fileId: fileId,
+                media: media
+            });
+            console.log("[DriveService] Manual Master updated:", fileId);
+        } else {
+            const resCreate = await drive.files.create({
+                resource: fileMetadata,
+                media: media,
+                fields: 'id',
+            });
+            console.log("[DriveService] Manual Master created:", resCreate.data.id);
+        }
+    } catch (err) {
+        console.error("[DriveService] Manual Master upload failed:", err.message);
+    }
+};
+
+const restoreManualMaster = async () => {
+    try {
+        if (!drive) return;
+        const DB_PATH = path.join(__dirname, '../database.db');
+
+        console.log("[DriveService] Checking for Manual Master in Drive...");
+        const res = await drive.files.list({
+            q: `'${DB_FOLDER_ID}' in parents and name = 'manual_master_database.db' and trashed=false`,
+            fields: 'files(id, name)',
+            pageSize: 1
+        });
+
+        if (res.data.files.length === 0) {
+            console.log("[DriveService] No Manual Master found on Drive.");
+            return false;
+        }
+
+        const masterFile = res.data.files[0];
+        console.log(`[DriveService] Manual Master detected: ${masterFile.name}`);
+        console.log(`[DriveService] Restoring Manual Master...`);
+
+        const dest = fs.createWriteStream(DB_PATH);
+        const response = await drive.files.get(
+            { fileId: masterFile.id, alt: 'media' },
+            { responseType: 'stream' }
+        );
+
+        return new Promise((resolve) => {
+            response.data
+                .on('end', () => {
+                    console.log("[DriveService] Manual Master restoration complete.");
+                    resolve(true);
+                })
+                .on('error', err => {
+                    console.error("[DriveService] Error downloading master:", err);
+                    resolve(false);
+                })
+                .pipe(dest);
+        });
+    } catch (err) {
+        console.error("[DriveService] Manual Master restore failed:", err.message);
+        return false;
+    }
+};
+
 const uploadAvatar = async (fileBuffer, fileName, mimeType) => {
     try {
         if (!drive) throw new Error("Drive not initialized");
@@ -370,6 +458,8 @@ module.exports = {
     getLiveStatus,
     backupDatabase,
     restoreDatabase,
+    uploadManualMaster,
+    restoreManualMaster,
     uploadAvatar,
     uploadPartyVideo,
     getFileStream, // Export new function

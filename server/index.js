@@ -402,6 +402,12 @@ app.post('/api/tasks', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
     const { title, drive_link, notes, subject } = req.body;
     db.prepare('INSERT INTO tasks (title, drive_link, notes, subject) VALUES (?, ?, ?, ?)').run(title, drive_link, notes, subject || 'general');
+
+    // Notify all Telegram users instantly
+    if (botInstance) {
+        botInstance.broadcastMission({ title, drive_link, notes, subject: subject || 'general' });
+    }
+
     res.json({ success: true });
 });
 
@@ -580,6 +586,15 @@ app.post('/api/tasks/upload', authenticateToken, upload.single('file'), async (r
         db.prepare('DELETE FROM student_uploads WHERE task_id = ? AND student_id = ?').run(task_id, req.user.id);
 
         db.prepare('INSERT INTO student_uploads (task_id, student_id, upload_link, notes, status) VALUES (?, ?, ?, ?, ?)').run(task_id, req.user.id, driveFile.webViewLink, notes, 'pending');
+
+        // Notify Admins on Telegram
+        if (botInstance) {
+            botInstance.notifyAdminsOfUpload({
+                studentName: req.user.username,
+                taskTitle: task.title,
+                url: driveFile.webViewLink
+            });
+        }
 
         res.json({ success: true, link: driveFile.webViewLink });
     } catch (err) {

@@ -148,21 +148,11 @@ function initBot(db) {
                     db.prepare('INSERT OR IGNORE INTO telegram_subscriptions (telegram_id, subject) VALUES (?, ?)').run(String(ctx.from.id), sub);
                 });
 
-                session.step = 'time';
-                ctx.reply(`✅ Linked as *${user.username}*!\n\nNow, tell me what time should I remind you about your daily missions?\n(Use format HH:mm AM/PM, e.g., 07:30 AM)`, { parse_mode: 'Markdown' });
+                ctx.reply(`✅ Linked as *${user.username}*!\n\nYou're all set! I'll notify you here instantly whenever a new mission is assigned. 🛡️`, { parse_mode: 'Markdown' });
+                delete sessions[ctx.from.id];
             } else {
                 delete sessions[ctx.from.id];
                 ctx.reply("❌ Invalid password. Use /login to try again.");
-            }
-        }
-        else if (session.step === 'time') {
-            const time24 = convertTo24h(text);
-            if (time24) {
-                db.prepare('UPDATE telegram_subscriptions SET reminder_time = ? WHERE telegram_id = ?').run(time24, String(ctx.from.id));
-                delete sessions[ctx.from.id];
-                ctx.reply(`✅ All set! I'll remind you at ${text} every day. 🥋`);
-            } else {
-                ctx.reply("Invalid format. Please use HH:mm AM/PM (e.g., 06:00 PM).");
             }
         }
     });
@@ -288,6 +278,33 @@ function initBot(db) {
     bot.sendDenial = (telegramId, taskTitle, reason) => {
         const msg = `❌ *MISSION UPDATE*\n\nYour submission for "*${taskTitle}*" needs improvement.\n\n📝 *Commander's Feedback:* ${reason}\n\nPlease check the Mission Center and try again! 🥋`;
         return bot.telegram.sendMessage(telegramId, msg, { parse_mode: 'Markdown' });
+    };
+
+    bot.broadcastMission = (mission) => {
+        const activeUsers = db.prepare('SELECT DISTINCT telegram_id FROM telegram_users WHERE website_user_id IS NOT NULL').all();
+        console.log(`[Bot] Broadcasting mission "${mission.title}" to ${activeUsers.length} users...`);
+        activeUsers.forEach(u => {
+            sendMission(u.telegram_id, mission);
+        });
+    };
+
+    bot.notifyAdminsOfUpload = ({ studentName, taskTitle, url }) => {
+        const admins = db.prepare(`
+            SELECT tu.telegram_id 
+            FROM telegram_users tu 
+            JOIN users u ON tu.website_user_id = u.id 
+            WHERE u.role = 'admin'
+        `).all();
+
+        const msg = `🚀 *NEW MISSION SUBMISSION!*\n\n` +
+            `👤 *Student:* ${studentName}\n` +
+            `🎯 *Mission:* ${taskTitle}\n` +
+            `🔗 [Review on Drive](${url})\n\n` +
+            `🌍 [Open Mission Center](${siteUrl}/tasks)`;
+
+        admins.forEach(a => {
+            bot.telegram.sendMessage(a.telegram_id, msg, { parse_mode: 'Markdown' }).catch(err => console.error("Admin notify error:", err));
+        });
     };
 
     bot.launch();

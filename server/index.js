@@ -1049,6 +1049,31 @@ app.get('/health', (req, res) => {
     res.status(200).send('OK');
 });
 
+// Secure DB Download
+app.post('/api/admin/download-db', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    const { password } = req.body;
+
+    try {
+        const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+        const valid = bcrypt.compareSync(password, user.password);
+
+        if (!valid) {
+            return res.status(401).json({ error: "Invalid password for database access." });
+        }
+
+        const DB_PATH = path.join(__dirname, '../database.db');
+        if (!fs.existsSync(DB_PATH)) {
+            return res.status(404).json({ error: "Database file not found on server." });
+        }
+
+        res.download(DB_PATH, `database_backup_${new Date().toISOString().split('T')[0]}.db`);
+    } catch (err) {
+        console.error("[Admin] DB download failed:", err);
+        res.status(500).json({ error: "Failed to download database: " + err.message });
+    }
+});
+
 // Manual DB Upload
 app.post('/api/admin/upload-db', authenticateToken, upload.single('db'), (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
@@ -1068,10 +1093,6 @@ app.post('/api/admin/upload-db', authenticateToken, upload.single('db'), (req, r
         console.log("[Admin] DB replaced. Restarting server or reloading DB engine is recommended.");
 
         res.json({ success: true, message: "Database uploaded and replaced. The server will now use the new data. A manual restart on Railway might be needed for full consistency." });
-
-        // Optional: Trigger a restart if in production or just re-init
-        // For now, most Node.js SQLite libs will pick up the new file on next query if path is same,
-        // but it's safer to have the app restart.
     } catch (err) {
         console.error("[Admin] Manual DB upload failed:", err);
         res.status(500).json({ error: "Failed to replace database file: " + err.message });
@@ -1087,14 +1108,12 @@ const PORT = Number(process.env.PORT) || 8080;
 
 const startServer = async () => {
     try {
-        // Local DB Init & Restore
+        // Local DB Init (Directory creation only)
         backupService.init();
 
-        // FALLBACK: If database.db still doesn't exist after local init, try Drive restore
         const dbPath = path.join(__dirname, '../database.db');
         if (!fs.existsSync(dbPath)) {
-            console.log("[System] Local database and backup not found. Attempting Drive restore...");
-            await driveService.restoreDatabase();
+            console.log("[System] No database file found. Manual upload required.");
         }
 
         // Initialize DB AFTER local check
@@ -1193,16 +1212,7 @@ const startServer = async () => {
 
         server.listen(PORT, '0.0.0.0', () => {
             console.log(`Server running on port ${PORT} (Bound to 0.0.0.0 for Railway)`);
-
-            // SCHEDULE BACKUPS (Every 12 hours)
-            setInterval(() => {
-                backupService.performBackup();
-                driveService.backupDatabase(); // Re-enabled Drive backup
-            }, 12 * 60 * 60 * 1000);
-
-            // Initial backups on start
-            backupService.performBackup();
-            driveService.backupDatabase(); // Re-enabled Drive backup
+            console.log(`[System] Manual Database Mode: Automatic backups disabled.`);
 
             console.log(`Environment: ${process.env.NODE_ENV}`);
             console.log(`Health Check: Server is ready.`);

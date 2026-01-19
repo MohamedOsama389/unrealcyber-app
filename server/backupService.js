@@ -12,17 +12,7 @@ const init = () => {
     if (!fs.existsSync(BACKUP_DIR)) {
         fs.mkdirSync(BACKUP_DIR, { recursive: true });
     }
-
-    // Auto-restore logic: If main DB is missing, try to restore from latest backup
-    if (!fs.existsSync(DB_PATH) && fs.existsSync(BACKUP_PATH)) {
-        console.log('[BackupService] Main database missing. Restoring from latest backup...');
-        try {
-            fs.copyFileSync(BACKUP_PATH, DB_PATH);
-            console.log('[BackupService] Restore successful.');
-        } catch (err) {
-            console.error('[BackupService] Restore failed:', err.message);
-        }
-    }
+    // Auto-restore logic removed to favor Manual Mode.
 };
 
 /**

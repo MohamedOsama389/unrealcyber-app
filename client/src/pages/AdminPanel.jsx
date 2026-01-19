@@ -174,6 +174,28 @@ const AdminPanel = () => {
         }
     };
 
+    const handleDbDownload = async () => {
+        const password = prompt("Enter your Admin Password to authorize database download:");
+        if (!password) return;
+
+        try {
+            const response = await axios.post('/api/admin/download-db', { password }, {
+                responseType: 'blob'
+            });
+
+            // Create a link to download the file
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `unreal_cyber_backup_${new Date().toISOString().split('T')[0]}.db`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+        } catch (err) {
+            alert("Download failed: " + (err.response?.status === 401 ? "Invalid password" : err.message));
+        }
+    };
+
     const fetchSubmissions = async () => {
         try {
             const res = await axios.get('/api/tasks/uploads');
@@ -596,19 +618,22 @@ const AdminPanel = () => {
                         </p>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                            <div className="bg-app/50 p-4 rounded-xl border border-border">
-                                <span className="text-[10px] uppercase font-bold text-secondary mb-1 block">Local Storage Status</span>
+                            <div className="bg-app/50 p-4 rounded-xl border border-red-500/30">
+                                <span className="text-[10px] uppercase font-bold text-red-400 mb-1 block">Automatic Backups</span>
                                 <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                                    <span className="text-sm font-bold text-primary">Active (12h Rotation)</span>
+                                    <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                                    <span className="text-sm font-bold text-primary">DISABLED (Manual Mode)</span>
                                 </div>
                             </div>
                             <div className="bg-app/50 p-4 rounded-xl border border-border">
-                                <span className="text-[10px] uppercase font-bold text-secondary mb-1 block">Google Drive Sync</span>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></div>
-                                    <span className="text-sm font-bold text-primary">Standby / Fallback</span>
-                                </div>
+                                <span className="text-[10px] uppercase font-bold text-secondary mb-1 block">Manual Download</span>
+                                <button
+                                    onClick={handleDbDownload}
+                                    className="mt-1 flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition-colors"
+                                >
+                                    <Shield size={14} />
+                                    <span className="text-sm font-bold">Download Current .db File</span>
+                                </button>
                             </div>
                         </div>
 

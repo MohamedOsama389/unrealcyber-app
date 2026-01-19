@@ -26,6 +26,9 @@ const AdminPanel = () => {
     const [uploadingParty, setUploadingParty] = useState(false);
     const [siteSettings, setSiteSettings] = useState({ telegram_enabled: 'false', telegram_link: '' });
     const [stats, setStats] = useState([]);
+    const [sqlText, setSqlText] = useState('');
+    const [dbPassword, setDbPassword] = useState('');
+    const [showSqlModal, setShowSqlModal] = useState(false);
 
     useEffect(() => {
         fetchUsers();
@@ -196,6 +199,46 @@ const AdminPanel = () => {
         }
     };
 
+    const handleSqlExport = async () => {
+        const password = prompt("Enter your Admin Password to export SQL:");
+        if (!password) return;
+
+        try {
+            const response = await axios.post('/api/admin/export-sql', { password }, {
+                responseType: 'blob'
+            });
+
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `database_backup_${new Date().toISOString().split('T')[0]}.sql`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+            alert("SQL dump downloaded successfully!");
+        } catch (err) {
+            alert("SQL export failed: " + (err.response?.status === 401 ? "Invalid password" : err.message));
+        }
+    };
+
+    const handleSqlImport = async () => {
+        if (!sqlText.trim()) {
+            return alert("Please paste SQL dump text first.");
+        }
+        if (!window.confirm("WARNING: This will overwrite the current database with the SQL you pasted. All existing data will be replaced. Proceed?")) {
+            return;
+        }
+
+        try {
+            const res = await axios.post('/api/admin/import-sql', { sqlDump: sqlText });
+            alert(res.data.message);
+            setSqlText('');
+            setShowSqlModal(false);
+        } catch (err) {
+            alert("SQL import failed: " + (err.response?.data?.error || err.message));
+        }
+    };
+
     const fetchSubmissions = async () => {
         try {
             const res = await axios.get('/api/tasks/uploads');
@@ -356,10 +399,10 @@ const AdminPanel = () => {
                     onClick={() => setActiveTab('database')}
                     className={clsx(
                         "flex items-center space-x-2 px-6 py-3 rounded-xl font-bold transition-all",
-                        activeTab === 'database' ? "bg-cyan-600 text-white shadow-lg shadow-cyan-500/30" : "bg-panel text-secondary hover:bg-white/10 dark:hover:bg-slate-800 hover:text-primary border border-border"
+                        activeTab === 'database' ? "bg-emerald-600 text-white shadow-lg shadow-emerald-500/30" : "bg-panel text-secondary hover:bg-white/10 dark:hover:bg-slate-800 hover:text-primary border border-border"
                     )}
                 >
-                    <Globe size={20} />
+                    <Shield size={20} />
                     <span>Database</span>
                 </button>
             </div>
@@ -1073,6 +1116,146 @@ const AdminPanel = () => {
                     </div>
                 </div>
             )}
+
+            {/* Database Tab */}
+            {activeTab === 'database' && (
+                <div className="space-y-6">
+                    <div className="bg-panel border border-border p-8 rounded-2xl">
+                        <h3 className="text-2xl font-bold text-primary mb-6 flex items-center gap-3">
+                            <Shield className="text-emerald-400" size={28} />
+                            Database Management (SQL Mode)
+                        </h3>
+
+                        <div className="grid md:grid-cols-2 gap-6">
+                            {/* Export SQL */}
+                            <div className="bg-panel/30 border border-border p-6 rounded-xl">
+                                <h4 className="font-bold text-primary mb-3 flex items-center gap-2">
+                                    <FileCheck size={18} className="text-emerald-400" />
+                                    Export Database as SQL
+                                </h4>
+                                <p className="text-sm text-secondary mb-4">
+                                    Download your entire database as SQL text commands. You can inspect, edit, or save this file.
+                                </p>
+                                <button
+                                    onClick={handleSqlExport}
+                                    className="btn-primary w-full h-[48px] flex items-center justify-center gap-2"
+                                >
+                                    <FileCheck size={18} />
+                                    Export SQL Dump
+                                </button>
+                            </div>
+
+                            {/* Import SQL */}
+                            <div className="bg-panel/30 border border-border p-6 rounded-xl">
+                                <h4 className="font-bold text-primary mb-3 flex items-center gap-2">
+                                    <Send size={18} className="text-cyan-400" />
+                                    Import Database from SQL
+                                </h4>
+                                <p className="text-sm text-secondary mb-4">
+                                    Paste SQL dump text to restore your database. This will replace all current data.
+                                </p>
+                                <button
+                                    onClick={() => setShowSqlModal(true)}
+                                    className="btn-secondary w-full h-[48px] flex items-center justify-center gap-2"
+                                >
+                                    <Send size={18} />
+                                    Paste & Import SQL
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Legacy Binary Upload */}
+                        <div className="mt-6 bg-panel/30 border border-border p-6 rounded-xl">
+                            <h4 className="font-bold text-primary mb-3 flex items-center gap-2">
+                                <Shield size={18} className="text-yellow-400" />
+                                Legacy: Upload Binary .db File
+                            </h4>
+                            <p className="text-sm text-secondary mb-4">
+                                Upload a binary database.db file (less reliable than SQL mode).
+                            </p>
+                            <form onSubmit={handleDbUpload} className="flex gap-4 items-end">
+                                <div className="flex-1">
+                                    <input
+                                        type="file"
+                                        accept=".db"
+                                        onChange={(e) => setDbFile(e.target.files[0])}
+                                        className="input-field w-full"
+                                    />
+                                </div>
+                                <button type="submit" className="btn-primary px-8 h-[48px] whitespace-nowrap">
+                                    Upload .db
+                                </button>
+                            </form>
+                        </div>
+
+                        {/* Download Binary */}
+                        <div className="mt-6 bg-panel/30 border border-border p-6 rounded-xl">
+                            <h4 className="font-bold text-primary mb-3 flex items-center gap-2">
+                                <Key size={18} className="text-purple-400" />
+                                Download Binary .db File
+                            </h4>
+                            <p className="text-sm text-secondary mb-4">
+                                Download the current database as a binary .db file.
+                            </p>
+                            <button
+                                onClick={handleDbDownload}
+                                className="btn-secondary px-8 h-[48px]"
+                            >
+                                Download database.db
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* SQL Import Modal */}
+            <AnimatePresence>
+                {showSqlModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                        onClick={() => setShowSqlModal(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="bg-panel border border-border rounded-2xl p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <h3 className="text-2xl font-bold text-primary mb-4 flex items-center gap-3">
+                                <Send className="text-cyan-400" />
+                                Import SQL Dump
+                            </h3>
+                            <p className="text-sm text-secondary mb-4">
+                                Paste your SQL dump text below. This will completely replace the current database.
+                            </p>
+                            <textarea
+                                value={sqlText}
+                                onChange={(e) => setSqlText(e.target.value)}
+                                placeholder="Paste SQL dump here (CREATE TABLE, INSERT statements, etc.)..."
+                                className="input-field w-full h-[400px] font-mono text-xs"
+                            />
+                            <div className="flex gap-4 mt-6">
+                                <button
+                                    onClick={handleSqlImport}
+                                    className="btn-primary flex-1 h-[48px]"
+                                >
+                                    Import & Restore Database
+                                </button>
+                                <button
+                                    onClick={() => setShowSqlModal(false)}
+                                    className="btn-secondary px-8 h-[48px]"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div >
     );
 };

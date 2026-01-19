@@ -1082,6 +1082,117 @@ app.post('/api/admin/download-db', authenticateToken, async (req, res) => {
     }
 });
 
+// Export Database as SQL Text
+app.post('/api/admin/export-sql', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+
+    try {
+        const { password } = req.body;
+        if (!password) {
+            return res.status(400).json({ error: "Password required for SQL export." });
+        }
+
+        const admin = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+        const valid = await bcrypt.compare(password, admin.password);
+
+        if (!valid) {
+            return res.status(401).json({ error: "Invalid password for SQL export." });
+        }
+
+        const DB_PATH = path.join(__dirname, '../database.db');
+        if (!fs.existsSync(DB_PATH)) {
+            return res.status(404).json({ error: "Database file not found on server." });
+        }
+
+        // Flush WAL first
+        try {
+            db.pragma('wal_checkpoint(FULL)');
+            console.log("[Admin] WAL checkpoint completed for SQL export.");
+        } catch (e) {
+            console.error("[Admin] WAL checkpoint failed:", e);
+        }
+
+        console.log("[Admin] Exporting database to SQL dump...");
+        const { exportDatabaseToSQL } = require('./sqlDumpService');
+        const sqlDump = exportDatabaseToSQL(DB_PATH);
+
+        console.log(`[Admin] SQL dump generated: ${sqlDump.length} characters`);
+
+        res.setHeader('Content-Type', 'text/plain');
+        res.setHeader('Content-Disposition', `attachment; filename="database_backup_${new Date().toISOString().split('T')[0]}.sql"`);
+        res.send(sqlDump);
+    } catch (err) {
+        console.error("[Admin] SQL export failed:", err);
+        res.status(500).json({ error: "Failed to export SQL: " + err.message });
+    }
+});
+
+// Import Database from SQL Text
+app.post('/api/admin/import-sql', authenticateToken, async (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+
+    try {
+        const { sqlDump } = req.body;
+        if (!sqlDump) {
+            return res.status(400).json({ error: "SQL dump text required." });
+        }
+
+        const DB_PATH = path.join(__dirname, '../database.db');
+        const WAL_PATH = path.join(__dirname, '../database.db-wal');
+        const SHM_PATH = path.join(__dirname, '../database.db-shm');
+
+        console.log("[Admin] Initiating SQL import sequence...");
+
+        // 1. Force close the database connection
+        if (db) {
+            try {
+                db.close();
+                console.log("[Admin] Database connection closed.");
+            } catch (e) {
+                console.error("[Admin] error closing DB (continuing anyway):", e);
+            }
+        }
+
+        // 2. Clean up WAL/SHM files to prevent corruption/locks
+        [DB_PATH, WAL_PATH, SHM_PATH].forEach(p => {
+            if (fs.existsSync(p)) {
+                try {
+                    fs.unlinkSync(p);
+                    console.log(`[Admin] Removed: ${path.basename(p)}`);
+                } catch (e) {
+                    console.error(`[Admin] Could not remove ${path.basename(p)}:`, e.message);
+                }
+            }
+        });
+
+        // 3. Import SQL dump
+        console.log("[Admin] Importing SQL dump...");
+        const { importDatabaseFromSQL } = require('./sqlDumpService');
+        importDatabaseFromSQL(DB_PATH, sqlDump);
+        console.log("[Admin] SQL import successful.");
+
+        // 4. SYNC TO DRIVE AS SQL DUMP
+        console.log("[Admin] Syncing imported database to Drive as SQL dump...");
+        await driveService.uploadSQLDump();
+
+        // 5. Respond to client
+        res.json({
+            success: true,
+            message: "SQL imported and synced to Drive! The system will now reboot in 2 seconds to apply changes. Please refresh the page shortly."
+        });
+
+        // 6. Force process exit after a short delay
+        setTimeout(() => {
+            console.log("[Admin] Rebooting server for database consistency...");
+            process.exit(0);
+        }, 2000);
+
+    } catch (err) {
+        console.error("[Admin] SQL import failed:", err);
+        res.status(500).json({ error: "Failed to import SQL: " + err.message });
+    }
+});
+
 // Manual DB Upload
 app.post('/api/admin/upload-db', authenticateToken, upload.single('db'), async (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);

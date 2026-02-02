@@ -15,6 +15,7 @@ import Files from './pages/Files';
 import VMRental from './pages/VMRental';
 import Chat from './pages/Chat';
 import Games from './pages/Games';
+import GameViewPage from './pages/GameViewPage';
 import AtomGame from './pages/AtomGame';
 import AdminPanel from './pages/AdminPanel';
 import clsx from 'clsx';
@@ -44,6 +45,7 @@ function AppContent() {
             <Route path="/vm-rental" element={<VMRental />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/games" element={<Games />} />
+            <Route path="/games/:gameId" element={<GameViewPage />} />
             <Route path="/games/atom-builder" element={<AtomGame />} />
           </Route>
 

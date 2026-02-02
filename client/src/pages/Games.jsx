@@ -1,67 +1,81 @@
+import React, { useState } from 'react';
+import { Search, Rocket } from 'lucide-react';
+import { GAMES_REGISTRY } from '../data/gamesData';
+import GameCard from '../components/games/GameCard';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { Gamepad2, Atom } from 'lucide-react';
 
 const Games = () => {
-    const navigate = useNavigate();
+    const [searchTerm, setSearchTerm] = useState('');
+    const [activeCategory, setActiveCategory] = useState('All');
 
-    const games = [
-        {
-            id: 'atom-builder',
-            title: 'Atom Builder',
-            description: 'Build atoms by dragging protons, neutrons, and electrons. Visualized on the periodic table.',
-            icon: Atom,
-            color: 'text-cyan-400',
-            bg: 'bg-cyan-400/10',
-            border: 'border-cyan-400/20'
-        }
-    ];
+    const categories = ['All', 'Science', 'Math', 'English', 'Social Studies', 'Arabic'];
+
+    const filteredGames = GAMES_REGISTRY.filter(game => {
+        const matchesSearch = game.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            game.tags.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()));
+        const matchesCategory = activeCategory === 'All' || game.category === activeCategory;
+        return matchesSearch && matchesCategory;
+    });
 
     return (
-        <div className="p-6 md:p-10 min-h-screen">
+        <div className="p-6 md:p-10 min-h-screen bg-app">
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
             >
-                <div className="flex items-center space-x-4 mb-8">
-                    <div className="p-3 bg-cyan-500/10 rounded-xl">
-                        <Gamepad2 size={32} className="text-cyan-400" />
+                {/* Header Section */}
+                <div className="max-w-7xl mx-auto mb-12">
+                    <h1 className="text-4xl font-bold text-primary font-serif mb-2">Curriculum Games</h1>
+                    <p className="text-secondary">Interactive simulations aligned with your current term goals.</p>
+                </div>
+
+                {/* Filter Bar */}
+                <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-6 items-center justify-between mb-12">
+                    <div className="relative w-full md:w-96">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
+                        <input
+                            type="text"
+                            placeholder="Search topics (e.g. 'equations')..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full bg-slate-800/40 border border-white/5 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 rounded-2xl py-3 pl-12 pr-4 transition-all text-primary"
+                        />
                     </div>
-                    <div>
-                        <h1 className="text-3xl font-bold text-primary">Education Games</h1>
-                        <p className="text-secondary">Interactive learning experiences</p>
+
+                    <div className="flex items-center space-x-1 bg-slate-800/40 p-1 rounded-2xl border border-white/5 overflow-x-auto max-w-full no-scrollbar">
+                        {categories.map(cat => (
+                            <button
+                                key={cat}
+                                onClick={() => setActiveCategory(cat)}
+                                className={`
+                                    px-5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all duration-300
+                                    ${activeCategory === cat
+                                        ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/20'
+                                        : 'text-secondary hover:text-primary hover:bg-white/5'}
+                                `}
+                            >
+                                {cat}
+                            </button>
+                        ))}
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {games.map((game) => (
-                        <motion.button
-                            key={game.id}
-                            onClick={() => navigate(`/games/${game.id}`)}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className={`
-                                text-left p-6 rounded-2xl border ${game.border} ${game.bg}
-                                hover:shadow-lg transition-all duration-300 group
-                            `}
-                        >
-                            <div className="flex justify-between items-start mb-4">
-                                <div className={`p-3 rounded-xl bg-app border border-white/5`}>
-                                    <game.icon size={32} className={game.color} />
-                                </div>
-                                <div className="px-3 py-1 rounded-full bg-app border border-white/5 text-xs text-secondary font-medium uppercase tracking-wider">
-                                    Released
-                                </div>
-                            </div>
-                            <h3 className="text-xl font-bold text-primary mb-2 group-hover:text-cyan-400 transition-colors">
-                                {game.title}
-                            </h3>
-                            <p className="text-sm text-secondary leading-relaxed">
-                                {game.description}
-                            </p>
-                        </motion.button>
-                    ))}
+                {/* Grid */}
+                <div className="max-w-7xl mx-auto">
+                    {filteredGames.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {filteredGames.map(game => (
+                                <GameCard key={game.id} game={game} />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-24 bg-slate-800/20 rounded-[2.5rem] border border-dashed border-white/5">
+                            <Rocket className="mx-auto text-slate-600 mb-6" size={64} />
+                            <h3 className="text-2xl font-bold text-secondary">No missions found</h3>
+                            <p className="text-slate-500 mt-2">Try adjusting your filters or search terms.</p>
+                        </div>
+                    )}
                 </div>
             </motion.div>
         </div>

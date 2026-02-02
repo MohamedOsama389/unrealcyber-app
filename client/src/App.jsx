@@ -14,6 +14,8 @@ import Videos from './pages/Videos';
 import Files from './pages/Files';
 import VMRental from './pages/VMRental';
 import Chat from './pages/Chat';
+import Games from './pages/Games';
+import AtomGame from './pages/AtomGame';
 import AdminPanel from './pages/AdminPanel';
 import clsx from 'clsx';
 
@@ -41,6 +43,8 @@ function AppContent() {
             <Route path="/files" element={<Files />} />
             <Route path="/vm-rental" element={<VMRental />} />
             <Route path="/chat" element={<Chat />} />
+            <Route path="/games" element={<Games />} />
+            <Route path="/games/atom-builder" element={<AtomGame />} />
           </Route>
 
           <Route element={<ProtectedRoute allowedRoles={['admin']} />}>

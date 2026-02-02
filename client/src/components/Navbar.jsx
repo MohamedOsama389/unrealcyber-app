@@ -16,7 +16,8 @@ import {
     Folder,
     FileText,
     Sun,
-    Moon
+    Moon,
+    Gamepad2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -35,6 +36,7 @@ const Navbar = () => {
         { path: '/videos', label: 'Recorded Sessions', icon: Video },
         { path: '/files', label: 'Academy Files', icon: FileText },
         { path: '/vm-rental', label: 'VM Rental', icon: Monitor },
+        { path: '/games', label: 'Education Games', icon: Gamepad2 },
         { path: '/chat', label: 'Comms Channel', icon: MessageSquare },
     ];
 

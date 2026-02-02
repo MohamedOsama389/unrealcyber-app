@@ -1,4 +1,14 @@
-export const PERIODIC_TABLE = [
+export interface ElementData {
+    number: number;
+    symbol: string;
+    name: string;
+    mass: number;
+    group: number;
+    period: number;
+    category: string;
+}
+
+export const PERIODIC_TABLE: ElementData[] = [
     { number: 1, symbol: 'H', name: 'Hydrogen', mass: 1.008, group: 1, period: 1, category: 'nonmetal' },
     { number: 2, symbol: 'He', name: 'Helium', mass: 4.0026, group: 18, period: 1, category: 'noble-gas' },
     { number: 3, symbol: 'Li', name: 'Lithium', mass: 6.94, group: 1, period: 2, category: 'alkali-metal' },
@@ -56,7 +66,7 @@ export const PERIODIC_TABLE = [
     { number: 55, symbol: 'Cs', name: 'Cesium', mass: 132.91, group: 1, period: 6, category: 'alkali-metal' },
     { number: 56, symbol: 'Ba', name: 'Barium', mass: 137.33, group: 2, period: 6, category: 'alkaline-earth' },
     { number: 57, symbol: 'La', name: 'Lanthanum', mass: 138.91, group: 3, period: 6, category: 'lanthanide' },
-    { number: 58, symbol: 'Ce', name: 'Cerium', mass: 140.12, group: 4, period: 9, category: 'lanthanide' }, // Period 9 is separate block
+    { number: 58, symbol: 'Ce', name: 'Cerium', mass: 140.12, group: 4, period: 9, category: 'lanthanide' },
     { number: 59, symbol: 'Pr', name: 'Praseodymium', mass: 140.91, group: 5, period: 9, category: 'lanthanide' },
     { number: 60, symbol: 'Nd', name: 'Neodymium', mass: 144.24, group: 6, period: 9, category: 'lanthanide' },
     { number: 61, symbol: 'Pm', name: 'Promethium', mass: 145, group: 7, period: 9, category: 'lanthanide' },
@@ -88,7 +98,7 @@ export const PERIODIC_TABLE = [
     { number: 87, symbol: 'Fr', name: 'Francium', mass: 223, group: 1, period: 7, category: 'alkali-metal' },
     { number: 88, symbol: 'Ra', name: 'Radium', mass: 226, group: 2, period: 7, category: 'alkaline-earth' },
     { number: 89, symbol: 'Ac', name: 'Actinium', mass: 227, group: 3, period: 7, category: 'actinide' },
-    { number: 90, symbol: 'Th', name: 'Thorium', mass: 232.04, group: 4, period: 10, category: 'actinide' }, // Period 10 is separate block
+    { number: 90, symbol: 'Th', name: 'Thorium', mass: 232.04, group: 4, period: 10, category: 'actinide' },
     { number: 91, symbol: 'Pa', name: 'Protactinium', mass: 231.04, group: 5, period: 10, category: 'actinide' },
     { number: 92, symbol: 'U', name: 'Uranium', mass: 238.03, group: 6, period: 10, category: 'actinide' },
     { number: 93, symbol: 'Np', name: 'Neptunium', mass: 237, group: 7, period: 10, category: 'actinide' },
@@ -119,5 +129,4 @@ export const PERIODIC_TABLE = [
     { number: 118, symbol: 'Og', name: 'Oganesson', mass: 294, group: 18, period: 7, category: 'unknown' }
 ];
 
-// Helper to get element by proton count
-export const getElementByProtons = (protons) => PERIODIC_TABLE.find(e => e.number === protons);
+export const getElementByProtons = (protons: number) => PERIODIC_TABLE.find(e => e.number === protons);

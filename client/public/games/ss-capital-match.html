@@ -1,0 +1,172 @@
+<!-- Capital Match Game
+     Basic multiple-choice game for Social Studies to match countries to capitals.
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Capital Match Game</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        background-color: #f9f9f9;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+      }
+      .quiz-container {
+        background-color: #fff;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        max-width: 600px;
+        width: 90%;
+      }
+      h1 {
+        text-align: center;
+        margin-top: 0;
+      }
+      .question {
+        font-size: 1.2rem;
+        text-align: center;
+        margin-bottom: 1rem;
+      }
+      .options {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .option-button {
+        padding: 0.5rem 1rem;
+        border: 2px solid #2196f3;
+        border-radius: 8px;
+        background-color: #e3f2fd;
+        cursor: pointer;
+        transition: background-color 0.2s, border-color 0.2s;
+      }
+      .option-button:hover {
+        background-color: #bbdefb;
+        border-color: #1976d2;
+      }
+      #result {
+        margin-top: 1rem;
+        font-weight: bold;
+        text-align: center;
+      }
+      #score {
+        text-align: center;
+        margin-bottom: 1rem;
+      }
+      #nextBtn, #restartBtn {
+        display: none;
+        margin-top: 1rem;
+        padding: 0.5rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        cursor: pointer;
+      }
+      #nextBtn { background-color: #4caf50; color: white; }
+      #restartBtn { background-color: #ff7043; color: white; }
+    </style>
+  </head>
+  <body>
+    <div class="quiz-container">
+      <h1>Capital Match</h1>
+      <div id="score">Score: 0</div>
+      <div class="question" id="question"></div>
+      <div class="options" id="options"></div>
+      <div id="result"></div>
+      <button id="nextBtn">Next</button>
+      <button id="restartBtn">Restart</button>
+    </div>
+    <script>
+      const questions = [
+        {
+          question: "What is the capital of Egypt?",
+          options: ["Cairo", "Paris", "Rome", "Tokyo"],
+          answer: "Cairo"
+        },
+        {
+          question: "What is the capital of France?",
+          options: ["London", "Berlin", "Paris", "Madrid"],
+          answer: "Paris"
+        },
+        {
+          question: "What is the capital of Italy?",
+          options: ["Athens", "Rome", "Lisbon", "Berlin"],
+          answer: "Rome"
+        },
+        {
+          question: "What is the capital of Japan?",
+          options: ["Beijing", "Seoul", "Tokyo", "Osaka"],
+          answer: "Tokyo"
+        },
+        {
+          question: "What is the capital of Qatar?",
+          options: ["Doha", "Dubai", "Muscat", "Riyadh"],
+          answer: "Doha"
+        }
+      ];
+      let currentIndex = 0;
+      let score = 0;
+      const questionEl = document.getElementById("question");
+      const optionsEl = document.getElementById("options");
+      const resultEl = document.getElementById("result");
+      const nextBtn = document.getElementById("nextBtn");
+      const restartBtn = document.getElementById("restartBtn");
+      const scoreEl = document.getElementById("score");
+      
+      function loadQuestion() {
+        resultEl.textContent = "";
+        nextBtn.style.display = "none";
+        const q = questions[currentIndex];
+        questionEl.textContent = q.question;
+        optionsEl.innerHTML = "";
+        q.options.forEach(opt => {
+          const btn = document.createElement("button");
+          btn.textContent = opt;
+          btn.className = "option-button";
+          btn.onclick = () => selectAnswer(opt);
+          optionsEl.appendChild(btn);
+        });
+      }
+      function selectAnswer(selected) {
+        const correct = questions[currentIndex].answer;
+        if (selected === correct) {
+          resultEl.textContent = "Correct!";
+          resultEl.style.color = "green";
+          score++;
+          scoreEl.textContent = "Score: " + score;
+        } else {
+          resultEl.textContent = "Incorrect. The correct answer is " + correct + ".";
+          resultEl.style.color = "red";
+        }
+        Array.from(optionsEl.children).forEach(btn => {
+          btn.disabled = true;
+          btn.style.cursor = "default";
+        });
+        if (currentIndex < questions.length - 1) {
+          nextBtn.style.display = "inline-block";
+        } else {
+          restartBtn.style.display = "inline-block";
+        }
+      }
+      nextBtn.addEventListener("click", () => {
+        currentIndex++;
+        loadQuestion();
+      });
+      restartBtn.addEventListener("click", () => {
+        currentIndex = 0;
+        score = 0;
+        scoreEl.textContent = "Score: 0";
+        restartBtn.style.display = "none";
+        loadQuestion();
+      });
+      loadQuestion();
+    </script>
+  </body>
+</html>

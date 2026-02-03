@@ -79,20 +79,22 @@ export const GAMES_REGISTRY: GameMetadata[] = [
         simUrl: 'https://phet.colorado.edu/sims/html/plinko-probability/latest/plinko-probability_en.html',
         isPhET: true,
         tags: ['Statistics', 'Probability']
-},,
+    },
+
     // ENGLISH
     {
-        {
-            id: 'sports-word-game',
-            title: 'Sports Word Game',
-            category: 'English',
-            unit: 'Unit 7: Sports',
-            lesson: 'Vocabulary Builder',
-            description: 'Learn sports-related vocabulary with interactive matching.',
-            simUrl: 'https://learnenglishkids.britishcouncil.org/grammar-vocabulary/word-games/sports-1',
-            isPhET: false,
-            tags: ['Vocabulary', 'Sports']
-        }, // SOCIAL STUDIES
+        id: 'sports-word-game',
+        title: 'Sports Word Game',
+        category: 'English',
+        unit: 'Unit 7: Sports',
+        lesson: 'Vocabulary Builder',
+        description: 'Learn sports-related vocabulary with interactive matching.',
+        simUrl: 'https://learnenglishkids.britishcouncil.org/grammar-vocabulary/word-games/sports-1',
+        isPhET: false,
+        tags: ['Vocabulary', 'Sports']
+    },
+
+    // SOCIAL STUDIES
     {
         id: 'ss-capital-match',
         title: 'Capital Match Game',
@@ -104,6 +106,7 @@ export const GAMES_REGISTRY: GameMetadata[] = [
         isPhET: false,
         tags: ['Geography', 'Capitals', 'Quiz']
     },
+
     // ARABIC
     {
         id: 'arabic-sentence-scramble',
@@ -116,6 +119,7 @@ export const GAMES_REGISTRY: GameMetadata[] = [
         isPhET: false,
         tags: ['Arabic', 'Sentence', 'Grammar']
     },
+
     // ENGLISH
     {
         id: 'english-synonym-game',
@@ -128,7 +132,8 @@ export const GAMES_REGISTRY: GameMetadata[] = [
         isPhET: false,
         tags: ['Vocabulary', 'Synonyms', 'English']
     },
-    // SCIENCE
+
+    // SCIENCE (BIOLOGY/HORMONES)
     {
         id: 'science-hormone-quiz',
         title: 'Hormone Quiz',
@@ -140,6 +145,7 @@ export const GAMES_REGISTRY: GameMetadata[] = [
         isPhET: false,
         tags: ['Biology', 'Hormones', 'Quiz']
     },
+
     // MATH
     {
         id: 'math-fraction-game',
@@ -151,5 +157,5 @@ export const GAMES_REGISTRY: GameMetadata[] = [
         simUrl: '/games/math-fraction-game.html',
         isPhET: false,
         tags: ['Fractions', 'Math', 'Addition']
-    },
+    }
 ];

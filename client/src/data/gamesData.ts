@@ -83,18 +83,17 @@ export const GAMES_REGISTRY: GameMetadata[] = [
 
     // ENGLISH
     {
-        id: 'sports-word-game',
-        title: 'Sports Word Game',
-        category: 'English',
-        unit: 'Unit 7: Sports',
-        lesson: 'Vocabulary Builder',
-        description: 'Learn sports-related vocabulary with interactive matching.',
-        simUrl: 'https://learnenglishkids.britishcouncil.org/grammar-vocabulary/word-games/sports-1',
-        isPhET: false,
-        tags: ['Vocabulary', 'Sports']
-    }
-];,
-    // SOCIAL STUDIES
+        {
+            id: 'sports-word-game',
+            title: 'Sports Word Game',
+            category: 'English',
+            unit: 'Unit 7: Sports',
+            lesson: 'Vocabulary Builder',
+            description: 'Learn sports-related vocabulary with interactive matching.',
+            simUrl: 'https://learnenglishkids.britishcouncil.org/grammar-vocabulary/word-games/sports-1',
+            isPhET: false,
+            tags: ['Vocabulary', 'Sports']
+        }, // SOCIAL STUDIES
     {
         id: 'ss-capital-match',
         title: 'Capital Match Game',

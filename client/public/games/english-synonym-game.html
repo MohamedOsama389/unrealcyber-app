@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>English Synonym Game</title>
+<style>
+body { font-family: Arial, sans-serif; background-color: #f3f4f6; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+.container { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); width: 90%; max-width: 600px; text-align: center; }
+h1 { margin-top: 0; }
+.options { margin: 20px 0; display: flex; flex-direction: column; align-items: center; }
+button.option { margin: 5px 0; padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; background: #e5e7eb; transition: background-color .2s; width: 80%; max-width: 300px; }
+button.option:hover { background: #d1d5db; }
+button.next { margin-top: 10px; padding: 10px 16px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; display: none; }
+button.restart { margin-top: 10px; padding: 10px 16px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; display: none; }
+.score { font-weight: bold; }
+.result { margin-top: 10px; font-weight: bold; }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>Synonym Quiz</h1>
+    <div id="question">Question text</div>
+    <div id="options" class="options"></div>
+    <div class="result" id="result"></div>
+    <div class="score">Score: <span id="score">0</span></div>
+    <button id="nextBtn" class="next">Next</button>
+    <button id="restartBtn" class="restart">Restart</button>
+</div>
+<script>
+const questions = [
+    {
+        word: 'happy',
+        options: ['sad', 'angry', 'joyful', 'tired'],
+        answer: 'joyful'
+    },
+    {
+        word: 'big',
+        options: ['large', 'tiny', 'short', 'thin'],
+        answer: 'large'
+    },
+    {
+        word: 'beautiful',
+        options: ['ugly', 'pretty', 'dirty', 'messy'],
+        answer: 'pretty'
+    },
+    {
+        word: 'fast',
+        options: ['slow', 'quick', 'weak', 'calm'],
+        answer: 'quick'
+    },
+    {
+        word: 'small',
+        options: ['tiny', 'massive', 'long', 'wide'],
+        answer: 'tiny'
+    }
+];
+let current = 0;
+let score = 0;
+
+const questionEl = document.getElementById('question');
+const optionsEl = document.getElementById('options');
+const resultEl = document.getElementById('result');
+const scoreEl = document.getElementById('score');
+const nextBtn = document.getElementById('nextBtn');
+const restartBtn = document.getElementById('restartBtn');
+
+function loadQuestion() {
+    resultEl.textContent = '';
+    nextBtn.style.display = 'none';
+    restartBtn.style.display = 'none';
+    optionsEl.innerHTML = '';
+    const q = questions[current];
+    questionEl.textContent = "Which is a synonym of '" + q.word + "'?";
+    q.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.textContent = opt;
+        btn.className = 'option';
+        btn.addEventListener('click', () => {
+            if (opt === q.answer) {
+                resultEl.textContent = 'Correct!';
+                resultEl.style.color = 'green';
+                score++;
+                scoreEl.textContent = score;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>English Synonym Game</title>
+<style>
+body { font-family: Arial, sans-serif; background-color: #f3f4f6; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+.container { background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); width: 90%; max-width: 600px; text-align: center; }
+h1 { margin-top: 0; }
+.options { margin: 20px 0; display: flex; flex-direction: column; align-items: center; }
+button.option { margin: 5px 0; padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; background: #e5e7eb; transition: background-color .2s; width: 80%; max-width: 300px; }
+button.option:hover { background: #d1d5db; }
+button.next { margin-top: 10px; padding: 10px 16px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; display: none; }
+button.restart { margin-top: 10px; padding: 10px 16px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; display: none; }
+.score { font-weight: bold; }
+.result { margin-top: 10px; font-weight: bold; }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>Synonym Quiz</h1>
+    <div id="question">Question text</div>
+    <div id="options" class="options"></div>
+    <div class="result" id="result"></div>
+    <div class="score">Score: <span id="score">0</span></div>
+    <button id="nextBtn" class="next">Next</button>
+    <button id="restartBtn" class="restart">Restart</button>
+</div>
+<script>
+const questions = [
+    {
+        word: 'happy',
+        options: ['sad', 'angry', 'joyful', 'tired'],
+        answer: 'joyful'
+    },
+    {
+        word: 'big',
+        options: ['large', 'tiny', 'short', 'thin'],
+        answer: 'large'
+    },
+    {
+        word: 'beautiful',
+        options: ['ugly', 'pretty', 'dirty', 'messy'],
+        answer: 'pretty'
+    },
+    {
+        word: 'fast',
+        options: ['slow', 'quick', 'weak', 'calm'],
+        answer: 'quick'
+    },
+    {
+        word: 'small',
+        options: ['tiny', 'massive', 'long', 'wide'],
+        answer: 'tiny'
+    }
+];
+let current = 0;
+let score = 0;
+  
+const questionEl = document.getElementById('question');
+const optionsEl = document.getElementById('options');
+const resultEl = document.getElementById('result');
+const scoreEl = document.getElementById('score');
+const nextBtn = document.getElementById('nextBtn');
+const restartBtn = document.getElementById('restartBtn');
+
+function loadQuestion() {
+    resultEl.textContent = '';
+    nextBtn.style.display = 'none';
+    restartBtn.style.display = 'none';
+    optionsEl.innerHTML = '';
+    const q = questions[current];
+    questionEl.textContent = "Which is a synonym of '" + q.word + "'?";
+    q.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.textContent = opt;
+        btn.className = 'option';
+        btn.addEventListener('click', () => {
+            if (opt === q.answer) {
+                resultEl.textContent = 'Correct!';
+                resultEl.style.color = 'green';
+                score++;
+                scoreEl.textContent = score;
+            } else {
+                resultEl.textContent = "Incorrect. The correct answer is '" + q.answer + "'.";
+                resultEl.style.color = 'red';
+            }
+            Array.from(optionsEl.children).forEach(c => c.disabled = true);
+            if (current < questions.length - 1) {
+                nextBtn.style.display = 'inline-block';
+            } else {
+                restartBtn.style.display = 'inline-block';
+            }
+        });
+        optionsEl.appendChild(btn);
+    });
+}
+
+nextBtn.addEventListener('click', () => {
+    current++;
+    loadQuestion();
+});
+
+restartBtn.addEventListener('click', () => {
+    current = 0;
+    score = 0;
+    scoreEl.textContent = score;
+    loadQuestion();
+});
+
+loadQuestion();
+</script>
+</body>
+</html>          } else {
+                resultEl.textContent = "Incorrect. The correct answer is '" + q.answer + "'.";
+                resultEl.style.color = 'red';
+            }
+            Array.from(optionsEl.children).forEach(c => c.disabled = true);
+            if (current < questions.length - 1) {
+                nextBtn.style.display = 'inline-block';
+            } else {
+                restartBtn.style.display = 'inline-block';
+            }
+        });
+        optionsEl.appendChild(btn);
+    });
+}
+
+nextBtn.addEventListener('click', () => {
+    current++;
+    loadQuestion();
+});
+
+restartBtn.addEventListener('click', () => {
+    current = 0;
+    score = 0;
+    scoreEl.textContent = score;
+    loadQuestion();
+});
+
+loadQuestion();
+</script>
+</body>
+</html>

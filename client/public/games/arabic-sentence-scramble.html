@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>Arabic Sentence Scramble</title>
+<style>
+    body { font-family: Arial, sans-serif; background-color:#f3f4f6; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; margin:0; }
+    .game-container { background:#fff; padding:20px; border-radius:10px; box-shadow:0 2px 4px rgba(0,0,0,0.1); width:90%; max-width:600px; text-align:center; }
+    h1 { margin-top:0; }
+    .words { display:flex; flex-wrap:wrap; justify-content:center; margin:20px 0; }
+    .word { background:#e5e7eb; margin:5px; padding:8px 12px; border-radius:6px; cursor:pointer; transition:background-color 0.2s; }
+    .word:hover { background:#d1d5db; }
+    .sentence { min-height:60px; margin-bottom:20px; padding:10px; background:#f9fafb; border-radius:6px; border:1px dashed #d1d5db; display:flex; flex-wrap:wrap; justify-content:center; }
+    button { margin:10px; padding:10px 16px; border:none; border-radius:6px; cursor:pointer; font-size:16px; }
+    .next { background:#3b82f6; color:white; }
+    .restart { background:#10b981; color:white; }
+    .score { font-weight:bold; margin-top:10px; }
+</style>
+</head>
+<body>
+<div class="game-container">
+    <h1>لعبة ترتيب الجملة</h1>
+    <div id="sentence" class="sentence"></div>
+    <div id="words" class="words"></div>
+    <div class="score">الدرجة: <span id="score">0</span></div>
+    <button id="nextBtn" class="next" style="display:none;">التالي</button>
+    <button id="restartBtn" class="restart" style="display:none;">إعادة اللعب</button>
+</div>
+<script>
+const sentences = [
+    { text: "نهر النيل أطول نهر في العالم" },
+    { text: "القاهرة عاصمة جمهورية مصر العربية" },
+    { text: "اللغة العربية لغة جميلة وغنية" },
+    { text: "دولة قطر تقع في الخليج العربي" }
+];
+let current = 0;
+let score = 0;
+
+const sentenceEl = document.getElementById('sentence');
+const wordsEl = document.getElementById('words');
+const scoreEl = document.getElementById('score');
+const nextBtn = document.getElementById('nextBtn');
+const restartBtn = document.getElementById('restartBtn');
+
+function shuffle(array) {
+    for (let i = array.length -1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i+1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+
+function loadSentence() {
+    sentenceEl.innerHTML = '';
+    wordsEl.innerHTML = '';
+    nextBtn.style.display = 'none';
+    restartBtn.style.display = 'none';
+
+    const words = sentences[current].text.split(' ');
+    const shuffled = [...words];
+    shuffle(shuffled);
+    shuffled.forEach(word => {
+        const span = document.createElement('span');
+        span.textContent = word;
+        span.className = 'word';
+        span.addEventListener('click', () => {
+            sentenceEl.appendChild(span);
+            span.remove();
+            if (sentenceEl.children.length === words.length) {
+                checkAnswer(words);
+            }
+        });
+        wordsEl.appendChild(span);
+    });
+}
+
+function checkAnswer(correctWords) {
+    const userWords = Array.from(sentenceEl.children).map(span => span.textContent);
+    if (userWords.join(' ') === correctWords.join(' ')) {
+        score++;
+        scoreEl.textContent = score;
+nextBtn.style.display = 'inline-block';
+    } else {
+        restartBtn.style.display = 'inline-block';
+    }
+}
+
+nextBtn.addEventListener('click', () => {
+    current++;
+    if (current < sentences.length) {
+        loadSentence();
+    } else {
+        // end
+        sentenceEl.textContent = 'أحسنت! لقد انتهيت من جميع الجمل.';
+        wordsEl.innerHTML = '';
+        nextBtn.style.display = 'none';
+        restartBtn.style.display = 'inline-block';
+    }
+});
+
+restartBtn.addEventListener('click', () => {
+    current = 0;
+    score = 0;
+    scoreEl.textContent = score;
+    loadSentence();
+});
+
+loadSentence();
+</script>
+</body>
+</html>

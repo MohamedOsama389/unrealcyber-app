@@ -79,8 +79,7 @@ export const GAMES_REGISTRY: GameMetadata[] = [
         simUrl: 'https://phet.colorado.edu/sims/html/plinko-probability/latest/plinko-probability_en.html',
         isPhET: true,
         tags: ['Statistics', 'Probability']
-    },
-
+},,
     // ENGLISH
     {
         {

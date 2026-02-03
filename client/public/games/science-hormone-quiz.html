@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Hormone Quiz</title>
+<style>
+body { font-family: Arial, sans-serif; background-color:#f3f4f6; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; margin:0; }
+.container { background:#fff; padding:20px; border-radius:10px; box-shadow:0 2px 4px rgba(0,0,0,0.1); width:90%; max-width:600px; text-align:center; }
+h1 { margin-top:0; }
+.options { margin:20px 0; display:flex; flex-direction:column; align-items:center; }
+button.option { margin:5px 0; padding:10px 16px; border:none; border-radius:6px; cursor:pointer; background:#e5e7eb; transition:background-color .2s; width:80%; max-width:300px; }
+button.option:hover { background:#d1d5db; }
+button.next { margin-top:10px; padding:10px 16px; background:#3b82f6; color:white; border:none; border-radius:6px; cursor:pointer; display:none; }
+button.restart { margin-top:10px; padding:10px 16px; background:#10b981; color:white; border:none; border-radius:6px; cursor:pointer; display:none; }
+.score { font-weight:bold; }
+.result { margin-top:10px; font-weight:bold; }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>Hormone Quiz</h1>
+    <div id="question"></div>
+    <div id="options" class="options"></div>
+    <div class="result" id="result"></div>
+    <div class="score">Score: <span id="score">0</span></div>
+    <button id="nextBtn" class="next">Next</button>
+    <button id="restartBtn" class="restart">Restart</button>
+</div>
+<script>
+const questions = [
+    {
+        question: 'Which hormone regulates blood sugar levels?',
+
+function displayQuestion() {
+  const q = questions[current];
+  document.getElementById('question').textContent = q.question;
+  const optionsDiv = document.getElementById('options');
+  optionsDiv.innerHTML = '';
+  q.options.forEach(option => {
+    const btn = document.createElement('button');
+    btn.className = 'option';
+    btn.textContent = option;
+    btn.onclick = () => selectAnswer(option);
+    optionsDiv.appendChild(btn);
+  });
+  document.getElementById('result').textContent = '';
+}
+
+function selectAnswer(selected) {
+  const q = questions[current];
+  if (selected === q.answer) {
+    document.getElementById('result').textContent = 'Correct!';
+    score++;
+    document.getElementById('score').textContent = score;
+  } else {
+    document.getElementById('result').textContent = `Incorrect! Correct answer: ${q.answer}`;
+  }
+  Array.from(document.getElementById('options').children).forEach(btn => {
+    btn.disabled = true;
+    if (btn.textContent === q.answer) {
+      btn.style.backgroundColor = '#60c895';
+    } else {
+      btn.style.backgroundColor = '#f46e6e';
+    }
+  });
+}
+
+document.getElementById('nextBtn').addEventListener('click', () => {
+  current++;
+  if (current < questions.length) {
+    displayQuestion();
+    Array.from(document.getElementById('options').children).forEach(btn => {
+      btn.disabled = false;
+      btn.style.backgroundColor = '';
+    });
+  } else {
+    document.getElementById('question').textContent = 'Quiz complete!';
+    document.getElementById('options').innerHTML = '';
+    document.getElementById('result').textContent = `Your score: ${score}/${questions.length}`;
+    document.getElementById('nextBtn').style.display = 'none';
+    document.getElementById('restartBtn').style.display = 'inline-block';
+  }
+});
+
+document.getElementById('restartBtn').addEventListener('click', () => {
+  current = 0;
+  score = 0;
+  document.getElementById('score').textContent = score;
+  document.getElementById('nextBtn').style.display = 'inline-block';
+  document.getElementById('restartBtn').style.display = 'none';
+  displayQuestion();
+});
+
+displayQuestion();
+</script>
+</body>
+</html>
+   

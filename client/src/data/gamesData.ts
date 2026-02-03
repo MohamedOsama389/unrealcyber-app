@@ -93,4 +93,65 @@ export const GAMES_REGISTRY: GameMetadata[] = [
         isPhET: false,
         tags: ['Vocabulary', 'Sports']
     }
+];,
+    // SOCIAL STUDIES
+    {
+        id: 'ss-capital-match',
+        title: 'Capital Match Game',
+        category: 'Social Studies',
+        unit: 'Unit 1: Geography',
+        lesson: 'Lesson: Country Capitals',
+        description: 'Test your knowledge of country capitals by matching capitals to countries in a multiple-choice quiz.',
+        simUrl: '/games/ss-capital-match.html',
+        isPhET: false,
+        tags: ['Geography', 'Capitals', 'Quiz']
+    },
+    // ARABIC
+    {
+        id: 'arabic-sentence-scramble',
+        title: 'Arabic Sentence Scramble',
+        category: 'Arabic',
+        unit: 'Unit 1: Sentence Construction',
+        lesson: 'Lesson: Word Order',
+        description: 'Arrange the scrambled Arabic words to form correct sentences and improve understanding of sentence structure.',
+        simUrl: '/games/arabic-sentence-scramble.html',
+        isPhET: false,
+        tags: ['Arabic', 'Sentence', 'Grammar']
+    },
+    // ENGLISH
+    {
+        id: 'english-synonym-game',
+        title: 'English Synonym Game',
+        category: 'English',
+        unit: 'Unit 5: Vocabulary',
+        lesson: 'Lesson: Synonyms',
+        description: 'Choose synonyms for given words to build your vocabulary in this interactive quiz.',
+        simUrl: '/games/english-synonym-game.html',
+        isPhET: false,
+        tags: ['Vocabulary', 'Synonyms', 'English']
+    },
+    // SCIENCE
+    {
+        id: 'science-hormone-quiz',
+        title: 'Hormone Quiz',
+        category: 'Science',
+        unit: 'Unit 4: Hormones',
+        lesson: 'Lesson: Hormones and Glands',
+        description: 'Test your understanding of hormones by identifying which glands produce specific hormones in this multiple-choice quiz.',
+        simUrl: '/games/science-hormone-quiz.html',
+        isPhET: false,
+        tags: ['Biology', 'Hormones', 'Quiz']
+    },
+    // MATH
+    {
+        id: 'math-fraction-game',
+        title: 'Fraction Addition Game',
+        category: 'Math',
+        unit: 'Unit 2: Fractions',
+        lesson: 'Lesson: Fraction Addition',
+        description: 'Practice adding fractions with like denominators through a series of multiple-choice questions.',
+        simUrl: '/games/math-fraction-game.html',
+        isPhET: false,
+        tags: ['Fractions', 'Math', 'Addition']
+    },
 ];

@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import StarRating from '../components/StarRating';
-import { Activity, Calendar, CheckCircle, Award, Server, Play, FileText, Eye, Star, Folder, Layout } from 'lucide-react';
+import { Activity, Calendar, CheckCircle, Award, Server, Play, FileText, Eye, Star, Folder, Layout, Plus, Trash2, CheckCircle2 } from 'lucide-react';
 import io from 'socket.io-client';
 import { useNavigate } from 'react-router-dom'; // Added import for useNavigate
 import clsx from 'clsx'; // Added import for clsx
@@ -23,9 +23,12 @@ const Dashboard = () => {
         vmOnlineCount: 0,
         vmTotalCount: 0
     });
+    const [todos, setTodos] = useState([]);
+    const [showTodoModal, setShowTodoModal] = useState(false);
+    const [newTodo, setNewTodo] = useState({ title: '', type: 'personal' });
+
     const [featuredVideo, setFeaturedVideo] = useState(null);
-    const [featuredFile, setFeaturedFile] = useState(null);
-    const [featuredFolders, setFeaturedFolders] = useState([]);
+    const [featuredFile, setFeaturedFile] = useState(null); const [featuredFolders, setFeaturedFolders] = useState([]);
     const [activeVotes, setActiveVotes] = useState([]);
     const [myVotes, setMyVotes] = useState({}); // { voteId: optionIndex }
     const [profile, setProfile] = useState(null);
@@ -98,6 +101,10 @@ const Dashboard = () => {
                 // Get Settings
                 const settingsRes = await axios.get('/api/settings');
                 setSettings(settingsRes.data);
+
+                // Get Todos
+                const todosRes = await axios.get('/api/todos');
+                setTodos(todosRes.data);
             } catch (error) {
                 console.error("Error fetching dashboard data:", error);
             }
@@ -209,6 +216,43 @@ const Dashboard = () => {
         window.dispatchEvent(new Event('party:show'));
     };
 
+    const handleAddTodo = async (e) => {
+        e.preventDefault();
+        if (!newTodo.title.trim()) return;
+        try {
+            await axios.post('/api/todos', newTodo);
+            setNewTodo({ title: '', type: 'personal' });
+            setShowTodoModal(false);
+            // Refresh
+            const res = await axios.get('/api/todos');
+            setTodos(res.data);
+        } catch (err) {
+            alert("Failed to add goal");
+        }
+    };
+
+    const handleToggleTodo = async (id, isCompleted) => {
+        try {
+            await axios.put(`/api/todos/${id}`, { is_completed: !isCompleted });
+            setTodos(todos.map(t => t.id === id ? { ...t, is_completed: !isCompleted } : t));
+        } catch (err) {
+            alert("Update failed");
+        }
+    };
+
+    const handleDeleteTodo = async (id) => {
+        if (!window.confirm("Remove this goal?")) return;
+        try {
+            await axios.delete(`/api/todos/${id}`);
+            setTodos(todos.filter(t => t.id !== id));
+        } catch (err) {
+            alert("Delete failed");
+        }
+    };
+
+    const completedGoals = todos.filter(t => t.is_completed).length;
+    const totalGoals = todos.length;
+
     return (
         <div className="p-8 max-w-7xl mx-auto">
             {/* PARTY RE-JOIN BANNER */}
@@ -305,14 +349,78 @@ const Dashboard = () => {
                         </div>
                         <div className="text-[10px] text-secondary uppercase tracking-widest font-bold">Day Streak</div>
                     </div>
-                    <div className="glass-panel px-6 py-4 flex flex-col items-center">
+                    <div className="glass-panel px-6 py-4 flex flex-col items-center group relative overflow-hidden">
                         <div className="text-green-500 font-bold text-2xl">
-                            {stats.tasksCompleted}/{stats.tasksTotal}
+                            {completedGoals}/{totalGoals}
                         </div>
                         <div className="text-[10px] text-secondary uppercase tracking-widest font-bold">Goals Met</div>
+                        <button
+                            onClick={() => setShowTodoModal(true)}
+                            className="absolute bottom-0 right-0 p-2 bg-green-500/10 text-green-500 opacity-0 group-hover:opacity-100 transition-all rounded-tl-xl hover:bg-green-500 hover:text-white"
+                        >
+                            <Plus size={16} />
+                        </button>
                     </div>
                 </div>
             </motion.div>
+
+            {/* TODO LIST REVEAL SECTION */}
+            {todos.length > 0 && (
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-12"
+                >
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-xs font-bold text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
+                            <CheckCircle2 size={12} className="text-green-500" /> Active Goals
+                        </h2>
+                        {user.role === 'admin' && (
+                            <span className="text-[10px] text-cyan-500/70 italic px-2 py-1 bg-cyan-500/5 rounded-lg border border-cyan-500/10">
+                                As Admin, you can set General goals for everyone
+                            </span>
+                        )}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {todos.map(todo => (
+                            <div
+                                key={todo.id}
+                                className={clsx(
+                                    "glass-panel p-4 flex items-center justify-between border-l-4 transition-all hover:scale-[1.01]",
+                                    todo.is_completed ? "border-l-green-500/50 bg-green-500/5" : "border-l-cyan-500",
+                                    todo.type === 'general' && "ring-1 ring-cyan-400/20"
+                                )}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={() => handleToggleTodo(todo.id, todo.is_completed)}
+                                        className={clsx(
+                                            "w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all",
+                                            todo.is_completed ? "bg-green-500 border-green-500 text-white" : "border-slate-700 hover:border-cyan-500"
+                                        )}
+                                    >
+                                        {todo.is_completed && <CheckCircle size={14} />}
+                                    </button>
+                                    <div className="overflow-hidden">
+                                        <p className={clsx("text-sm font-medium truncate", todo.is_completed ? "text-slate-500 line-through" : "text-primary")}>
+                                            {todo.title}
+                                        </p>
+                                        {todo.type === 'general' && (
+                                            <span className="text-[9px] text-cyan-400 font-bold uppercase tracking-widest">Global Target</span>
+                                        )}
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => handleDeleteTodo(todo.id)}
+                                    className="p-2 text-slate-600 hover:text-red-500 transition-colors"
+                                >
+                                    <Trash2 size={14} />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </motion.div>
+            )}
 
             {/* FEATURED VIDEO SECTION */}
             {featuredVideo && (
@@ -566,6 +674,86 @@ const Dashboard = () => {
                     }}
                 />
             )}
+
+            {/* TODO MODAL */}
+            <AnimatePresence>
+                {showTodoModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowTodoModal(false)}
+                            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="relative w-full max-w-md bg-slate-900 border border-white/10 rounded-3xl p-8 shadow-2xl shadow-cyan-500/10 hover:shadow-cyan-500/20 transition-shadow"
+                        >
+                            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+                                <Plus className="text-cyan-400" /> New Academy Goal
+                            </h2>
+
+                            <form onSubmit={handleAddTodo} className="space-y-6">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Goal Title</label>
+                                    <input
+                                        autoFocus
+                                        type="text"
+                                        value={newTodo.title}
+                                        onChange={(e) => setNewTodo({ ...newTodo, title: e.target.value })}
+                                        placeholder="What do you want to achieve?"
+                                        className="w-full bg-slate-800 border border-slate-700 text-white p-4 rounded-xl focus:ring-2 focus:ring-cyan-500 outline-none transition-all"
+                                    />
+                                </div>
+
+                                {user.role === 'admin' && (
+                                    <div className="flex bg-slate-800 p-1 rounded-xl">
+                                        <button
+                                            type="button"
+                                            onClick={() => setNewTodo({ ...newTodo, type: 'personal' })}
+                                            className={clsx(
+                                                "flex-1 py-2 rounded-lg text-xs font-bold transition-all",
+                                                newTodo.type === 'personal' ? "bg-cyan-500 text-white" : "text-slate-500 hover:text-white"
+                                            )}
+                                        >
+                                            PERSONAL
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setNewTodo({ ...newTodo, type: 'general' })}
+                                            className={clsx(
+                                                "flex-1 py-2 rounded-lg text-xs font-bold transition-all",
+                                                newTodo.type === 'general' ? "bg-cyan-500 text-white" : "text-slate-500 hover:text-white"
+                                            )}
+                                        >
+                                            GENERAL
+                                        </button>
+                                    </div>
+                                )}
+
+                                <div className="flex gap-3 pt-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowTodoModal(false)}
+                                        className="flex-1 px-6 py-3 bg-panel text-secondary font-bold rounded-xl hover:bg-white/5 transition-all text-sm"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="flex-1 px-6 py-3 bg-cyan-500 hover:bg-cyan-600 text-white font-bold rounded-xl shadow-lg shadow-cyan-500/20 transition-all text-sm"
+                                    >
+                                        Create Goal
+                                    </button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

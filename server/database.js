@@ -112,6 +112,16 @@ db.exec(`
     FOREIGN KEY(user_id) REFERENCES users(id),
     UNIQUE(vote_id, user_id)
   );
+
+  CREATE TABLE IF NOT EXISTS todos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    title TEXT NOT NULL,
+    is_completed BOOLEAN DEFAULT 0,
+    type TEXT CHECK(type IN ('personal', 'general')) DEFAULT 'personal',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(user_id) REFERENCES users(id)
+  );
 `);
 
 // Seed Admin using PREPARED STATEMENTS to avoid syntax errors with special chars

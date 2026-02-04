@@ -70,11 +70,13 @@ const Navbar = () => {
                         transition={{ type: "spring", stiffness: 300, damping: 30 }}
                         className={`fixed top-0 left-0 h-full w-72 bg-app border-r border-border flex flex-col z-40 ${isOpen ? 'block pt-20' : 'hidden md:block'}`}
                     >
-                        <div className="mb-10 px-2 hidden md:block shrink-0">
-                            <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
+                        <div className="mt-4 mb-10 px-4 hidden md:block shrink-0">
+                            <h1 className="text-3xl font-extrabold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent tracking-tight">
                                 Unreal Cyber
                             </h1>
-                            <p className="text-xs text-slate-500 tracking-widest mt-1">ACADEMY OS v2.0</p>
+                            <p className="text-[10px] text-slate-500 tracking-[0.2em] mt-1.5 uppercase font-bold opacity-70">
+                                Academy OS v2.0
+                            </p>
                         </div>
 
                         <div className="space-y-1 flex-1 overflow-y-auto pr-2 custom-scrollbar">

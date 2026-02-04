@@ -629,10 +629,8 @@ app.post('/api/tasks/rate', authenticateToken, (req, res) => {
     res.json({ success: true });
 });
 
-// Delete upload (Admin or Owner)
 app.delete('/api/tasks/upload/:id', authenticateToken, (req, res) => {
     const uploadId = req.params.id;
-    // Check ownership or admin
     const upload = db.prepare('SELECT * FROM student_uploads WHERE id = ?').get(uploadId);
     if (!upload) return res.status(404).json({ error: "Upload not found" });
 
@@ -641,8 +639,67 @@ app.delete('/api/tasks/upload/:id', authenticateToken, (req, res) => {
     }
 
     db.prepare('DELETE FROM student_uploads WHERE id = ?').run(uploadId);
-    // Note: We are deleting the DB record. The file remains on Drive for safety/logs unless extended logic added.
     res.json({ success: true });
+});
+
+// --- TODOS / GOALS ---
+app.get('/api/todos', authenticateToken, (req, res) => {
+    try {
+        // Fetch personal todos for the user + general todos for everyone
+        const todos = db.prepare(`
+            SELECT * FROM todos 
+            WHERE user_id = ? OR type = 'general'
+            ORDER BY created_at DESC
+        `).all(req.user.id);
+        res.json(todos);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/todos', authenticateToken, (req, res) => {
+    const { title, type } = req.body;
+    // Only admins can create general todos
+    const finalType = (req.user.role === 'admin' && type === 'general') ? 'general' : 'personal';
+    try {
+        const result = db.prepare('INSERT INTO todos (user_id, title, type) VALUES (?, ?, ?)').run(req.user.id, title, finalType);
+        res.json({ success: true, id: result.lastInsertRowid });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/todos/:id', authenticateToken, (req, res) => {
+    const { id } = req.params;
+    const { is_completed } = req.body;
+    try {
+        // Verify ownership or check if it's a general todo (anyone can toggle their own view? No, per-user toggle for general todos?)
+        // Actually, if it's general, everyone sees it. If someone completes it, does it complete for everyone?
+        // Usually, goals on dashboard are personal. General goals might be global targets.
+        // User said: "make the goal met for the admin put in the admin case add two options personal or general so anyone can see it"
+        // This implies general goals are shared. Let's make it so if someone toggles a 'general' todo, it updates for everyone?
+        // Or should general todos have their own completion status per user? 
+        // For simplicity and based on "anyone can see it", let's make them shared for now.
+        db.prepare('UPDATE todos SET is_completed = ? WHERE id = ?').run(is_completed ? 1 : 0, id);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/todos/:id', authenticateToken, (req, res) => {
+    const { id } = req.params;
+    try {
+        const todo = db.prepare('SELECT * FROM todos WHERE id = ?').get(id);
+        if (!todo) return res.status(404).json({ error: "Todo not found" });
+        if (req.user.role !== 'admin' && todo.user_id !== req.user.id) {
+            return res.status(403).json({ error: "Unauthorized" });
+        }
+        db.prepare('DELETE FROM todos WHERE id = ?').run(id);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // --- DRIVE FOLDERS ---

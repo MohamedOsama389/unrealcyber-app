@@ -69,20 +69,21 @@ const Navbar = () => {
                         animate={{ x: 0 }}
                         exit={{ x: -280 }}
                         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                        className={`fixed top-0 left-0 h-full w-72 bg-app border-r border-border p-6 flex flex-col z-40 ${isOpen ? 'block pt-20' : 'hidden md:block'}`}
+                        className={`fixed top-0 left-0 h-full w-72 bg-app border-r border-border flex flex-col z-40 ${isOpen ? 'block pt-20' : 'hidden md:block'}`}
                     >
-                        <div className="mb-10 px-2 hidden md:block">
+                        <div className="mb-10 px-2 hidden md:block shrink-0">
                             <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
                                 Unreal Cyber
                             </h1>
                             <p className="text-xs text-slate-500 tracking-widest mt-1">ACADEMY OS v2.0</p>
                         </div>
 
-                        <div className="space-y-2 flex-1 overflow-y-auto">
+                        <div className="space-y-1 flex-1 overflow-y-auto pr-2 custom-scrollbar">
                             {navItems.map((item) => (
                                 <NavLink
                                     key={item.path}
                                     to={item.path}
+                                    id={`nav-${item.path.replace('/', '') || 'dashboard'}`}
                                     onClick={() => setIsOpen(false)}
                                     className={({ isActive }) => `
                                         flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300
@@ -98,8 +99,8 @@ const Navbar = () => {
                             ))}
                         </div>
 
-                        <div className="mt-8 pt-6 border-t border-border">
-                            <div className="flex items-center space-x-3 px-4 mb-4">
+                        <div className="mt-auto pt-6 border-t border-border shrink-0 pb-6 md:pb-8">
+                            <div className="flex items-center space-x-3 px-4 mb-4" id="nav-user-profile">
                                 <div className="w-10 h-10 rounded-full bg-panel overflow-hidden shadow-lg border border-border">
                                     {user?.avatar_id ? (
                                         <img
@@ -120,19 +121,20 @@ const Navbar = () => {
                                 </div>
                             </div>
                             {/* LOGOUT & THEME */}
-                            <div className="px-4"> {/* Adjusted to keep it within the existing structure */}
+                            <div className="px-4 space-y-2">
                                 <button
+                                    id="nav-theme-toggle"
                                     onClick={toggleTheme}
-                                    className="w-full flex items-center mb-3 px-4 py-3 text-secondary hover:text-primary hover:bg-panel rounded-xl transition-all font-medium"
+                                    className="w-full flex items-center px-4 py-2 text-secondary hover:text-primary hover:bg-panel rounded-xl transition-all font-medium text-sm"
                                 >
-                                    {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+                                    {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
                                     <span className="ml-3">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
                                 </button>
                                 <button
-                                    onClick={handleLogout} // Changed to handleLogout
-                                    className="w-full flex items-center px-4 py-3 text-red-500 hover:bg-red-500/10 rounded-xl transition-all font-bold"
+                                    onClick={handleLogout}
+                                    className="w-full flex items-center px-4 py-2 text-red-500 hover:bg-red-500/10 rounded-xl transition-all font-bold text-sm"
                                 >
-                                    <LogOut size={20} />
+                                    <LogOut size={18} />
                                     <span className="ml-3">Sign Out</span>
                                 </button>
                             </div>

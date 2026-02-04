@@ -37,6 +37,7 @@ const Navbar = () => {
         { path: '/files', label: 'Academy Files', icon: FileText },
         { path: '/vm-rental', label: 'VM Rental', icon: Monitor },
         { path: '/games', label: 'Education Games', icon: Gamepad2 },
+        { path: '/tutorials', label: 'Tutorial Hub', icon: BookOpen },
         { path: '/chat', label: 'Comms Channel', icon: MessageSquare },
     ];
 

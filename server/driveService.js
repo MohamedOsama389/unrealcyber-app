@@ -15,9 +15,68 @@ const PARTY_FOLDER_ID = '1j6Ne5b-NC6Tl5sw-9s0K09N8AoT5jhra';
 
 let drive;
 let oauth2Client;
+let dbInstance;
+let keys;
+
+const initOAuth = (tokens) => {
+    try {
+        const redirectUri = process.env.GOOGLE_REDIRECT_URI || "http://localhost:3000";
+        oauth2Client = new google.auth.OAuth2(
+            keys.client_id,
+            keys.client_secret,
+            redirectUri
+        );
+        oauth2Client.setCredentials(tokens);
+
+        oauth2Client.on('tokens', (newTokens) => {
+            if (!newTokens) return;
+            console.log("✅ Google tokens refreshed.");
+            const updated = { ...oauth2Client.credentials, ...newTokens };
+
+            // 1. Save to DB if available
+            if (dbInstance) {
+                try {
+                    dbInstance.prepare('INSERT OR REPLACE INTO site_settings (key, value) VALUES (?, ?)').run('google_tokens', JSON.stringify(updated));
+                    console.log("Tokens saved to database.");
+                } catch (dbErr) {
+                    console.error("Failed to save tokens to database:", dbErr.message);
+                }
+            }
+
+            // 2. Save to local file (Dev fallback)
+            try {
+                fs.writeFileSync(TOKENS_PATH, JSON.stringify(updated, null, 2));
+            } catch (e) { }
+
+            console.log("📢 Railway/Production Tip: Update GOOGLE_TOKENS env var if DB is not persistent.");
+        });
+
+        drive = google.drive({ version: 'v3', auth: oauth2Client });
+        console.log(`Drive Service Initialized with Redirect URI: ${redirectUri}`);
+        return true;
+    } catch (err) {
+        console.error("Failed to init OAuth2:", err.message);
+        return false;
+    }
+};
+
+const setDB = (db) => {
+    dbInstance = db;
+    // Try to load tokens from DB
+    try {
+        const row = db.prepare('SELECT value FROM site_settings WHERE key = ?').get('google_tokens');
+        if (row && row.value) {
+            console.log("Loading Google Tokens from Database...");
+            const tokens = JSON.parse(row.value);
+            initOAuth(tokens);
+        }
+    } catch (err) {
+        console.error("Failed to load tokens from site_settings:", err.message);
+    }
+};
 
 try {
-    let keys, tokens;
+    let tokens;
 
     // 1. Try Environment Variables
     if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_TOKENS) {
@@ -40,44 +99,9 @@ try {
         }
     }
 
-    if (!keys || !tokens) {
-        throw new Error("Missing Credentials! Please check env vars or local files.");
-    }
+    // TOKEN REFRESH PERSISTENCE moved to initOAuth helper
 
-    // CONSISTENT REDIRECT URI
-    const redirectUri = process.env.GOOGLE_REDIRECT_URI || "http://localhost:3000";
-
-    oauth2Client = new google.auth.OAuth2(
-        keys.client_id,
-        keys.client_secret,
-        redirectUri
-    );
-    oauth2Client.setCredentials(tokens);
-
-    // TOKEN REFRESH PERSISTENCE
-    oauth2Client.on('tokens', (newTokens) => {
-        if (!newTokens) return;
-        console.log("✅ Google tokens refreshed.");
-
-        const updated = {
-            ...oauth2Client.credentials,
-            ...newTokens,
-        };
-
-        // Persist to local file (Dev)
-        try {
-            fs.writeFileSync(TOKENS_PATH, JSON.stringify(updated, null, 2));
-            console.log("Tokens saved to local file.");
-        } catch (e) {
-            console.error("Failed to save tokens to file:", e.message);
-        }
-
-        // For Production (Railway logs)
-        console.log("📢 Update Railway GOOGLE_TOKENS env var with this JSON:\n", JSON.stringify(updated));
-    });
-
-    drive = google.drive({ version: 'v3', auth: oauth2Client });
-    console.log(`Drive Service Initialized with Redirect URI: ${redirectUri}`);
+    initOAuth(tokens);
 
 } catch (err) {
     console.error("Failed to initialize Drive with OAuth2:", err.message);
@@ -587,6 +611,7 @@ module.exports = {
     createFolder,
     isInitialized,
     getLiveStatus,
+    setDB, // Export new function
     backupDatabase,
     restoreDatabase,
     uploadManualMaster,

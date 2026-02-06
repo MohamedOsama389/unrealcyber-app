@@ -122,6 +122,16 @@ db.exec(`
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(user_id) REFERENCES users(id)
   );
+
+  CREATE TABLE IF NOT EXISTS todo_completions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    todo_id INTEGER,
+    user_id INTEGER,
+    completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(todo_id) REFERENCES todos(id),
+    FOREIGN KEY(user_id) REFERENCES users(id),
+    UNIQUE(todo_id, user_id)
+  );
 `);
 
 // Seed Admin using PREPARED STATEMENTS to avoid syntax errors with special chars

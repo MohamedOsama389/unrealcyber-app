@@ -125,6 +125,11 @@ const Dashboard = () => {
             fetchData();
         });
 
+        socket.on('todo_update', () => {
+            console.log("Todo update received");
+            fetchData();
+        });
+
         // Listen for Party Updates
         socket.on('party_update', (state) => {
             if (state && state.active) {
@@ -382,42 +387,67 @@ const Dashboard = () => {
                         )}
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {todos.map(todo => (
-                            <div
-                                key={todo.id}
-                                className={clsx(
-                                    "glass-panel p-4 flex items-center justify-between border-l-4 transition-all hover:scale-[1.01]",
-                                    todo.is_completed ? "border-l-green-500/50 bg-green-500/5" : "border-l-cyan-500",
-                                    todo.type === 'general' && "ring-1 ring-cyan-400/20"
-                                )}
-                            >
-                                <div className="flex items-center gap-3">
-                                    <button
-                                        onClick={() => handleToggleTodo(todo.id, todo.is_completed)}
-                                        className={clsx(
-                                            "w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all",
-                                            todo.is_completed ? "bg-green-500 border-green-500 text-white" : "border-slate-700 hover:border-cyan-500"
-                                        )}
-                                    >
-                                        {todo.is_completed && <CheckCircle size={14} />}
-                                    </button>
-                                    <div className="overflow-hidden">
-                                        <p className={clsx("text-sm font-medium truncate", todo.is_completed ? "text-slate-500 line-through" : "text-primary")}>
-                                            {todo.title}
-                                        </p>
-                                        {todo.type === 'general' && (
-                                            <span className="text-[9px] text-cyan-400 font-bold uppercase tracking-widest">Global Target</span>
-                                        )}
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => handleDeleteTodo(todo.id)}
-                                    className="p-2 text-slate-600 hover:text-red-500 transition-colors"
+                        <AnimatePresence mode="popLayout">
+                            {todos.map(todo => (
+                                <motion.div
+                                    layout
+                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 0.9 }}
+                                    key={todo.id}
+                                    className={clsx(
+                                        "relative glass-panel p-4 flex items-center justify-between border-l-4 transition-all hover:shadow-xl hover:shadow-cyan-500/10 group",
+                                        todo.is_completed
+                                            ? "border-l-green-500/50 bg-green-500/5 opacity-80"
+                                            : todo.type === 'general' ? "border-l-purple-500 bg-purple-500/5" : "border-l-cyan-500 bg-panel",
+                                        todo.type === 'general' && "ring-1 ring-purple-500/20"
+                                    )}
                                 >
-                                    <Trash2 size={14} />
-                                </button>
-                            </div>
-                        ))}
+                                    <div className="flex items-center gap-4">
+                                        <button
+                                            onClick={() => handleToggleTodo(todo.id, todo.is_completed)}
+                                            className={clsx(
+                                                "w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all",
+                                                todo.is_completed
+                                                    ? "bg-green-500 border-green-500 text-white"
+                                                    : todo.type === 'general'
+                                                        ? "border-purple-500/30 hover:border-purple-500"
+                                                        : "border-slate-700 hover:border-cyan-500"
+                                            )}
+                                        >
+                                            {todo.is_completed && <CheckCircle size={14} />}
+                                        </button>
+                                        <div className="overflow-hidden">
+                                            <p className={clsx(
+                                                "text-sm font-semibold truncate transition-all",
+                                                todo.is_completed ? "text-slate-500 line-through" : "text-primary"
+                                            )}>
+                                                {todo.title}
+                                            </p>
+                                            <div className="flex items-center gap-2 mt-0.5">
+                                                {todo.type === 'general' ? (
+                                                    <span className="text-[8px] text-purple-400 font-extrabold uppercase tracking-widest px-1.5 py-0.5 bg-purple-500/10 rounded-md border border-purple-500/20">
+                                                        Academy Target
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-[8px] text-cyan-400 font-bold uppercase tracking-widest">
+                                                        Personal Goal
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {(user.role === 'admin' || todo.type !== 'general') && (
+                                        <button
+                                            onClick={() => handleDeleteTodo(todo.id)}
+                                            className="p-2 text-slate-600 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    )}
+                                </motion.div>
+                            ))}
+                        </AnimatePresence>
                     </div>
                 </motion.div>
             )}

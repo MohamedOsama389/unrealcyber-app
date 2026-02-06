@@ -646,11 +646,15 @@ app.delete('/api/tasks/upload/:id', authenticateToken, (req, res) => {
 app.get('/api/todos', authenticateToken, (req, res) => {
     try {
         // Fetch personal todos for the user + general todos for everyone
+        // Join with todo_completions to get the current user's completion status
         const todos = db.prepare(`
-            SELECT * FROM todos 
-            WHERE user_id = ? OR type = 'general'
-            ORDER BY created_at DESC
-        `).all(req.user.id);
+            SELECT t.*, 
+                   CASE WHEN tc.completed_at IS NOT NULL THEN 1 ELSE 0 END as is_completed
+            FROM todos t
+            LEFT JOIN todo_completions tc ON t.id = tc.todo_id AND tc.user_id = ?
+            WHERE t.user_id = ? OR t.type = 'general'
+            ORDER BY t.created_at DESC
+        `).all(req.user.id, req.user.id);
         res.json(todos);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -659,10 +663,13 @@ app.get('/api/todos', authenticateToken, (req, res) => {
 
 app.post('/api/todos', authenticateToken, (req, res) => {
     const { title, type } = req.body;
-    // Only admins can create general todos
     const finalType = (req.user.role === 'admin' && type === 'general') ? 'general' : 'personal';
     try {
         const result = db.prepare('INSERT INTO todos (user_id, title, type) VALUES (?, ?, ?)').run(req.user.id, title, finalType);
+
+        // Notify clients
+        io.emit('todo_update');
+
         res.json({ success: true, id: result.lastInsertRowid });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -673,14 +680,15 @@ app.put('/api/todos/:id', authenticateToken, (req, res) => {
     const { id } = req.params;
     const { is_completed } = req.body;
     try {
-        // Verify ownership or check if it's a general todo (anyone can toggle their own view? No, per-user toggle for general todos?)
-        // Actually, if it's general, everyone sees it. If someone completes it, does it complete for everyone?
-        // Usually, goals on dashboard are personal. General goals might be global targets.
-        // User said: "make the goal met for the admin put in the admin case add two options personal or general so anyone can see it"
-        // This implies general goals are shared. Let's make it so if someone toggles a 'general' todo, it updates for everyone?
-        // Or should general todos have their own completion status per user? 
-        // For simplicity and based on "anyone can see it", let's make them shared for now.
-        db.prepare('UPDATE todos SET is_completed = ? WHERE id = ?').run(is_completed ? 1 : 0, id);
+        if (is_completed) {
+            db.prepare('INSERT OR IGNORE INTO todo_completions (todo_id, user_id) VALUES (?, ?)').run(id, req.user.id);
+        } else {
+            db.prepare('DELETE FROM todo_completions WHERE todo_id = ? AND user_id = ?').run(id, req.user.id);
+        }
+
+        // Notify clients (especially relevant if general goals show completion counters or if user has multiple devices)
+        io.emit('todo_update');
+
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -695,7 +703,14 @@ app.delete('/api/todos/:id', authenticateToken, (req, res) => {
         if (req.user.role !== 'admin' && todo.user_id !== req.user.id) {
             return res.status(403).json({ error: "Unauthorized" });
         }
+
+        // Cleanup completions
+        db.prepare('DELETE FROM todo_completions WHERE todo_id = ?').run(id);
         db.prepare('DELETE FROM todos WHERE id = ?').run(id);
+
+        // Notify clients
+        io.emit('todo_update');
+
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -1358,6 +1373,9 @@ const startServer = async () => {
 
         // Initialize Telegram Bot
         botInstance = initBot(db);
+
+        // Initialize Drive Service with DB for token persistence
+        driveService.setDB(db);
 
         // Run migrations
         try {

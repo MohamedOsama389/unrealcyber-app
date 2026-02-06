@@ -38,6 +38,7 @@ const Navbar = () => {
         { path: '/files', label: 'Academy Files', icon: FileText },
         { path: '/vm-rental', label: 'VM Rental', icon: Monitor },
         { path: '/games', label: 'Education Games', icon: Gamepad2 },
+        { path: '/tutorials', label: 'Tutorial Hub', icon: BookOpen },
         { path: '/chat', label: 'Comms Channel', icon: MessageSquare },
     ];
 
@@ -71,11 +72,16 @@ const Navbar = () => {
                         className={`fixed top-0 left-0 h-full w-72 bg-app border-r border-border flex flex-col z-40 ${isOpen ? 'block pt-20' : 'hidden md:block'}`}
                     >
                         <div className="mt-4 mb-10 px-4 hidden md:block shrink-0">
-                            <h1 className="text-3xl font-extrabold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent tracking-tight">
-                                Unreal Cyber
-                            </h1>
-                            <p className="text-[10px] text-slate-500 tracking-[0.2em] mt-1.5 uppercase font-bold opacity-70">
-                                Academy OS v2.0
+                            <div className="flex items-baseline gap-2">
+                                <h1 className="text-3xl font-extrabold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent tracking-tight">
+                                    Unreal Cyber
+                                </h1>
+                                <span className="text-[10px] text-cyan-500/50 font-bold uppercase tracking-widest bg-cyan-500/5 px-2 py-0.5 rounded-full border border-cyan-500/10 mb-1">
+                                    v2.0
+                                </span>
+                            </div>
+                            <p className="text-[9px] text-slate-500 tracking-[0.2em] mt-1 uppercase font-bold opacity-60">
+                                Academy OS • Digital Frontier
                             </p>
                         </div>
 

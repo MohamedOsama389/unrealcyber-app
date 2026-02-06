@@ -20,13 +20,22 @@ let keys;
 
 const initOAuth = (tokens) => {
     try {
+        if (!keys || !keys.client_id || !keys.client_secret) {
+            console.error("❌ Cannot initialize OAuth: Missing keys (client_id/client_secret)");
+            return false;
+        }
+
         const redirectUri = process.env.GOOGLE_REDIRECT_URI || "http://localhost:3000";
         oauth2Client = new google.auth.OAuth2(
             keys.client_id,
             keys.client_secret,
             redirectUri
         );
-        oauth2Client.setCredentials(tokens);
+
+        if (tokens) {
+            oauth2Client.setCredentials(tokens);
+            console.log("✅ Google tokens applied from source.");
+        }
 
         oauth2Client.on('tokens', (newTokens) => {
             if (!newTokens) return;
@@ -76,32 +85,37 @@ const setDB = (db) => {
 };
 
 try {
-    let tokens;
-
-    // 1. Try Environment Variables
-    if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.GOOGLE_TOKENS) {
-        console.log("Loading Credentials from Environment Variables...");
+    // 1. Try Environment Variables for Keys
+    if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+        console.log("Loading Credentials (Keys) from Environment Variables...");
         keys = {
             client_id: process.env.GOOGLE_CLIENT_ID,
             client_secret: process.env.GOOGLE_CLIENT_SECRET
         };
+    }
+    // Fallback to Local Files for Keys
+    else if (fs.existsSync(CREDENTIALS_PATH)) {
+        console.log("Loading Credentials (Keys) from Local Credentials File...");
+        const creds = JSON.parse(fs.readFileSync(CREDENTIALS_PATH));
+        keys = creds.web || creds.installed;
+    }
+
+    // 2. Try Environment Variables for Tokens
+    if (process.env.GOOGLE_TOKENS) {
+        console.log("Found Google Tokens in Environment Variables.");
         tokens = JSON.parse(process.env.GOOGLE_TOKENS);
     }
-    // 2. Fallback to Local Files
-    else {
-        console.log("Loading Credentials from Local Files...");
-        if (fs.existsSync(CREDENTIALS_PATH)) {
-            const creds = JSON.parse(fs.readFileSync(CREDENTIALS_PATH));
-            keys = creds.web || creds.installed;
-        }
-        if (fs.existsSync(TOKENS_PATH)) {
-            tokens = JSON.parse(fs.readFileSync(TOKENS_PATH));
-        }
+    // Fallback to Local Tokens File
+    else if (fs.existsSync(TOKENS_PATH)) {
+        console.log("Found Google Tokens in Local Tokens File.");
+        tokens = JSON.parse(fs.readFileSync(TOKENS_PATH));
     }
 
-    // TOKEN REFRESH PERSISTENCE moved to initOAuth helper
-
-    initOAuth(tokens);
+    if (keys) {
+        initOAuth(tokens);
+    } else {
+        console.error("❌ FAILED to load Google credentials keys. Drive features will be disabled.");
+    }
 
 } catch (err) {
     console.error("Failed to initialize Drive with OAuth2:", err.message);

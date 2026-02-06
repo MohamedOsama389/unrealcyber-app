@@ -17,6 +17,7 @@ let drive;
 let oauth2Client;
 let dbInstance;
 let keys;
+let tokens;
 
 const initOAuth = (tokens) => {
     try {
@@ -102,13 +103,21 @@ try {
 
     // 2. Try Environment Variables for Tokens
     if (process.env.GOOGLE_TOKENS) {
-        console.log("Found Google Tokens in Environment Variables.");
-        tokens = JSON.parse(process.env.GOOGLE_TOKENS);
+        try {
+            console.log("Found Google Tokens in Environment Variables.");
+            tokens = JSON.parse(process.env.GOOGLE_TOKENS);
+        } catch (e) {
+            console.error("Failed to parse GOOGLE_TOKENS env var:", e.message);
+        }
     }
     // Fallback to Local Tokens File
     else if (fs.existsSync(TOKENS_PATH)) {
-        console.log("Found Google Tokens in Local Tokens File.");
-        tokens = JSON.parse(fs.readFileSync(TOKENS_PATH));
+        try {
+            console.log("Found Google Tokens in Local Tokens File.");
+            tokens = JSON.parse(fs.readFileSync(TOKENS_PATH));
+        } catch (e) {
+            console.error("Failed to parse local tokens file:", e.message);
+        }
     }
 
     if (keys) {

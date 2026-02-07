@@ -1117,6 +1117,30 @@ io.on('connection', (socket) => {
 });
 
 // --- Labs API ---
+app.get('/api/labs/download/:fileId', authenticateToken, async (req, res) => {
+    try {
+        const { fileId } = req.params;
+        const range = req.headers.range;
+        const response = await driveService.getFileStream(fileId, range);
+
+        // Forward headers
+        const headers = response.headers;
+        const contentLength = headers['content-length'];
+        const contentType = headers['content-type'];
+        const contentDisposition = headers['content-disposition'];
+
+        if (contentLength) res.setHeader('Content-Length', contentLength);
+        if (contentType) res.setHeader('Content-Type', contentType);
+        if (contentDisposition) res.setHeader('Content-Disposition', contentDisposition);
+
+        // Pipe the stream
+        response.data.pipe(res);
+    } catch (err) {
+        console.error("Lab download proxy failed:", err.message);
+        res.status(500).send("Failed to download lab file.");
+    }
+});
+
 app.get('/api/labs', authenticateToken, (req, res) => {
     try {
         const labs = db.prepare('SELECT * FROM labs ORDER BY created_at DESC').all();

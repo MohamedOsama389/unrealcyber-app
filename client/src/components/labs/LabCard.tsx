@@ -26,7 +26,7 @@ const LabCard = ({ lab }: { lab: Lab }) => {
             <div className="aspect-video w-full bg-slate-900 overflow-hidden relative">
                 {lab.thumbnail_link ? (
                     <img
-                        src={lab.thumbnail_link}
+                        src={lab.thumbnail_link.replace('file/d/', 'uc?id=').replace('/view?usp=sharing', '').replace('/view', '')}
                         alt={lab.title}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                     />
@@ -61,7 +61,14 @@ const LabCard = ({ lab }: { lab: Lab }) => {
 
                 <div className="flex items-center space-x-3">
                     <button
-                        onClick={handleDownload}
+                        onClick={() => {
+                            const link = document.createElement('a');
+                            link.href = `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/labs/download/${lab.file_id}`;
+                            link.setAttribute('download', `${lab.title}.zip`); // Default name, reliable
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                        }}
                         className="flex-1 flex items-center justify-center space-x-2 bg-white text-slate-950 font-bold py-3 rounded-xl hover:bg-cyan-400 hover:text-black transition-all active:scale-95"
                     >
                         <Download size={18} />

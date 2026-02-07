@@ -165,6 +165,13 @@ const HandsOn = () => {
                                         </div>
                                     </div>
                                     <div className="flex items-center space-x-4">
+                                        <button
+                                            onClick={() => window.open('https://netlab.thecybersecguru.com/', '_blank')}
+                                            className="flex items-center space-x-2 text-[10px] font-bold text-cyan-400 bg-cyan-400/10 px-3 py-1 rounded-full border border-cyan-400/20 hover:bg-cyan-400/20 transition-all"
+                                        >
+                                            <ExternalLink size={12} />
+                                            <span>LAUNCH NEW WINDOW</span>
+                                        </button>
                                         <div className="flex items-center space-x-2 text-[10px] font-bold text-green-400 bg-green-400/10 px-3 py-1 rounded-full border border-green-400/20">
                                             <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
                                             <span>SYSTEM ONLINE</span>

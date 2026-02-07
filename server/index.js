@@ -1205,6 +1205,10 @@ app.post('/api/labs', authenticateToken, upload.fields([
             const thumbRes = await driveService.uploadFile(thumbnail, driveService.FILES_FOLDER_ID);
             thumbnail_link = thumbRes.webViewLink;
         }
+        // If no thumbnail uploaded, fall back to the lab file's Drive link.
+        if (!thumbnail_link && drive_link) {
+            thumbnail_link = drive_link;
+        }
 
         // 3. Save to DB
         const stmt = db.prepare('INSERT INTO labs (title, description, thumbnail_link, drive_link, file_id) VALUES (?, ?, ?, ?, ?)');
@@ -1585,6 +1589,26 @@ const startServer = async () => {
             console.log("Migrations check complete.");
         } catch (e) {
             console.error("Database migration check failed", e);
+        }
+
+        // --- Labs Thumbnail Backfill ---
+        try {
+            const missingThumbs = db.prepare(`
+                SELECT id, drive_link 
+                FROM labs 
+                WHERE (thumbnail_link IS NULL OR thumbnail_link = '') 
+                  AND drive_link IS NOT NULL
+            `).all();
+
+            if (missingThumbs.length > 0) {
+                const upd = db.prepare('UPDATE labs SET thumbnail_link = drive_link WHERE id = ?');
+                db.transaction(() => {
+                    missingThumbs.forEach(lab => upd.run(lab.id));
+                })();
+                console.log(`[Labs] Backfilled ${missingThumbs.length} thumbnails using drive_link.`);
+            }
+        } catch (err) {
+            console.error("[Labs] Thumbnail backfill failed:", err.message);
         }
 
         server.listen(PORT, '0.0.0.0', () => {

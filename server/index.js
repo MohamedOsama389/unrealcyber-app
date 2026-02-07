@@ -1145,25 +1145,19 @@ app.get('/api/labs/download/:fileId', authenticateToken, async (req, res) => {
 app.get('/api/labs/thumbnail/:fileId', async (req, res) => {
     try {
         const { fileId } = req.params;
-        const range = req.headers.range;
-        const response = await driveService.getFileStream(fileId, range);
+        const thumb = await driveService.getThumbnailStream(fileId);
 
-        // Forward headers
-        const headers = response.headers;
-        const contentLength = headers['content-length'];
-        const contentType = headers['content-type'];
+        // If Drive provides no thumbnail, fall back to a static placeholder
+        if (!thumb) {
+            return res.redirect('https://upload.wikimedia.org/wikipedia/commons/1/14/No_Image_Available.jpg');
+        }
 
-        if (contentLength) res.setHeader('Content-Length', contentLength);
-        if (contentType) res.setHeader('Content-Type', contentType);
-
-        // Ensure inline display for images
+        res.setHeader('Content-Type', thumb.contentType || 'image/jpeg');
         res.setHeader('Content-Disposition', 'inline');
-
-        // Pipe the stream
-        response.data.pipe(res);
+        thumb.stream.pipe(res);
     } catch (err) {
         console.error("Thumbnail proxy failed:", err.message);
-        res.status(404).send("Thumbnail not found");
+        return res.redirect('https://upload.wikimedia.org/wikipedia/commons/1/14/No_Image_Available.jpg');
     }
 });
 

@@ -645,6 +645,57 @@ const uploadLabFile = async (fileObject) => {
     return uploadFile(fileObject, LABS_FOLDER_ID);
 };
 
+/**
+ * Try to fetch a Google-generated thumbnail for any file.
+ * - If the file is an image, stream the original file.
+ * - Otherwise, if Drive provides a thumbnailLink, stream that image.
+ * Returns null when no thumbnail is available.
+ */
+const getThumbnailStream = async (fileId) => {
+    try {
+        if (!drive) throw new Error("Google Drive Service not initialized");
+
+        // Lightweight metadata fetch
+        const meta = await drive.files.get({
+            fileId,
+            fields: 'mimeType, thumbnailLink'
+        });
+
+        const mime = meta.data.mimeType || '';
+        const thumbLink = meta.data.thumbnailLink;
+
+        // 1) If file itself is an image, stream it directly
+        if (mime.startsWith('image/')) {
+            const resp = await drive.files.get(
+                { fileId, alt: 'media' },
+                { responseType: 'stream' }
+            );
+            return { stream: resp.data, contentType: mime };
+        }
+
+        // 2) Otherwise, attempt to stream Drive-generated thumbnail
+        if (thumbLink) {
+            const axios = require('axios');
+            const headers = {};
+            if (oauth2Client?.credentials?.access_token) {
+                headers.Authorization = `Bearer ${oauth2Client.credentials.access_token}`;
+            }
+
+            const thumbResp = await axios.get(thumbLink, {
+                responseType: 'stream',
+                headers
+            });
+            const ct = thumbResp.headers['content-type'] || 'image/jpeg';
+            return { stream: thumbResp.data, contentType: ct };
+        }
+
+        return null;
+    } catch (err) {
+        console.error("[DriveService] getThumbnailStream failed:", err.message);
+        return null;
+    }
+};
+
 const getLabsFromDrive = async () => {
     if (!LABS_FOLDER_ID) await ensureLabsFolder();
     return listFiles(LABS_FOLDER_ID, 'file'); // Using 'file' as a generic type here
@@ -729,6 +780,7 @@ module.exports = {
     uploadAvatar,
     uploadPartyVideo,
     uploadLabFile,
+    getThumbnailStream,
     getLabsFromDrive,
     ensureLabsFolder, // Export new function
     getFileStream, // Export new function

@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
-import { LanguageProvider } from './context/LanguageContext';
+import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
 import TutorialTour from './components/TutorialTour';
@@ -25,14 +25,19 @@ import clsx from 'clsx';
 
 function AppContent() {
   const { user } = useAuth();
+  const { language } = useLanguage();
   const isAuthPage = ['/login', '/signup'].includes(window.location.pathname);
 
   return (
-    <div className="flex min-h-screen bg-app text-primary font-sans selection:bg-cyan-500/30">
+    <div className={clsx(
+      "flex min-h-screen bg-app text-primary font-sans selection:bg-cyan-500/30",
+      language === 'ar' && "flex-row-reverse"
+    )}>
       {!isAuthPage && <Navbar />}
       <div className={clsx(
         "flex-1 pt-16 md:pt-0 transition-all duration-300",
-        !isAuthPage && "md:ml-72"
+        !isAuthPage && (language === 'ar' ? "md:mr-72" : "md:ml-72"),
+        language === 'ar' && "text-right"
       )}>
         <Routes>
           <Route path="/login" element={<Login />} />

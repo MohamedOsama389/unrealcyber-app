@@ -72,7 +72,7 @@ const Navbar = () => {
                         animate={{ x: 0 }}
                         exit={{ x: -280 }}
                         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                        className={`fixed top-0 left-0 h-full w-72 bg-app border-r border-border flex flex-col z-40 ${isOpen ? 'block pt-20' : 'hidden md:block'}`}
+                        className={`fixed top-0 ${language === 'ar' ? 'right-0 border-l' : 'left-0 border-r'} h-full w-72 bg-app border-border flex flex-col z-40 ${isOpen ? 'block pt-20' : 'hidden md:block'}`}
                     >
                         <div className="mt-4 mb-10 px-4 hidden md:block shrink-0">
                             <div className="flex items-baseline gap-2">
@@ -96,15 +96,15 @@ const Navbar = () => {
                                     id={`nav-${item.path.replace('/', '') || 'dashboard'}`}
                                     onClick={() => setIsOpen(false)}
                                     className={({ isActive }) => `
-                                        flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300
+                                        flex items-center ${language === 'ar' ? 'flex-row-reverse space-x-reverse' : ''} space-x-3 px-4 py-3 rounded-xl transition-all duration-300
                                         ${isActive
-                                            ? 'bg-cyan-500/10 text-cyan-400 border-l-4 border-cyan-500 shadow-[0_0_20px_rgba(34,211,238,0.1)]'
+                                            ? `${language === 'ar' ? 'border-r-4' : 'border-l-4'} bg-cyan-500/10 text-cyan-400 border-cyan-500 shadow-[0_0_20px_rgba(34,211,238,0.1)]`
                                             : 'text-secondary hover:bg-panel hover:text-primary'
                                         }
                                     `}
                                 >
                                     <item.icon size={20} />
-                                    <span className="font-medium text-sm">{t(item.labelKey, item.fallback)}</span>
+                                    <span className={`font-medium text-sm ${language === 'ar' ? 'text-right w-full' : ''}`}>{t(item.labelKey, item.fallback)}</span>
                                 </NavLink>
                             ))}
                         </div>
@@ -153,7 +153,7 @@ const Navbar = () => {
             )}
 
             {/* Floating Toggles */}
-            <div className="fixed top-4 right-4 z-50 flex items-center gap-3">
+            <div className={`fixed z-50 flex items-center gap-3 ${language === 'ar' ? 'left-4 right-auto' : 'right-4'} top-4 md:top-24`}>
                 <button
                     id="nav-theme-toggle"
                     onClick={toggleTheme}

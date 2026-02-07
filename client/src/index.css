@@ -43,6 +43,17 @@
   }
 }
 
+[dir='rtl'] .glass-panel,
+[dir='rtl'] .input-field,
+[dir='rtl'] .btn-primary,
+[dir='rtl'] .btn-danger {
+  text-align: right;
+}
+
+[dir='rtl'] .input-field::placeholder {
+  text-align: right;
+}
+
 .glass-panel {
   @apply backdrop-blur-xl rounded-2xl shadow-lg transition-all duration-300;
   background-color: var(--card);

@@ -86,56 +86,64 @@ const setDB = (db) => {
     }
 };
 
-try {
-    // 1. Try Environment Variables for Keys
-    if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-        console.log("Loading Credentials (Keys) from Environment Variables...");
-        keys = {
-            client_id: process.env.GOOGLE_CLIENT_ID,
-            client_secret: process.env.GOOGLE_CLIENT_SECRET
-        };
-    }
-    // Fallback to Local Files for Keys
-    else if (fs.existsSync(CREDENTIALS_PATH)) {
-        console.log("Loading Credentials (Keys) from Local Credentials File...");
-        const creds = JSON.parse(fs.readFileSync(CREDENTIALS_PATH));
-        keys = creds.web || creds.installed;
-    }
-
-    // 2. Try Environment Variables for Tokens
-    if (process.env.GOOGLE_TOKENS) {
-        try {
-            console.log("Found Google Tokens in Environment Variables.");
-            tokens = JSON.parse(process.env.GOOGLE_TOKENS);
-        } catch (e) {
-            console.error("Failed to parse GOOGLE_TOKENS env var:", e.message);
+const init = async () => {
+    try {
+        // 1. Try Environment Variables for Keys
+        if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+            console.log("Loading Credentials (Keys) from Environment Variables...");
+            keys = {
+                client_id: process.env.GOOGLE_CLIENT_ID,
+                client_secret: process.env.GOOGLE_CLIENT_SECRET
+            };
         }
-    }
-    // Fallback to Local Tokens File
-    else if (fs.existsSync(TOKENS_PATH)) {
-        try {
-            console.log("Found Google Tokens in Local Tokens File.");
-            tokens = JSON.parse(fs.readFileSync(TOKENS_PATH));
-        } catch (e) {
-            console.error("Failed to parse local tokens file:", e.message);
+        // Fallback to Local Files for Keys
+        else if (fs.existsSync(CREDENTIALS_PATH)) {
+            console.log("Loading Credentials (Keys) from Local Credentials File...");
+            const creds = JSON.parse(fs.readFileSync(CREDENTIALS_PATH));
+            keys = creds.web || creds.installed;
         }
-    }
 
-    if (keys) {
-        const success = initOAuth(tokens);
-        if (success) {
-            console.log("🚀 Google Drive Service fully started.");
+        // 2. Try Environment Variables for Tokens
+        if (process.env.GOOGLE_TOKENS) {
+            try {
+                console.log("Found Google Tokens in Environment Variables.");
+                tokens = JSON.parse(process.env.GOOGLE_TOKENS);
+            } catch (e) {
+                console.error("Failed to parse GOOGLE_TOKENS env var:", e.message);
+            }
+        }
+        // Fallback to Local Tokens File
+        else if (fs.existsSync(TOKENS_PATH)) {
+            try {
+                console.log("Found Google Tokens in Local Tokens File.");
+                tokens = JSON.parse(fs.readFileSync(TOKENS_PATH));
+            } catch (e) {
+                console.error("Failed to parse local tokens file:", e.message);
+            }
+        }
+
+        if (keys) {
+            const success = initOAuth(tokens);
+            if (success) {
+                console.log("🚀 Google Drive Service fully started.");
+                return true;
+            } else {
+                console.error("❌ Google Drive Service failed to start after key loading.");
+                return false;
+            }
         } else {
-            console.error("❌ Google Drive Service failed to start after key loading.");
+            console.error("❌ FAILED to load Google credentials keys (ID/Secret). Drive features will be disabled.");
+            console.log("ℹ️ Troubleshooting: Ensure GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are set in your environment variables.");
+            return false;
         }
-    } else {
-        console.error("❌ FAILED to load Google credentials keys (ID/Secret). Drive features will be disabled.");
-        console.log("ℹ️ Troubleshooting: Ensure GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are set in your environment variables.");
+    } catch (err) {
+        console.error("Failed to initialize Drive with OAuth2:", err.message);
+        return false;
     }
+};
 
-} catch (err) {
-    console.error("Failed to initialize Drive with OAuth2:", err.message);
-}
+// Initial trigger if not running as a module (Optional but keep it safe)
+// if (require.main === module) init();
 
 const uploadFile = async (fileObject, parentId) => {
     try {
@@ -703,6 +711,7 @@ const ensureLabsFolder = async () => {
 };
 
 module.exports = {
+    init,
     uploadFile,
     listFiles,
     listFolders,

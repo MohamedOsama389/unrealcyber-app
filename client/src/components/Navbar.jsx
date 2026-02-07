@@ -130,25 +130,7 @@ const Navbar = () => {
                                     <p className="text-xs text-secondary capitalize">{user.role}</p>
                                 </div>
                             </div>
-                            {/* LOGOUT & THEME */}
                             <div className="px-4 space-y-2">
-                                <button
-                                    id="nav-theme-toggle"
-                                    onClick={toggleTheme}
-                                    className="w-full flex items-center px-4 py-2 text-secondary hover:text-primary hover:bg-panel rounded-xl transition-all font-medium text-sm"
-                                >
-                                    {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-                                    <span className="ml-3">{theme === 'dark' ? t('theme.light') : t('theme.dark')}</span>
-                                </button>
-                                <button
-                                    onClick={toggleLanguage}
-                                    className="w-full flex items-center px-4 py-2 text-secondary hover:text-primary hover:bg-panel rounded-xl transition-all font-medium text-sm"
-                                >
-                                    <Languages size={18} />
-                                    <span className="ml-3">
-                                        {language === 'en' ? 'العربية' : 'English'}
-                                    </span>
-                                </button>
                                 <button
                                     onClick={handleLogout}
                                     className="w-full flex items-center px-4 py-2 text-red-500 hover:bg-red-500/10 rounded-xl transition-all font-bold text-sm"
@@ -169,6 +151,25 @@ const Navbar = () => {
                     onClick={() => setIsOpen(false)}
                 />
             )}
+
+            {/* Floating Toggles */}
+            <div className="fixed top-4 right-4 z-50 flex items-center gap-3">
+                <button
+                    id="nav-theme-toggle"
+                    onClick={toggleTheme}
+                    className="w-12 h-12 rounded-full bg-panel border border-border shadow-lg flex items-center justify-center text-secondary hover:text-primary hover:bg-white/5 transition-all"
+                    title={theme === 'dark' ? t('theme.light') : t('theme.dark')}
+                >
+                    {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+                </button>
+                <button
+                    onClick={toggleLanguage}
+                    className="w-12 h-12 rounded-full bg-panel border border-border shadow-lg flex items-center justify-center text-secondary hover:text-primary hover:bg-white/5 transition-all"
+                    title={language === 'en' ? 'العربية' : 'English'}
+                >
+                    <Languages size={20} />
+                </button>
+            </div>
         </>
     );
 };

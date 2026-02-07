@@ -11,5 +11,10 @@ service-account.json
 client_secret*.json
 final_tokens.json
 secrets_output.txt
+secrets_utf8.txt
+validation_output.txt
+auth_url*.txt
+clean_url.txt
 tokens.json
+final_tokens*.json
 .DS_Store

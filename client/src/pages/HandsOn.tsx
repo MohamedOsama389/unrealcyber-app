@@ -157,24 +157,24 @@ const HandsOn = () => {
                                 <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/5">
                                     <div className="flex items-center space-x-3">
                                         <div className="p-2 bg-cyan-500/20 rounded-xl text-cyan-400">
-                                            <Zap size={20} />
+                                            <FlaskConical size={20} />
                                         </div>
                                         <div>
-                                            <h3 className="font-bold text-primary">Packet Tracer Web Engine</h3>
-                                            <p className="text-[10px] text-secondary uppercase tracking-widest mt-0.5">High-Performance Network Virtualization</p>
+                                            <h3 className="font-bold text-primary">Digital Logic & Networking Lab</h3>
+                                            <p className="text-[10px] text-secondary uppercase tracking-widest mt-0.5">Interactive Logic Sandbox • High Precision</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center space-x-4">
                                         <div className="flex items-center space-x-2 text-[10px] font-bold text-green-400 bg-green-400/10 px-3 py-1 rounded-full border border-green-400/20">
                                             <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                                            <span>LIVE ENGINE</span>
+                                            <span>LIVE SANDBOX</span>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="aspect-video w-full bg-black relative group">
                                     <iframe
-                                        src="https://pt-web.netlify.app/"
-                                        title="Network Simulator"
+                                        src="https://phet.colorado.edu/sims/html/circuit-construction-kit-dc-virtual-lab/latest/circuit-construction-kit-dc-virtual-lab_all.html"
+                                        title="Network & Logic Simulator"
                                         className="w-full h-full border-none"
                                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                         allowFullScreen
@@ -187,16 +187,16 @@ const HandsOn = () => {
                                 </div>
                                 <div className="p-8 grid grid-cols-1 md:grid-cols-3 gap-8 bg-slate-800/20">
                                     <div className="space-y-2">
-                                        <h4 className="text-sm font-bold text-cyan-400">Topology Builder</h4>
-                                        <p className="text-xs text-secondary leading-relaxed">Design and test networking topologies with routers and switches in a virtual sandbox.</p>
+                                        <h4 className="text-sm font-bold text-cyan-400">Logic Fundamentals</h4>
+                                        <p className="text-xs text-secondary leading-relaxed">Master the basic building blocks of connectivity through interactive logic and circuit simulations.</p>
                                     </div>
                                     <div className="space-y-2">
-                                        <h4 className="text-sm font-bold text-cyan-400">Interactive CLI</h4>
-                                        <p className="text-xs text-secondary leading-relaxed">Practice real commands and configuration directly within the simulated devices' terminal.</p>
+                                        <h4 className="text-sm font-bold text-cyan-400">Signal Analysis</h4>
+                                        <p className="text-xs text-secondary leading-relaxed">Visualize signal flow and test theories in a precise virtual sandbox environment.</p>
                                     </div>
                                     <div className="space-y-2">
-                                        <h4 className="text-sm font-bold text-cyan-400">Packet Analysis</h4>
-                                        <p className="text-xs text-secondary leading-relaxed">Visualize data flow and inspect protocol headers throughout your network architecture.</p>
+                                        <h4 className="text-sm font-bold text-cyan-400">Proximity Labs</h4>
+                                        <p className="text-xs text-secondary leading-relaxed">Practice real-world concepts directly in the browser with high-fidelity interactive models.</p>
                                     </div>
                                 </div>
                             </div>

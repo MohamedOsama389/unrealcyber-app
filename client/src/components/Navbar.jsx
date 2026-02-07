@@ -3,6 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import {
     LayoutDashboard,
     Video,
@@ -19,31 +20,33 @@ import {
     Moon,
     Gamepad2,
     BookOpen,
-    Network
+    Network,
+    Languages
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Navbar = () => {
     const { user, logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
+    const { language, toggleLanguage, t } = useLanguage();
     const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
 
     if (!user) return null;
 
     const navItems = [
-        { path: '/', label: 'Dashboard', icon: LayoutDashboard },
-        { path: '/meetings', label: 'Meetings', icon: Monitor },
-        { path: '/tasks', label: 'Mission Center', icon: CheckSquare },
-        { path: '/videos', label: 'Recorded Sessions', icon: Video },
-        { path: '/files', label: 'Academy Files', icon: FileText },
-        { path: '/vm-rental', label: 'VM Rental', icon: Monitor },
-        { path: '/hands-on', label: 'Hands-On Space', icon: Network },
-        { path: '/chat', label: 'Comms Channel', icon: MessageSquare },
+        { path: '/', labelKey: 'nav.dashboard', fallback: 'Dashboard', icon: LayoutDashboard },
+        { path: '/meetings', labelKey: 'nav.meetings', fallback: 'Meetings', icon: Monitor },
+        { path: '/tasks', labelKey: 'nav.tasks', fallback: 'Mission Center', icon: CheckSquare },
+        { path: '/videos', labelKey: 'nav.videos', fallback: 'Recorded Sessions', icon: Video },
+        { path: '/files', labelKey: 'nav.files', fallback: 'Academy Files', icon: FileText },
+        { path: '/vm-rental', labelKey: 'nav.vm', fallback: 'VM Rental', icon: Monitor },
+        { path: '/hands-on', labelKey: 'nav.handsOn', fallback: 'Hands-On Space', icon: Network },
+        { path: '/chat', labelKey: 'nav.chat', fallback: 'Comms Channel', icon: MessageSquare },
     ];
 
     if (user.role === 'admin') {
-        navItems.push({ path: '/admin', label: 'Admin Grid', icon: Shield });
+        navItems.push({ path: '/admin', labelKey: 'nav.admin', fallback: 'Admin Grid', icon: Shield });
     }
 
     const handleLogout = () => {
@@ -101,7 +104,7 @@ const Navbar = () => {
                                     `}
                                 >
                                     <item.icon size={20} />
-                                    <span className="font-medium text-sm">{item.label}</span>
+                                    <span className="font-medium text-sm">{t(item.labelKey, item.fallback)}</span>
                                 </NavLink>
                             ))}
                         </div>
@@ -135,14 +138,23 @@ const Navbar = () => {
                                     className="w-full flex items-center px-4 py-2 text-secondary hover:text-primary hover:bg-panel rounded-xl transition-all font-medium text-sm"
                                 >
                                     {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-                                    <span className="ml-3">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+                                    <span className="ml-3">{theme === 'dark' ? t('theme.light') : t('theme.dark')}</span>
+                                </button>
+                                <button
+                                    onClick={toggleLanguage}
+                                    className="w-full flex items-center px-4 py-2 text-secondary hover:text-primary hover:bg-panel rounded-xl transition-all font-medium text-sm"
+                                >
+                                    <Languages size={18} />
+                                    <span className="ml-3">
+                                        {language === 'en' ? 'العربية' : 'English'}
+                                    </span>
                                 </button>
                                 <button
                                     onClick={handleLogout}
                                     className="w-full flex items-center px-4 py-2 text-red-500 hover:bg-red-500/10 rounded-xl transition-all font-bold text-sm"
                                 >
                                     <LogOut size={18} />
-                                    <span className="ml-3">Sign Out</span>
+                                    <span className="ml-3">{t('action.signout', 'Sign Out')}</span>
                                 </button>
                             </div>
                         </div>

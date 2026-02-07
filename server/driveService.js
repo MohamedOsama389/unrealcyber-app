@@ -12,6 +12,7 @@ const FILES_FOLDER_ID = '14nYLGu1H9eqQNCHxk2JXot2G42WY2xN_';
 const DB_FOLDER_ID = '1AGAN36ErTOMF8-SwG2OxJXBQ9VySsVrc';
 const AVATAR_FOLDER_ID = '1_7gJgXHupwKb3lN-nJ3uEzMHzNGni7DO';
 const PARTY_FOLDER_ID = '1j6Ne5b-NC6Tl5sw-9s0K09N8AoT5jhra';
+const LABS_FOLDER_ID = '1_Xq-F7u0_X27mS8-j-Y6dG-y7uO8_X-Z'; // Placeholder, will create if missing
 
 let drive;
 let oauth2Client;
@@ -632,6 +633,14 @@ const restoreSQLDump = async () => {
     }
 };
 
+const uploadLabFile = async (fileObject) => {
+    return uploadFile(fileObject, LABS_FOLDER_ID);
+};
+
+const getLabsFromDrive = async () => {
+    return listFiles(LABS_FOLDER_ID, 'file'); // Using 'file' as a generic type here
+};
+
 module.exports = {
     uploadFile,
     listFiles,
@@ -649,6 +658,8 @@ module.exports = {
     restoreSQLDump,
     uploadAvatar,
     uploadPartyVideo,
+    uploadLabFile,
+    getLabsFromDrive,
     getFileStream, // Export new function
     TASKS_FOLDER_ID,
     VIDEOS_FOLDER_ID,

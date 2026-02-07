@@ -132,6 +132,21 @@ db.exec(`
     FOREIGN KEY(user_id) REFERENCES users(id),
     UNIQUE(todo_id, user_id)
   );
+
+  CREATE TABLE IF NOT EXISTS site_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT
+  );
+
+  CREATE TABLE IF NOT EXISTS labs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    description TEXT,
+    thumbnail_link TEXT,
+    drive_link TEXT,
+    file_id TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 // Seed Admin using PREPARED STATEMENTS to avoid syntax errors with special chars

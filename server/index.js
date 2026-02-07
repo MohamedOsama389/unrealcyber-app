@@ -1116,6 +1116,57 @@ io.on('connection', (socket) => {
     });
 });
 
+// --- Labs API ---
+app.get('/api/labs', authenticateToken, (req, res) => {
+    try {
+        const labs = db.prepare('SELECT * FROM labs ORDER BY created_at DESC').all();
+        res.json(labs);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/labs', authenticateToken, upload.fields([
+    { name: 'appFile', maxCount: 1 },
+    { name: 'thumbnail', maxCount: 1 }
+]), async (req, res) => {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: "Unauthorized" });
+
+    try {
+        const { title, description } = req.body;
+        const appFile = req.files['appFile'] ? req.files['appFile'][0] : null;
+        const thumbnail = req.files['thumbnail'] ? req.files['thumbnail'][0] : null;
+
+        if (!appFile || !title) {
+            return res.status(400).json({ error: "Title and App File are required" });
+        }
+
+        let file_id = null;
+        let drive_link = null;
+        let thumbnail_link = null;
+
+        // 1. Upload App File to Drive
+        const driveRes = await driveService.uploadLabFile(appFile);
+        file_id = driveRes.id;
+        drive_link = driveRes.webViewLink;
+
+        // 2. Upload Thumbnail (Generic upload for now)
+        if (thumbnail) {
+            const thumbRes = await driveService.uploadFile(thumbnail, driveService.FILES_FOLDER_ID);
+            thumbnail_link = thumbRes.webViewLink;
+        }
+
+        // 3. Save to DB
+        const stmt = db.prepare('INSERT INTO labs (title, description, thumbnail_link, drive_link, file_id) VALUES (?, ?, ?, ?, ?)');
+        stmt.run(title, description, thumbnail_link, drive_link, file_id);
+
+        res.json({ success: true, message: "Lab uploaded successfully!" });
+    } catch (err) {
+        console.error("[Labs] Upload failed:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // --- HEALTH CHECK (Railway/Rentals) ---
 app.get('/health', (req, res) => {
     res.status(200).send('OK');

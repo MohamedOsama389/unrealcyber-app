@@ -17,4 +17,5 @@ auth_url*.txt
 clean_url.txt
 tokens.json
 final_tokens*.json
+last_tokens.json
 .DS_Store

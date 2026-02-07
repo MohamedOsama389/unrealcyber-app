@@ -49,8 +49,9 @@ const LabCard = ({ lab }: { lab: Lab }) => {
     };
 
     const thumbnailId = getDriveId(lab.thumbnail_link);
+    const apiBase = import.meta.env.VITE_API_URL || window.location.origin;
     const thumbnailUrl = thumbnailId
-        ? `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/labs/thumbnail/${thumbnailId}`
+        ? `${apiBase}/api/labs/thumbnail/${thumbnailId}`
         : lab.thumbnail_link;
 
     return (

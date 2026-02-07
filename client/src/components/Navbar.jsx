@@ -18,7 +18,8 @@ import {
     Sun,
     Moon,
     Gamepad2,
-    BookOpen
+    BookOpen,
+    Network
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 

@@ -18,17 +18,34 @@ const LabCard = ({ lab }: { lab: Lab }) => {
 
     const getDriveId = (url: string) => {
         if (!url) return null;
-        const patterns = [
-            /\/d\/(.*?)\//,
-            /id=(.*?)(&|$)/,
-            /id=(.*)/
-        ];
 
-        for (const pattern of patterns) {
-            const match = url.match(pattern);
-            if (match && match[1]) return match[1];
+        // If someone already stored a bare Drive ID, just use it.
+        if (!url.startsWith('http') && /^[\w-]{10,}$/.test(url)) return url;
+
+        try {
+            const parsed = new URL(url);
+
+            // Common query param forms: ?id=, ?file_id=, ?fid=
+            const paramId =
+                parsed.searchParams.get('id') ||
+                parsed.searchParams.get('file_id') ||
+                parsed.searchParams.get('fid');
+            if (paramId) return paramId;
+
+            // Path forms: /file/d/<id>/view, /u/0/uc?id=<id>, /open?id=<id>
+            const path = parsed.pathname;
+            const pathMatch =
+                path.match(/\/file\/d\/([^/]+)/) ||
+                path.match(/\/d\/([^/]+)/) ||
+                path.match(/\/folders\/([^/]+)/);
+            if (pathMatch?.[1]) return pathMatch[1];
+        } catch {
+            // Non-URL strings fall through to regex scan below.
         }
-        return null;
+
+        // Last‑chance: grab any long drive-like token.
+        const fallback = url.match(/[-\w]{15,}/);
+        return fallback ? fallback[0] : null;
     };
 
     const thumbnailId = getDriveId(lab.thumbnail_link);

@@ -60,21 +60,21 @@ const Meetings = () => {
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className={`flex items-center justify-center p-12 rounded-3xl mb-8 border transition-all duration-500 ${meeting.is_active
+                className={`flex items-center justify-center p-12 rounded-3xl mb-8 border transition-all duration-500 ${Boolean(meeting.is_active)
                     ? 'bg-green-500/10 border-green-500/30 shadow-[0_0_50px_rgba(34,197,94,0.2)]'
                     : 'bg-red-500/10 border-red-500/30'
                     }`}
             >
                 <div className="text-center">
-                    <div className={`mx-auto w-24 h-24 rounded-full flex items-center justify-center mb-4 ${meeting.is_active ? 'bg-green-500 text-white animate-pulse' : 'bg-red-500 text-white'
+                    <div className={`mx-auto w-24 h-24 rounded-full flex items-center justify-center mb-4 ${Boolean(meeting.is_active) ? 'bg-green-500 text-white animate-pulse' : 'bg-red-500 text-white'
                         }`}>
-                        {meeting.is_active ? <Wifi size={48} /> : <WifiOff size={48} />}
+                        {Boolean(meeting.is_active) ? <Wifi size={48} /> : <WifiOff size={48} />}
                     </div>
                     <h2 className="text-2xl font-bold text-primary mb-2">
-                        {meeting.is_active ? 'MEETING IN PROGRESS' : 'NO ACTIVE SESSION'}
+                        {Boolean(meeting.is_active) ? 'MEETING IN PROGRESS' : 'NO ACTIVE SESSION'}
                     </h2>
 
-                    {meeting.is_active && (
+                    {Boolean(meeting.is_active) && (
                         <a
                             href={meeting.link}
                             target="_blank"

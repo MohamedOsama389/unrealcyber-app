@@ -415,7 +415,7 @@ const Dashboard = () => {
                                                         : "border-slate-700 hover:border-cyan-500"
                                             )}
                                         >
-                                            {todo.is_completed && <CheckCircle size={14} />}
+                                            {todo.is_completed ? <CheckCircle size={14} /> : null}
                                         </button>
                                         <div className="overflow-hidden">
                                             <p className={clsx(

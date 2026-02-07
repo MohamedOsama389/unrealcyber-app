@@ -1194,9 +1194,13 @@ app.post('/api/labs', authenticateToken, upload.fields([
         file_id = driveRes.id;
         drive_link = driveRes.webViewLink;
 
-        // 2. Upload Thumbnail (Generic upload for now)
+        // 2. Upload Thumbnail into Labs folder (public reader)
         if (thumbnail) {
-            const thumbRes = await driveService.uploadFile(thumbnail, driveService.FILES_FOLDER_ID);
+            const thumbRes = await driveService.uploadLabThumbnail(
+                thumbnail.buffer,
+                `thumb_${Date.now()}_${thumbnail.originalname}`,
+                thumbnail.mimetype
+            );
             thumbnail_link = thumbRes.webViewLink;
         }
         // If no thumbnail uploaded, fall back to the lab file's Drive link.

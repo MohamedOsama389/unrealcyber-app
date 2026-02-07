@@ -646,6 +646,47 @@ const uploadLabFile = async (fileObject) => {
 };
 
 /**
+ * Upload a lab thumbnail into the Labs folder and make it public.
+ * Returns id + webViewLink so the client can derive a fileId.
+ */
+const uploadLabThumbnail = async (fileBuffer, fileName, mimeType) => {
+    try {
+        if (!drive) throw new Error("Drive not initialized");
+        if (!LABS_FOLDER_ID) await ensureLabsFolder();
+
+        const bufferStream = new stream.PassThrough();
+        bufferStream.end(fileBuffer);
+
+        const res = await drive.files.create({
+            resource: {
+                name: fileName,
+                parents: [LABS_FOLDER_ID],
+            },
+            media: {
+                mimeType: mimeType,
+                body: bufferStream,
+            },
+            fields: 'id, webViewLink'
+        });
+
+        // Make thumbnail publicly readable so the proxy can fetch it without auth if needed
+        try {
+            await drive.permissions.create({
+                fileId: res.data.id,
+                requestBody: { role: 'reader', type: 'anyone' },
+            });
+        } catch (permErr) {
+            console.warn("[DriveService] Could not set public permission for lab thumbnail:", permErr.message);
+        }
+
+        return res.data;
+    } catch (err) {
+        console.error("[DriveService] uploadLabThumbnail failed:", err.message);
+        throw err;
+    }
+};
+
+/**
  * Try to fetch a Google-generated thumbnail for any file.
  * - If the file is an image, stream the original file.
  * - Otherwise, if Drive provides a thumbnailLink, stream that image.
@@ -780,6 +821,7 @@ module.exports = {
     uploadAvatar,
     uploadPartyVideo,
     uploadLabFile,
+    uploadLabThumbnail,
     getThumbnailStream,
     getLabsFromDrive,
     ensureLabsFolder, // Export new function

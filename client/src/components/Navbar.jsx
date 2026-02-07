@@ -37,7 +37,7 @@ const Navbar = () => {
         { path: '/videos', label: 'Recorded Sessions', icon: Video },
         { path: '/files', label: 'Academy Files', icon: FileText },
         { path: '/vm-rental', label: 'VM Rental', icon: Monitor },
-        { path: '/games', label: 'Education Games', icon: Gamepad2 },
+        { path: '/hands-on', label: 'Hands-On Space', icon: Network },
         { path: '/chat', label: 'Comms Channel', icon: MessageSquare },
     ];
 

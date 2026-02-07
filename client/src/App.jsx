@@ -18,6 +18,7 @@ import Chat from './pages/Chat';
 import Games from './pages/Games';
 import GameViewPage from './pages/GameViewPage';
 import AtomGame from './pages/AtomGame';
+import HandsOn from './pages/HandsOn';
 import AdminPanel from './pages/AdminPanel';
 import clsx from 'clsx';
 
@@ -48,6 +49,7 @@ function AppContent() {
             <Route path="/games" element={<Games />} />
             <Route path="/games/:gameId" element={<GameViewPage />} />
             <Route path="/games/atom-builder" element={<AtomGame />} />
+            <Route path="/hands-on" element={<HandsOn />} />
           </Route>
 
           <Route element={<ProtectedRoute allowedRoles={['admin']} />}>

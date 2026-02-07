@@ -121,9 +121,15 @@ try {
     }
 
     if (keys) {
-        initOAuth(tokens);
+        const success = initOAuth(tokens);
+        if (success) {
+            console.log("🚀 Google Drive Service fully started.");
+        } else {
+            console.error("❌ Google Drive Service failed to start after key loading.");
+        }
     } else {
-        console.error("❌ FAILED to load Google credentials keys. Drive features will be disabled.");
+        console.error("❌ FAILED to load Google credentials keys (ID/Secret). Drive features will be disabled.");
+        console.log("ℹ️ Troubleshooting: Ensure GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are set in your environment variables.");
     }
 
 } catch (err) {

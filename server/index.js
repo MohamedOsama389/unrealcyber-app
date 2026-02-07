@@ -1377,6 +1377,24 @@ const startServer = async () => {
         // Initialize Drive Service with DB for token persistence
         driveService.setDB(db);
 
+        // Diagnostic Endpoint
+        app.get('/api/admin/system-status', authenticateToken, (req, res) => {
+            if (req.user.role !== 'admin') return res.status(403).json({ error: "Unauthorized" });
+
+            const status = {
+                google_drive: driveService.isInitialized() ? "INITIALIZED" : "FAILED",
+                google_env_vars: {
+                    client_id: !!process.env.GOOGLE_CLIENT_ID,
+                    client_secret: !!process.env.GOOGLE_CLIENT_SECRET,
+                    redirect_uri: !!process.env.GOOGLE_REDIRECT_URI,
+                    tokens: !!process.env.GOOGLE_TOKENS
+                },
+                database: "CONNECTED",
+                server_time: new Date().toISOString()
+            };
+            res.json(status);
+        });
+
         // Run migrations
         try {
             console.log("Running database migrations...");

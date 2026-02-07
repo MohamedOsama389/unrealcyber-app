@@ -1386,8 +1386,11 @@ const PORT = Number(process.env.PORT) || 8080;
 const startServer = async () => {
     try {
         // Local DB Init (Directory creation only)
-        backupService.init();
+        await driveService.init();
+        console.log('🚀 Google Drive Service fully started.');
 
+        // Initialize Labs folder
+        await driveService.ensureLabsFolder();
         const dbPath = path.join(__dirname, '../database.db');
         if (!fs.existsSync(dbPath)) {
             console.log("[System] Local database missing. Attempting SQL dump restore...");

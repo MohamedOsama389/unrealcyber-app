@@ -149,14 +149,41 @@ db.exec(`
   );
 `);
 
+// MIGRATIONS: Add missing columns if they don't exist
+const ensureColumn = (tableName, columnName, definition) => {
+  try {
+    db.exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`);
+    console.log(`[Migration] Added column ${columnName} to ${tableName}.`);
+  } catch (e) {
+    if (e.message.includes('duplicate column name')) {
+      // Column already exists, ignore
+    } else {
+      console.error(`Migration error on ${tableName}.${columnName}:`, e.message);
+    }
+  }
+};
+
+ensureColumn('users', 'avatar_id', 'TEXT');
+ensureColumn('users', 'avatar_version', 'INTEGER DEFAULT 0');
+ensureColumn('users', 'streak_count', 'INTEGER DEFAULT 0');
+ensureColumn('users', 'last_activity_date', 'TEXT');
+
+ensureColumn('tasks', 'notes', 'TEXT');
+ensureColumn('videos', 'folder_id', 'TEXT');
+ensureColumn('files', 'folder_id', 'TEXT');
+
 // Seed Admin using PREPARED STATEMENTS to avoid syntax errors with special chars
 const seedAdmin = () => {
-  const adminUser = db.prepare('SELECT * FROM users WHERE username = ?').get('Lloyed');
-  if (!adminUser) {
-    console.log("Seeding Admin User...");
-    const hash = bcrypt.hashSync('root@14112009', 10);
-    db.prepare('INSERT INTO users (username, password, role) VALUES (?, ?, ?)').run('Lloyed', hash, 'admin');
-    console.log("Admin seeded.");
+  try {
+    const adminUser = db.prepare('SELECT id FROM users WHERE username = ?').get('Lloyed');
+    if (!adminUser) {
+      console.log("Seeding Admin User...");
+      const hash = bcrypt.hashSync('root@14112009', 10);
+      db.prepare('INSERT INTO users (username, password, role) VALUES (?, ?, ?)').run('Lloyed', hash, 'admin');
+      console.log("Admin seeded.");
+    }
+  } catch (err) {
+    console.error("Seeding error (Admin might already exist):", err.message);
   }
 };
 

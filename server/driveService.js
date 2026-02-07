@@ -12,7 +12,7 @@ const FILES_FOLDER_ID = '14nYLGu1H9eqQNCHxk2JXot2G42WY2xN_';
 const DB_FOLDER_ID = '1AGAN36ErTOMF8-SwG2OxJXBQ9VySsVrc';
 const AVATAR_FOLDER_ID = '1_7gJgXHupwKb3lN-nJ3uEzMHzNGni7DO';
 const PARTY_FOLDER_ID = '1j6Ne5b-NC6Tl5sw-9s0K09N8AoT5jhra';
-const LABS_FOLDER_ID = '1_Xq-F7u0_X27mS8-j-Y6dG-y7uO8_X-Z'; // Placeholder, will create if missing
+let LABS_FOLDER_ID = null; // Dynamically resolved
 
 let drive;
 let oauth2Client;
@@ -638,7 +638,68 @@ const uploadLabFile = async (fileObject) => {
 };
 
 const getLabsFromDrive = async () => {
+    if (!LABS_FOLDER_ID) await ensureLabsFolder();
     return listFiles(LABS_FOLDER_ID, 'file'); // Using 'file' as a generic type here
+};
+
+/**
+ * Ensures the Labs folder exists in Google Drive.
+ * 1. Checks site_settings DB for cached ID.
+ * 2. If not found, searches Drive for "Hands-On Labs".
+ * 3. If still not found, creates it under the same parent as FILES_FOLDER_ID.
+ */
+const ensureLabsFolder = async () => {
+    try {
+        if (!drive) return null;
+
+        // 1. Check Site Settings
+        if (dbInstance) {
+            const row = dbInstance.prepare('SELECT value FROM site_settings WHERE key = ?').get('labs_folder_id');
+            if (row && row.value) {
+                console.log(`[DriveService] Using cached Labs folder ID from database: ${row.value}`);
+                LABS_FOLDER_ID = row.value;
+                return LABS_FOLDER_ID;
+            }
+        }
+
+        console.log("[DriveService] Resolving Labs folder...");
+
+        // 2. Search Drive
+        const query = "name = 'Hands-On Labs' and mimeType = 'application/vnd.google-apps.folder' and trashed = false";
+        const res = await drive.files.list({ q: query, fields: 'files(id, name)' });
+
+        if (res.data.files && res.data.files.length > 0) {
+            LABS_FOLDER_ID = res.data.files[0].id;
+            console.log(`[DriveService] Found existing Labs folder in Drive: ${LABS_FOLDER_ID}`);
+        } else {
+            // 3. Create Folder
+            console.log("[DriveService] Labs folder not found. Creating new folder...");
+
+            // Try to find parent of FILES_FOLDER_ID
+            let parentId = 'root';
+            try {
+                const filesFolder = await drive.files.get({ fileId: FILES_FOLDER_ID, fields: 'parents' });
+                if (filesFolder.data.parents && filesFolder.data.parents.length > 0) {
+                    parentId = filesFolder.data.parents[0];
+                }
+            } catch (pErr) {
+                console.warn("[DriveService] Could not determine parent for Labs, using root.");
+            }
+
+            LABS_FOLDER_ID = await createFolder("Hands-On Labs", parentId);
+            console.log(`[DriveService] Created new Labs folder: ${LABS_FOLDER_ID}`);
+        }
+
+        // 4. Save to Site Settings
+        if (dbInstance && LABS_FOLDER_ID) {
+            dbInstance.prepare('INSERT OR REPLACE INTO site_settings (key, value) VALUES (?, ?)').run('labs_folder_id', LABS_FOLDER_ID);
+        }
+
+        return LABS_FOLDER_ID;
+    } catch (err) {
+        console.error("[DriveService] Failed to ensure Labs folder:", err.message);
+        return null;
+    }
 };
 
 module.exports = {
@@ -660,6 +721,7 @@ module.exports = {
     uploadPartyVideo,
     uploadLabFile,
     getLabsFromDrive,
+    ensureLabsFolder, // Export new function
     getFileStream, // Export new function
     TASKS_FOLDER_ID,
     VIDEOS_FOLDER_ID,

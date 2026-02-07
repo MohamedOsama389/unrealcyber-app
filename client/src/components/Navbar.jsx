@@ -153,7 +153,7 @@ const Navbar = () => {
             )}
 
             {/* Floating Toggles */}
-            <div className={`fixed z-50 flex items-center gap-3 ${language === 'ar' ? 'left-4 right-auto' : 'right-4'} top-4 md:top-24`}>
+            <div className={`fixed z-50 flex items-center gap-3 ${language === 'ar' ? 'left-4 right-auto' : 'right-4'} bottom-6`}>
                 <button
                     id="nav-theme-toggle"
                     onClick={toggleTheme}

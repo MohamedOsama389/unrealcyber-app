@@ -1141,6 +1141,32 @@ app.get('/api/labs/download/:fileId', authenticateToken, async (req, res) => {
     }
 });
 
+// Thumbnail Proxy (Inline View)
+app.get('/api/labs/thumbnail/:fileId', async (req, res) => {
+    try {
+        const { fileId } = req.params;
+        const range = req.headers.range;
+        const response = await driveService.getFileStream(fileId, range);
+
+        // Forward headers
+        const headers = response.headers;
+        const contentLength = headers['content-length'];
+        const contentType = headers['content-type'];
+
+        if (contentLength) res.setHeader('Content-Length', contentLength);
+        if (contentType) res.setHeader('Content-Type', contentType);
+
+        // Ensure inline display for images
+        res.setHeader('Content-Disposition', 'inline');
+
+        // Pipe the stream
+        response.data.pipe(res);
+    } catch (err) {
+        console.error("Thumbnail proxy failed:", err.message);
+        res.status(404).send("Thumbnail not found");
+    }
+});
+
 app.get('/api/labs', authenticateToken, (req, res) => {
     try {
         const labs = db.prepare('SELECT * FROM labs ORDER BY created_at DESC').all();

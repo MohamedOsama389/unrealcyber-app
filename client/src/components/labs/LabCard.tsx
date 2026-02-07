@@ -16,6 +16,26 @@ const LabCard = ({ lab }: { lab: Lab }) => {
         window.open(lab.drive_link, '_blank');
     };
 
+    const getDriveId = (url: string) => {
+        if (!url) return null;
+        const patterns = [
+            /\/d\/(.*?)\//,
+            /id=(.*?)(&|$)/,
+            /id=(.*)/
+        ];
+
+        for (const pattern of patterns) {
+            const match = url.match(pattern);
+            if (match && match[1]) return match[1];
+        }
+        return null;
+    };
+
+    const thumbnailId = getDriveId(lab.thumbnail_link);
+    const thumbnailUrl = thumbnailId
+        ? `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/api/labs/thumbnail/${thumbnailId}`
+        : lab.thumbnail_link;
+
     return (
         <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -26,7 +46,7 @@ const LabCard = ({ lab }: { lab: Lab }) => {
             <div className="aspect-video w-full bg-slate-900 overflow-hidden relative">
                 {lab.thumbnail_link ? (
                     <img
-                        src={`https://drive.google.com/uc?export=view&id=${lab.thumbnail_link.match(/\/d\/(.*?)\//)?.[1] || ''}`}
+                        src={thumbnailUrl}
                         alt={lab.title}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                         onError={(e) => {

@@ -69,7 +69,7 @@ const LabCard = ({ lab, isAdmin, onEdit, onDelete }: LabCardProps) => {
     const videoUrl = lab.video_link || lab.drive_link;
     const extras = lab.extra_files || [];
     const description = lab.description || "Experimental lab environment. Download and launch to practice advanced networking scenarios locally.";
-    const isLong = description.length > 140;
+    const isLong = description.length > 90 || description.split(' ').length > 16;
 
     return (
         <motion.div
@@ -137,7 +137,7 @@ const LabCard = ({ lab, isAdmin, onEdit, onDelete }: LabCardProps) => {
                 {isLong && (
                     <button
                         onClick={() => setExpanded((v) => !v)}
-                        className="text-[11px] font-semibold text-cyan-400 hover:text-cyan-300 mb-4"
+                        className="text-[11px] font-semibold text-cyan-400 hover:text-cyan-300 mb-4 inline-flex items-center"
                     >
                         {expanded ? 'Show less' : 'Show more'}
                     </button>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Download, Box, AppWindow, ShieldCheck, Pencil, Trash2, Video, Paperclip } from 'lucide-react';
 
@@ -25,6 +25,7 @@ interface LabCardProps {
 }
 
 const LabCard = ({ lab, isAdmin, onEdit, onDelete }: LabCardProps) => {
+    const [expanded, setExpanded] = useState(false);
 
     const getDriveId = (url: string) => {
         if (!url) return null;
@@ -67,6 +68,8 @@ const LabCard = ({ lab, isAdmin, onEdit, onDelete }: LabCardProps) => {
     const downloadUrl = lab.drive_link || (lab.file_id ? `${apiBase}/api/labs/download/${lab.file_id}` : '#');
     const videoUrl = lab.video_link || lab.drive_link;
     const extras = lab.extra_files || [];
+    const description = lab.description || "Experimental lab environment. Download and launch to practice advanced networking scenarios locally.";
+    const isLong = description.length > 140;
 
     return (
         <motion.div
@@ -128,9 +131,17 @@ const LabCard = ({ lab, isAdmin, onEdit, onDelete }: LabCardProps) => {
                     {lab.title}
                 </h3>
 
-                <p className="text-slate-400 text-xs leading-relaxed mb-6 line-clamp-2">
-                    {lab.description || "Experimental lab environment. Download and launch to practice advanced networking scenarios locally."}
+                <p className={`text-slate-400 text-xs leading-relaxed ${expanded ? 'mb-2' : 'mb-2 line-clamp-2'}`}>
+                    {description}
                 </p>
+                {isLong && (
+                    <button
+                        onClick={() => setExpanded((v) => !v)}
+                        className="text-[11px] font-semibold text-cyan-400 hover:text-cyan-300 mb-4"
+                    >
+                        {expanded ? 'Show less' : 'Show more'}
+                    </button>
+                )}
 
                 <div className="flex items-center space-x-3">
                     <button

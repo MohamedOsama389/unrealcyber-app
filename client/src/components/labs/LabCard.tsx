@@ -63,7 +63,9 @@ const LabCard = ({ lab, isAdmin, onEdit, onDelete }: LabCardProps) => {
     const thumbnailUrl = thumbnailId
         ? `${apiBase}/api/labs/thumbnail/${thumbnailId}`
         : lab.thumbnail_link;
-    const downloadUrl = lab.file_id ? `${apiBase}/api/labs/download/${lab.file_id}` : lab.drive_link;
+    const token = localStorage.getItem('token');
+    const authSuffix = token ? `?token=${encodeURIComponent(token)}` : '';
+    const downloadUrl = lab.file_id ? `${apiBase}/api/labs/download/${lab.file_id}${authSuffix}` : lab.drive_link;
     const videoUrl = lab.video_link || lab.drive_link;
     const extras = lab.extra_files || [];
 
@@ -155,7 +157,7 @@ const LabCard = ({ lab, isAdmin, onEdit, onDelete }: LabCardProps) => {
                         </div>
                         <div className="flex flex-wrap gap-2">
                             {extras.map((file) => {
-                                const url = `${apiBase}/api/labs/download/${file.id}`;
+                                const url = `${apiBase}/api/labs/download/${file.id}${authSuffix}`;
                                 return (
                                     <button
                                         key={file.id}

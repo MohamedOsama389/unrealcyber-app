@@ -1119,16 +1119,6 @@ io.on('connection', (socket) => {
 // --- Labs API ---
 app.get('/api/labs/download/:fileId', async (req, res) => {
     try {
-        // Support token in query for download links opened in new tab
-        const token = req.headers['authorization']?.split(' ')[1] || req.query.token;
-        if (!token) return res.status(401).send("Unauthorized");
-        let user;
-        try {
-            user = jwt.verify(token, SECRET_KEY);
-        } catch {
-            return res.status(401).send("Unauthorized");
-        }
-
         const { fileId } = req.params;
         const range = req.headers.range;
         const response = await driveService.getFileStream(fileId, range);

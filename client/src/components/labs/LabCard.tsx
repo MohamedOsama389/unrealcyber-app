@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Download, Box, AppWindow, ExternalLink, ShieldCheck } from 'lucide-react';
+import { Download, Box, AppWindow, ShieldCheck, Pencil, Trash2, Video, Paperclip } from 'lucide-react';
 
 interface Lab {
     id: number;
@@ -9,12 +9,22 @@ interface Lab {
     thumbnail_link: string;
     drive_link: string;
     file_id: string;
+    video_link?: string | null;
+    extra_files?: {
+        id: string;
+        name: string;
+        webViewLink?: string;
+    }[];
 }
 
-const LabCard = ({ lab }: { lab: Lab }) => {
-    const handleDownload = () => {
-        window.open(lab.drive_link, '_blank');
-    };
+interface LabCardProps {
+    lab: Lab;
+    isAdmin?: boolean;
+    onEdit?: (lab: Lab) => void;
+    onDelete?: (lab: Lab) => void;
+}
+
+const LabCard = ({ lab, isAdmin, onEdit, onDelete }: LabCardProps) => {
 
     const getDriveId = (url: string) => {
         if (!url) return null;
@@ -48,11 +58,14 @@ const LabCard = ({ lab }: { lab: Lab }) => {
         return fallback ? fallback[0] : null;
     };
 
-    const thumbnailId = getDriveId(lab.thumbnail_link);
     const apiBase = import.meta.env.VITE_API_URL || window.location.origin;
+    const thumbnailId = getDriveId(lab.thumbnail_link);
     const thumbnailUrl = thumbnailId
         ? `${apiBase}/api/labs/thumbnail/${thumbnailId}`
         : lab.thumbnail_link;
+    const downloadUrl = lab.file_id ? `${apiBase}/api/labs/download/${lab.file_id}` : lab.drive_link;
+    const videoUrl = lab.video_link || lab.drive_link;
+    const extras = lab.extra_files || [];
 
     return (
         <motion.div
@@ -60,6 +73,23 @@ const LabCard = ({ lab }: { lab: Lab }) => {
             animate={{ opacity: 1, scale: 1 }}
             className="group relative bg-[#0f172a]/40 backdrop-blur-xl border border-white/5 rounded-[2rem] overflow-hidden hover:border-cyan-500/30 transition-all duration-500 hover:shadow-2xl hover:shadow-cyan-500/10"
         >
+            {isAdmin && (
+                <div className="absolute top-3 right-3 z-10 flex items-center space-x-2">
+                    <button
+                        onClick={() => onEdit && onEdit(lab)}
+                        className="p-2 rounded-lg bg-slate-900/70 border border-white/10 text-slate-200 hover:text-white hover:border-cyan-400/40 transition-colors"
+                    >
+                        <Pencil size={16} />
+                    </button>
+                    <button
+                        onClick={() => onDelete && onDelete(lab)}
+                        className="p-2 rounded-lg bg-slate-900/70 border border-white/10 text-red-300 hover:text-red-200 hover:border-red-400/40 transition-colors"
+                    >
+                        <Trash2 size={16} />
+                    </button>
+                </div>
+            )}
+
             {/* Thumbnail */}
             <div className="aspect-video w-full bg-slate-900 overflow-hidden relative">
                 {lab.thumbnail_link ? (
@@ -103,19 +133,42 @@ const LabCard = ({ lab }: { lab: Lab }) => {
 
                 <div className="flex items-center space-x-3">
                     <button
-                        onClick={() => window.open(lab.drive_link, '_blank')}
+                        onClick={() => window.open(downloadUrl, '_blank')}
                         className="flex-1 flex items-center justify-center space-x-2 bg-white text-slate-950 font-bold py-3 rounded-xl hover:bg-cyan-400 hover:text-black transition-all active:scale-95"
                     >
                         <Download size={18} />
                         <span>Download Lab</span>
                     </button>
                     <button
-                        onClick={() => window.open(lab.drive_link, '_blank')}
-                        className="p-3 border border-white/10 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all"
+                        onClick={() => videoUrl ? window.open(videoUrl, '_blank') : window.open(downloadUrl, '_blank')}
+                        className="p-3 border border-white/10 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all flex items-center justify-center"
                     >
-                        <ExternalLink size={18} />
+                        <Video size={18} />
                     </button>
                 </div>
+
+                {extras.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                        <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex items-center space-x-2">
+                            <Paperclip size={14} className="text-cyan-400" />
+                            <span>Supporting Files</span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            {extras.map((file) => {
+                                const url = `${apiBase}/api/labs/download/${file.id}`;
+                                return (
+                                    <button
+                                        key={file.id}
+                                        onClick={() => window.open(url, '_blank')}
+                                        className="text-xs px-3 py-2 rounded-xl bg-slate-800/60 border border-white/5 text-slate-200 hover:border-cyan-400/40 hover:text-white transition-all"
+                                    >
+                                        {file.name}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Decoration */}

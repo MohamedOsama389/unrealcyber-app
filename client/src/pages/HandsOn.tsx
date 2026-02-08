@@ -26,6 +26,12 @@ interface Lab {
     thumbnail_link: string;
     drive_link: string;
     file_id: string;
+    video_link?: string | null;
+    extra_files?: {
+        id: string;
+        name: string;
+        webViewLink?: string;
+    }[];
 }
 
 const HandsOn = () => {
@@ -36,6 +42,7 @@ const HandsOn = () => {
     const [isLoadingLabs, setIsLoadingLabs] = useState(false);
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [editingLab, setEditingLab] = useState<Lab | null>(null);
 
     const categories = ['All', 'Science', 'Math', 'English', 'Social Studies', 'Arabic'];
 
@@ -60,6 +67,26 @@ const HandsOn = () => {
         } finally {
             setIsLoadingLabs(false);
         }
+    };
+
+    const handleDeleteLab = async (labId: number) => {
+        const confirm = window.confirm('Delete this lab? This removes it from the catalog (files stay on Drive).');
+        if (!confirm) return;
+        try {
+            const token = localStorage.getItem('token');
+            await axios.delete(`/api/labs/${labId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            fetchLabs();
+        } catch (err) {
+            console.error("Failed to delete lab:", err);
+            alert('Delete failed. Check console for details.');
+        }
+    };
+
+    const handleEditLab = (lab: Lab) => {
+        setEditingLab(lab);
+        setIsUploadModalOpen(true);
     };
 
     const filteredGames = GAMES_REGISTRY.filter(game => {
@@ -98,7 +125,10 @@ const HandsOn = () => {
                         </div>
                         {isAdmin && activeTab === 'labs' && (
                             <button
-                                onClick={() => setIsUploadModalOpen(true)}
+                                onClick={() => {
+                                    setEditingLab(null);
+                                    setIsUploadModalOpen(true);
+                                }}
                                 className="flex items-center space-x-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-6 py-4 rounded-3xl font-bold shadow-xl shadow-cyan-500/20 hover:scale-105 transition-transform"
                             >
                                 <Plus size={20} />
@@ -297,7 +327,13 @@ const HandsOn = () => {
                             ) : filteredLabs.length > 0 ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                                     {filteredLabs.map(lab => (
-                                        <LabCard key={lab.id} lab={lab} />
+                                        <LabCard
+                                            key={lab.id}
+                                            lab={lab}
+                                            isAdmin={isAdmin}
+                                            onEdit={handleEditLab}
+                                            onDelete={(l) => handleDeleteLab(l.id)}
+                                        />
                                     ))}
                                 </div>
                             ) : (
@@ -314,8 +350,12 @@ const HandsOn = () => {
 
             <LabUploadModal
                 isOpen={isUploadModalOpen}
-                onClose={() => setIsUploadModalOpen(false)}
+                onClose={() => {
+                    setIsUploadModalOpen(false);
+                    setEditingLab(null);
+                }}
                 onUploadSuccess={fetchLabs}
+                labToEdit={editingLab}
             />
         </div>
     );

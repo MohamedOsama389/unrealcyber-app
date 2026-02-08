@@ -1164,7 +1164,11 @@ app.get('/api/labs/thumbnail/:fileId', async (req, res) => {
 app.get('/api/labs', authenticateToken, (req, res) => {
     try {
         const labs = db.prepare('SELECT * FROM labs ORDER BY created_at DESC').all();
-        res.json(labs);
+        const shaped = labs.map((lab) => ({
+            ...lab,
+            extra_files: lab.extra_files ? JSON.parse(lab.extra_files) : []
+        }));
+        res.json(shaped);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -1172,14 +1176,16 @@ app.get('/api/labs', authenticateToken, (req, res) => {
 
 app.post('/api/labs', authenticateToken, upload.fields([
     { name: 'appFile', maxCount: 1 },
-    { name: 'thumbnail', maxCount: 1 }
+    { name: 'thumbnail', maxCount: 1 },
+    { name: 'additionalFiles', maxCount: 10 }
 ]), async (req, res) => {
     if (req.user.role !== 'admin') return res.status(403).json({ error: "Unauthorized" });
 
     try {
-        const { title, description } = req.body;
+        const { title, description, videoLink } = req.body;
         const appFile = req.files['appFile'] ? req.files['appFile'][0] : null;
         const thumbnail = req.files['thumbnail'] ? req.files['thumbnail'][0] : null;
+        const attachments = req.files['additionalFiles'] || [];
 
         if (!appFile || !title) {
             return res.status(400).json({ error: "Title and App File are required" });
@@ -1189,12 +1195,12 @@ app.post('/api/labs', authenticateToken, upload.fields([
         let drive_link = null;
         let thumbnail_link = null;
 
-        // 1. Upload App File to Drive
+        // Upload main app
         const driveRes = await driveService.uploadLabFile(appFile);
         file_id = driveRes.id;
         drive_link = driveRes.webViewLink;
 
-        // 2. Upload Thumbnail into Labs folder (public reader)
+        // Optional thumbnail
         if (thumbnail) {
             const thumbRes = await driveService.uploadLabThumbnail(
                 thumbnail.buffer,
@@ -1203,18 +1209,124 @@ app.post('/api/labs', authenticateToken, upload.fields([
             );
             thumbnail_link = thumbRes.webViewLink;
         }
-        // If no thumbnail uploaded, fall back to the lab file's Drive link.
         if (!thumbnail_link && drive_link) {
             thumbnail_link = drive_link;
         }
 
-        // 3. Save to DB
-        const stmt = db.prepare('INSERT INTO labs (title, description, thumbnail_link, drive_link, file_id) VALUES (?, ?, ?, ?, ?)');
-        stmt.run(title, description, thumbnail_link, drive_link, file_id);
+        // Optional supporting files
+        const extra_files = [];
+        for (const file of attachments) {
+            const up = await driveService.uploadLabFile(file);
+            extra_files.push({
+                id: up.id,
+                name: file.originalname,
+                webViewLink: up.webViewLink
+            });
+        }
+
+        const stmt = db.prepare(`
+            INSERT INTO labs (title, description, thumbnail_link, drive_link, file_id, video_link, extra_files)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        `);
+        stmt.run(title, description, thumbnail_link, drive_link, file_id, videoLink || null, JSON.stringify(extra_files));
 
         res.json({ success: true, message: "Lab uploaded successfully!" });
     } catch (err) {
         console.error("[Labs] Upload failed:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/labs/:id', authenticateToken, upload.fields([
+    { name: 'appFile', maxCount: 1 },
+    { name: 'thumbnail', maxCount: 1 },
+    { name: 'additionalFiles', maxCount: 10 }
+]), async (req, res) => {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: "Unauthorized" });
+
+    try {
+        const { id } = req.params;
+        const { title, description, videoLink, keepExtraIds } = req.body;
+        const appFile = req.files['appFile'] ? req.files['appFile'][0] : null;
+        const thumbnail = req.files['thumbnail'] ? req.files['thumbnail'][0] : null;
+        const attachments = req.files['additionalFiles'] || [];
+
+        const existing = db.prepare('SELECT * FROM labs WHERE id = ?').get(id);
+        if (!existing) return res.status(404).json({ error: "Lab not found" });
+
+        let drive_link = existing.drive_link;
+        let file_id = existing.file_id;
+        let thumbnail_link = existing.thumbnail_link;
+
+        if (appFile) {
+            const driveRes = await driveService.uploadLabFile(appFile);
+            drive_link = driveRes.webViewLink;
+            file_id = driveRes.id;
+        }
+
+        if (thumbnail) {
+            const thumbRes = await driveService.uploadLabThumbnail(
+                thumbnail.buffer,
+                `thumb_${Date.now()}_${thumbnail.originalname}`,
+                thumbnail.mimetype
+            );
+            thumbnail_link = thumbRes.webViewLink;
+        } else if (!thumbnail_link && drive_link) {
+            thumbnail_link = drive_link;
+        }
+
+        let existingExtras = [];
+        try {
+            existingExtras = existing.extra_files ? JSON.parse(existing.extra_files) : [];
+        } catch {
+            existingExtras = [];
+        }
+
+        const keepList = keepExtraIds ? JSON.parse(keepExtraIds) : existingExtras.map(f => f.id);
+        const kept = existingExtras.filter(f => keepList.includes(f.id));
+
+        const newExtras = [];
+        for (const file of attachments) {
+            const up = await driveService.uploadLabFile(file);
+            newExtras.push({
+                id: up.id,
+                name: file.originalname,
+                webViewLink: up.webViewLink
+            });
+        }
+
+        const mergedExtras = [...kept, ...newExtras];
+
+        db.prepare(`
+            UPDATE labs
+            SET title = ?, description = ?, thumbnail_link = ?, drive_link = ?, file_id = ?, video_link = ?, extra_files = ?
+            WHERE id = ?
+        `).run(
+            title || existing.title,
+            description !== undefined ? description : existing.description,
+            thumbnail_link,
+            drive_link,
+            file_id,
+            videoLink !== undefined ? videoLink : existing.video_link,
+            JSON.stringify(mergedExtras),
+            id
+        );
+
+        res.json({ success: true, message: "Lab updated" });
+    } catch (err) {
+        console.error("[Labs] Update failed:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/labs/:id', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: "Unauthorized" });
+    const { id } = req.params;
+    try {
+        const info = db.prepare('DELETE FROM labs WHERE id = ?').run(id);
+        if (info.changes === 0) return res.status(404).json({ error: "Lab not found" });
+        res.json({ success: true });
+    } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });

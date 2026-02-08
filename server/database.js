@@ -169,6 +169,10 @@ ensureColumn('users', 'streak_count', 'INTEGER DEFAULT 0');
 ensureColumn('users', 'last_activity_date', 'TEXT');
 
 ensureColumn('tasks', 'notes', 'TEXT');
+
+// Labs enhancements
+ensureColumn('labs', 'video_link', 'TEXT');
+ensureColumn('labs', 'extra_files', 'TEXT'); // JSON array of supporting files { id, name, webViewLink }
 ensureColumn('videos', 'folder_id', 'TEXT');
 ensureColumn('files', 'folder_id', 'TEXT');
 

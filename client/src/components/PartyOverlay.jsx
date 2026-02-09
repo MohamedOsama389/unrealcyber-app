@@ -14,6 +14,7 @@ const PartyOverlay = () => {
     const [hidden, setHidden] = useState(false);
     const [input, setInput] = useState('');
     const [isMuted, setIsMuted] = useState(false);
+    const [fallbackEmbed, setFallbackEmbed] = useState(false);
     const socketRef = useRef();
     const videoRef = useRef();
     const chatEndRef = useRef();
@@ -216,7 +217,7 @@ const PartyOverlay = () => {
                         </div>
 
                         <div className="w-full max-w-5xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl relative group border border-white/5">
-                            {partyState.type === 'youtube' ? (
+                            {partyState.type === 'youtube' || (partyState.type === 'drive' && fallbackEmbed) ? (
                                 <iframe
                                     src={videoUrl}
                                     className="w-full h-full"
@@ -236,7 +237,10 @@ const PartyOverlay = () => {
                                     onPlay={() => handleAction('play', videoRef.current.currentTime)}
                                     onPause={() => handleAction('pause', videoRef.current.currentTime)}
                                     onSeeked={() => handleAction('seek', videoRef.current.currentTime)}
-                                    onError={(e) => console.error("Video Error:", e.nativeEvent)}
+                                    onError={(e) => {
+                                        console.error("Video Error, switching to Drive embed:", e.nativeEvent);
+                                        setFallbackEmbed(true);
+                                    }}
                                 />
                             )}
 

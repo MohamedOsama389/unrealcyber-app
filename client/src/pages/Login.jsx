@@ -21,7 +21,7 @@ const Login = () => {
             window.google.accounts.id.initialize({
                 client_id: clientId,
                 callback: async (response) => {
-                    const result = await loginWithGoogle(response.credential);
+                    const result = await loginWithGoogle(response.credential, { requireAdmin: true });
                     if (result.success) {
                         navigate('/private/dashboard');
                     } else {

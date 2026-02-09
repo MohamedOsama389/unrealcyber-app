@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import { ArrowUpRight, Play, ShieldCheck } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const DEFAULT_PUBLIC_CONTENT = {
     hero: {
@@ -49,6 +50,9 @@ const getYoutubeEmbed = (url) => {
 const PublicHome = () => {
     const [content, setContent] = useState(DEFAULT_PUBLIC_CONTENT);
     const [loading, setLoading] = useState(true);
+    const { user, loginWithGoogle, logout } = useAuth();
+    const googleBtnRef = useRef(null);
+    const [googleReady, setGoogleReady] = useState(false);
 
     useEffect(() => {
         const load = async () => {
@@ -64,6 +68,44 @@ const PublicHome = () => {
         load();
     }, []);
 
+    useEffect(() => {
+        const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+        if (!clientId || user) return;
+
+        const initGoogle = () => {
+            if (!window.google || !googleBtnRef.current) return;
+            window.google.accounts.id.initialize({
+                client_id: clientId,
+                callback: async (response) => {
+                    await loginWithGoogle(response.credential, { requireAdmin: false });
+                }
+            });
+            window.google.accounts.id.renderButton(googleBtnRef.current, {
+                theme: 'outline',
+                size: 'large',
+                text: 'continue_with',
+                width: '100%'
+            });
+            setGoogleReady(true);
+        };
+
+        if (window.google) {
+            initGoogle();
+            return;
+        }
+
+        const script = document.createElement('script');
+        script.src = 'https://accounts.google.com/gsi/client';
+        script.async = true;
+        script.defer = true;
+        script.onload = initGoogle;
+        document.body.appendChild(script);
+
+        return () => {
+            script.onload = null;
+        };
+    }, [loginWithGoogle, user]);
+
     const featuredItems = content.featured?.items || [];
     const resourceItems = content.resources?.items || [];
 
@@ -77,7 +119,7 @@ const PublicHome = () => {
                         </div>
                         <div>
                             <p className="text-sm font-bold tracking-wide">UNREAL CYBER</p>
-                            <p className="text-[10px] text-secondary uppercase tracking-widest">Public Portal</p>
+                            <p className="text-[10px] text-secondary uppercase tracking-widest">Academy</p>
                         </div>
                     </div>
                     <nav className="hidden md:flex items-center gap-6 text-sm text-secondary">
@@ -94,13 +136,6 @@ const PublicHome = () => {
                         >
                             <Play size={14} />
                             {content.hero?.ctaText || 'Watch on YouTube'}
-                        </a>
-                        <a
-                            href="/private/login"
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-white/10 text-secondary hover:text-primary hover:border-cyan-400/40 transition-colors text-xs font-bold"
-                        >
-                            Private Login
-                            <ArrowUpRight size={14} />
                         </a>
                     </div>
                 </div>
@@ -134,6 +169,40 @@ const PublicHome = () => {
                                     Download Resources
                                     <ArrowUpRight size={16} />
                                 </a>
+                            </div>
+                            <div className="mt-6 max-w-sm">
+                                {!user && (
+                                    <>
+                                        <div ref={googleBtnRef} className="w-full" />
+                                        {!googleReady && (
+                                            <p className="text-xs text-secondary mt-2">
+                                                Google sign-in requires `VITE_GOOGLE_CLIENT_ID`.
+                                            </p>
+                                        )}
+                                    </>
+                                )}
+                                {user && (
+                                    <div className="flex flex-col gap-3">
+                                        <div className="text-xs text-secondary">
+                                            Signed in as <span className="text-primary font-semibold">{user.username}</span>
+                                        </div>
+                                        {user.role === 'admin' && (
+                                            <a
+                                                href="/private/dashboard"
+                                                className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-white/10 border border-white/10 text-secondary hover:text-primary hover:border-cyan-400/40 transition-colors text-xs font-bold"
+                                            >
+                                                Open Private Dashboard
+                                                <ArrowUpRight size={14} />
+                                            </a>
+                                        )}
+                                        <button
+                                            onClick={logout}
+                                            className="text-xs text-red-400 hover:text-red-300 text-left"
+                                        >
+                                            Sign out
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                         <div className="glass-panel border-cyan-500/20 p-6">

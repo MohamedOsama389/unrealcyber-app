@@ -54,6 +54,9 @@ const AdminPanel = () => {
     const [publicContent, setPublicContent] = useState(DEFAULT_PUBLIC_CONTENT);
     const [publicSaving, setPublicSaving] = useState(false);
     const [publicError, setPublicError] = useState('');
+    const [privateAllowlist, setPrivateAllowlist] = useState([]);
+    const [privateEmailInput, setPrivateEmailInput] = useState('');
+    const [privateSaving, setPrivateSaving] = useState(false);
     const [stats, setStats] = useState([]);
     const [sqlText, setSqlText] = useState('');
     const [dbPassword, setDbPassword] = useState('');
@@ -66,6 +69,7 @@ const AdminPanel = () => {
         fetchPartyFiles(); // Fetch party files on component mount
         fetchSiteSettings();
         fetchPublicContent();
+        fetchPrivateAllowlist();
         fetchStats();
 
         const socket = io();
@@ -105,6 +109,28 @@ const AdminPanel = () => {
         } catch (err) {
             console.error("Failed to fetch public content:", err);
             setPublicContent(DEFAULT_PUBLIC_CONTENT);
+        }
+    };
+
+    const fetchPrivateAllowlist = async () => {
+        try {
+            const res = await axios.get('/api/admin/private-access');
+            setPrivateAllowlist(res.data.emails || []);
+        } catch (err) {
+            console.error("Failed to fetch allowlist:", err);
+        }
+    };
+
+    const savePrivateAllowlist = async () => {
+        setPrivateSaving(true);
+        try {
+            const res = await axios.put('/api/admin/private-access', { emails: privateAllowlist });
+            setPrivateAllowlist(res.data.emails || []);
+            alert('Private access list updated.');
+        } catch (err) {
+            alert(err.response?.data?.error || 'Failed to save allowlist');
+        } finally {
+            setPrivateSaving(false);
         }
     };
 
@@ -1302,6 +1328,59 @@ const AdminPanel = () => {
                                 onChange={(e) => setPublicContent(prev => ({ ...prev, socials: { ...prev.socials, discord: e.target.value } }))}
                             />
                         </div>
+                    </div>
+
+                    <div className="glass-panel p-6 border border-border space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h4 className="text-lg font-bold text-primary">Private Access Allowlist</h4>
+                            <button
+                                onClick={savePrivateAllowlist}
+                                disabled={privateSaving}
+                                className="px-4 py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs"
+                            >
+                                {privateSaving ? 'Saving...' : 'Save Allowlist'}
+                            </button>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <input
+                                className="input-field"
+                                placeholder="email@example.com"
+                                value={privateEmailInput}
+                                onChange={(e) => setPrivateEmailInput(e.target.value)}
+                            />
+                            <button
+                                onClick={() => {
+                                    const normalized = privateEmailInput.trim().toLowerCase();
+                                    if (!normalized) return;
+                                    if (!privateAllowlist.includes(normalized)) {
+                                        setPrivateAllowlist(prev => [...prev, normalized]);
+                                    }
+                                    setPrivateEmailInput('');
+                                }}
+                                className="px-4 py-2 rounded-xl bg-white/10 border border-white/10 text-secondary text-xs font-bold"
+                            >
+                                Add
+                            </button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            {privateAllowlist.map((email) => (
+                                <div key={email} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-panel/60 border border-white/10 text-xs text-secondary">
+                                    <span>{email}</span>
+                                    <button
+                                        onClick={() => setPrivateAllowlist(prev => prev.filter(e => e !== email))}
+                                        className="text-red-400 hover:text-red-300"
+                                    >
+                                        <Trash2 size={12} />
+                                    </button>
+                                </div>
+                            ))}
+                            {privateAllowlist.length === 0 && (
+                                <p className="text-xs text-secondary">No emails added yet.</p>
+                            )}
+                        </div>
+                        <p className="text-xs text-secondary">
+                            Only emails in this list will receive admin access in the private app via Google login.
+                        </p>
                     </div>
                 </div>
             )}

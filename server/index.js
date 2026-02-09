@@ -96,6 +96,44 @@ const savePublicContent = (content) => {
     }
 };
 
+const getPrivateAllowlist = () => {
+    try {
+        const row = db.prepare('SELECT value FROM site_settings WHERE key = ?').get('private_access_allowlist');
+        if (row?.value) {
+            const parsed = JSON.parse(row.value);
+            if (Array.isArray(parsed)) return parsed;
+        }
+    } catch (err) {
+        console.error('[Private Access] Failed to read allowlist:', err.message);
+    }
+    const envList = (process.env.GOOGLE_ADMIN_EMAILS || '')
+        .split(',')
+        .map(e => e.trim().toLowerCase())
+        .filter(Boolean);
+    if (envList.length > 0) {
+        try {
+            db.prepare('INSERT OR REPLACE INTO site_settings (key, value) VALUES (?, ?)').run(
+                'private_access_allowlist',
+                JSON.stringify(envList)
+            );
+        } catch (err) {
+            console.error('[Private Access] Failed to persist env allowlist:', err.message);
+        }
+    }
+    return envList;
+};
+
+const savePrivateAllowlist = (emails = []) => {
+    const normalized = (emails || [])
+        .map(e => e.trim().toLowerCase())
+        .filter(Boolean);
+    db.prepare('INSERT OR REPLACE INTO site_settings (key, value) VALUES (?, ?)').run(
+        'private_access_allowlist',
+        JSON.stringify(normalized)
+    );
+    return normalized;
+};
+
 let botInstance;
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -223,23 +261,26 @@ app.post('/api/auth/google', async (req, res) => {
         if (!payload || !payload.email) return res.status(401).json({ error: "Invalid Google token" });
         if (!payload.email_verified) return res.status(401).json({ error: "Google email not verified" });
 
-        const allowlist = (process.env.GOOGLE_ADMIN_EMAILS || '')
-            .split(',')
-            .map(e => e.trim().toLowerCase())
-            .filter(Boolean);
-        if (allowlist.length === 0) {
-            return res.status(403).json({ error: "Admin allowlist not configured" });
-        }
-        if (!allowlist.includes(payload.email.toLowerCase())) {
-            return res.status(403).json({ error: "Not authorized for private access" });
-        }
+        const allowlist = getPrivateAllowlist();
+        const normalizedEmail = payload.email.toLowerCase();
+        const isAllowed = allowlist.includes(normalizedEmail);
 
         let user = db.prepare('SELECT * FROM users WHERE username = ?').get(payload.email);
         if (!user) {
             const randomPass = crypto.randomBytes(32).toString('hex');
             const hash = bcrypt.hashSync(randomPass, 10);
-            const result = db.prepare('INSERT INTO users (username, password, role) VALUES (?, ?, ?)').run(payload.email, hash, 'admin');
+            const result = db.prepare('INSERT INTO users (username, password, role) VALUES (?, ?, ?)').run(
+                payload.email,
+                hash,
+                isAllowed ? 'admin' : 'student'
+            );
             user = db.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid);
+        } else {
+            const desiredRole = isAllowed ? 'admin' : 'student';
+            if (user.role !== desiredRole) {
+                db.prepare('UPDATE users SET role = ? WHERE id = ?').run(desiredRole, user.id);
+                user = { ...user, role: desiredRole };
+            }
         }
 
         const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, SECRET_KEY);
@@ -577,6 +618,27 @@ app.put('/api/admin/public', authenticateToken, (req, res) => {
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: "Failed to save public content" });
+    }
+});
+
+app.get('/api/admin/private-access', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: "Unauthorized" });
+    try {
+        const list = getPrivateAllowlist();
+        res.json({ emails: list });
+    } catch (err) {
+        res.status(500).json({ error: "Failed to load allowlist" });
+    }
+});
+
+app.put('/api/admin/private-access', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: "Unauthorized" });
+    try {
+        const { emails } = req.body;
+        const saved = savePrivateAllowlist(emails);
+        res.json({ success: true, emails: saved });
+    } catch (err) {
+        res.status(500).json({ error: "Failed to save allowlist" });
     }
 });
 

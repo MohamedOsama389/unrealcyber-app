@@ -38,10 +38,14 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const loginWithGoogle = async (credential) => {
+    const loginWithGoogle = async (credential, options = {}) => {
         try {
             const res = await axios.post('/api/auth/google', { credential });
             const { token, role, username: dbUsername, avatar_id, avatar_version } = res.data;
+
+            if (options.requireAdmin && role?.toLowerCase() !== 'admin') {
+                return { success: false, error: 'Not authorized for private access.' };
+            }
 
             const userData = { username: dbUsername, role, avatar_id, avatar_version };
             setUser(userData);

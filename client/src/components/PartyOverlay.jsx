@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, MessageSquare, Send, Maximize2, Minimize2, Play, Pause, Volume2, VolumeX } from 'lucide-react';
+import { X, MessageSquare, Send, Maximize2, Minimize2, Play, Pause, Volume2, VolumeX, Loader2 } from 'lucide-react';
 import io from 'socket.io-client';
 import clsx from 'clsx';
 
@@ -15,6 +15,8 @@ const PartyOverlay = () => {
     const [input, setInput] = useState('');
     const [isMuted, setIsMuted] = useState(false);
     const [fallbackEmbed, setFallbackEmbed] = useState(false);
+    const [isBuffering, setIsBuffering] = useState(true);
+    const [hasError, setHasError] = useState(false);
     const socketRef = useRef();
     const videoRef = useRef();
     const chatEndRef = useRef();
@@ -88,6 +90,27 @@ const PartyOverlay = () => {
 
     if (!partyState?.active || hidden) return null;
 
+    const getDriveId = (url) => {
+        if (!url) return null;
+        if (!url.startsWith('http') && /^[\w-]{10,}$/.test(url)) return url;
+        try {
+            const parsed = new URL(url);
+            const paramId =
+                parsed.searchParams.get('id') ||
+                parsed.searchParams.get('file_id') ||
+                parsed.searchParams.get('fid');
+            if (paramId) return paramId;
+            const path = parsed.pathname;
+            const pathMatch =
+                path.match(/\/file\/d\/([^/]+)/) ||
+                path.match(/\/d\/([^/]+)/) ||
+                path.match(/\/folders\/([^/]+)/);
+            if (pathMatch?.[1]) return pathMatch[1];
+        } catch { /* ignore */ }
+        const fallback = url.match(/[-\w]{15,}/);
+        return fallback ? fallback[0] : null;
+    };
+
     const getYoutubeEmbed = (url) => {
         if (!url) return '';
         try {
@@ -103,8 +126,9 @@ const PartyOverlay = () => {
         }
     };
 
+    const driveId = partyState.type === 'drive' ? getDriveId(partyState.videoSource) : null;
     const videoUrl = partyState.type === 'drive'
-        ? `https://drive.google.com/file/d/${partyState.videoSource}/preview`
+        ? `https://drive.google.com/file/d/${driveId}/preview`
         : getYoutubeEmbed(partyState.videoSource);
 
     if (!hasJoined && !minimized) {
@@ -228,20 +252,37 @@ const PartyOverlay = () => {
                                 <video
                                     key={partyState.videoSource} // Force remount on source change
                                     ref={videoRef}
-                                    src={`/api/party/video/${partyState.videoSource}`}
+                                    src={`/api/party/video/${driveId}`}
                                     className="w-full h-full object-contain"
                                     controls={user?.role === 'admin'}
                                     preload="auto"
                                     playsInline
                                     crossOrigin="anonymous"
+                                    muted={isMuted}
                                     onPlay={() => handleAction('play', videoRef.current.currentTime)}
                                     onPause={() => handleAction('pause', videoRef.current.currentTime)}
                                     onSeeked={() => handleAction('seek', videoRef.current.currentTime)}
+                                    onWaiting={() => setIsBuffering(true)}
+                                    onCanPlay={() => {
+                                        setIsBuffering(false);
+                                        setHasError(false);
+                                    }}
                                     onError={(e) => {
                                         console.error("Video Error, switching to Drive embed:", e.nativeEvent);
+                                        setHasError(true);
                                         setFallbackEmbed(true);
                                     }}
                                 />
+                            )}
+
+                            {/* Loading / error overlay */}
+                            {(isBuffering || hasError) && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-sm z-10 text-white">
+                                    <Loader2 className="h-8 w-8 animate-spin mb-3 text-pink-400" />
+                                    <p className="text-sm text-white/80">
+                                        {hasError ? 'Stream failed, trying fallback...' : 'Connecting to broadcast...'}
+                                    </p>
+                                </div>
                             )}
 
                             {/* Interaction Shield for Non-Admins (Only for YouTube - Drive uses native controls logic) */}

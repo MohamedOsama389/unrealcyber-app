@@ -16,6 +16,29 @@ const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const driveService = require('./driveService');
 
+// Utility: normalize Google Drive IDs from links or raw IDs
+const extractDriveId = (raw) => {
+    if (!raw) return null;
+    if (!raw.startsWith('http') && /^[\w-]{10,}$/.test(raw)) return raw;
+    try {
+        const u = new URL(raw);
+        const qp =
+            u.searchParams.get('id') ||
+            u.searchParams.get('file_id') ||
+            u.searchParams.get('fid');
+        if (qp) return qp;
+        const pathMatch =
+            u.pathname.match(/\/file\/d\/([^/]+)/) ||
+            u.pathname.match(/\/d\/([^/]+)/) ||
+            u.pathname.match(/\/folders\/([^/]+)/);
+        if (pathMatch?.[1]) return pathMatch[1];
+    } catch {
+        /* ignore */
+    }
+    const fallback = raw.match(/[-\w]{15,}/);
+    return fallback ? fallback[0] : null;
+};
+
 let botInstance;
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -159,6 +182,9 @@ app.post('/api/party/config', authenticateToken, upload.single('video'), async (
 
         if (req.file) {
             videoId = await driveService.uploadPartyVideo(req.file.buffer, req.file.originalname, req.file.mimetype);
+        } else if ((type || 'drive') === 'drive') {
+            videoId = extractDriveId(source);
+            if (!videoId) return res.status(400).json({ error: "Invalid Drive link or ID" });
         }
 
         partyState = {
@@ -188,8 +214,10 @@ app.get('/api/party/files', authenticateToken, async (req, res) => {
 
 app.get('/api/party/video/:fileId', async (req, res) => {
     try {
+        const driveId = extractDriveId(req.params.fileId);
+        if (!driveId) return res.sendStatus(400);
         const range = req.headers.range;
-        const response = await driveService.getFileStream(req.params.fileId, range);
+        const response = await driveService.getFileStream(driveId, range);
 
         // Forward headers from Drive API to Client (Handle case-insensitivity)
         const headers = response.headers;

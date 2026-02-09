@@ -5,14 +5,16 @@ const bcrypt = require('bcryptjs');
 const sessions = {}; // In-memory session state for login flow
 
 function initBot(db) {
-    const token = process.env.TELEGRAM_BOT_TOKEN;
-    if (!token) {
-        console.error("TELEGRAM_BOT_TOKEN not found in environment variables. Bot disabled.");
+    const privateToken = process.env.TELEGRAM_BOT_TOKEN;
+    const publicToken = process.env.TELEGRAM_PUBLIC_BOT_TOKEN;
+    if (!privateToken && !publicToken) {
+        console.error("No Telegram bot tokens found. Bots disabled.");
         return;
     }
 
-    const bot = new Telegraf(token);
     const siteUrl = process.env.SITE_BASE_URL || "https://unrealcyberacademy.up.railway.app";
+    const bot = privateToken ? new Telegraf(privateToken) : null;
+    const publicBot = publicToken ? new Telegraf(publicToken) : null;
 
     const SUBJECTS = ['arabic', 'social_studies', 'geometry', 'english', 'general'];
 
@@ -83,33 +85,46 @@ function initBot(db) {
 
     // --- COMMANDS ---
 
-    bot.start((ctx) => {
-        saveUser(ctx);
-        const linkedUser = getLinkedUser(ctx.from.id);
+    if (bot) {
+        bot.start((ctx) => {
+            saveUser(ctx);
+            const linkedUser = getLinkedUser(ctx.from.id);
 
-        if (linkedUser) {
-            ctx.reply(`Welcome back, ${linkedUser.username}! 🛡️\n\nYour account is linked. Use /time to change reminder settings.`);
-        } else {
-            ctx.reply(`Welcome to Unreal Cyber Academy Bot! 🛡️\n\nYou'll receive public updates automatically.\n\nIf you want daily missions, link your website account with /login.`);
-        }
-    });
+            if (linkedUser) {
+                ctx.reply(`Welcome back, ${linkedUser.username}! 🛡️\n\nYour account is linked. Use /time to change reminder settings.`);
+            } else {
+                ctx.reply(`Welcome to Unreal Cyber Academy Bot! 🛡️\n\nIf you want daily missions, link your website account with /login.`);
+            }
+        });
+    }
 
-    bot.command('login', (ctx) => {
+    if (publicBot) {
+        publicBot.start((ctx) => {
+            const { id, username, first_name } = ctx.from;
+            db.prepare(`
+                INSERT OR IGNORE INTO public_telegram_users (telegram_id, username, first_name) 
+                VALUES (?, ?, ?)
+            `).run(String(id), username || null, first_name || null);
+            ctx.reply(`You're subscribed to public updates. ✅\n\nYou'll receive announcements when new public content is released.`);
+        });
+    }
+
+    bot?.command('login', (ctx) => {
         sessions[ctx.from.id] = { step: 'username' };
         ctx.reply("Please enter your website username:");
     });
 
-    bot.command('logout', (ctx) => {
+    bot?.command('logout', (ctx) => {
         db.prepare('UPDATE telegram_users SET website_user_id = NULL WHERE telegram_id = ?').run(String(ctx.from.id));
         ctx.reply("Logged out. Your Telegram is no longer linked to your website account.");
     });
 
-    bot.command('time', (ctx) => {
+    bot?.command('time', (ctx) => {
         sessions[ctx.from.id] = { step: 'time' };
         ctx.reply("What time would you like to receive daily missions? (Format HH:mm AM/PM, e.g., 06:00 PM)");
     });
 
-    bot.command('mission', (ctx) => {
+    bot?.command('mission', (ctx) => {
         const mission = db.prepare('SELECT * FROM tasks ORDER BY created_at DESC LIMIT 1').get();
         if (mission) {
             sendMission(ctx, mission);
@@ -118,13 +133,13 @@ function initBot(db) {
         }
     });
 
-    bot.command('summary', (ctx) => {
+    bot?.command('summary', (ctx) => {
         sendWeeklySummaryToUser(ctx.from.id);
     });
 
     // --- MESSAGE HANDLER ---
 
-    bot.on('text', async (ctx) => {
+    bot?.on('text', async (ctx) => {
         const session = sessions[ctx.from.id];
         if (!session) return;
 
@@ -159,7 +174,7 @@ function initBot(db) {
 
     // --- CALLBACKS ---
 
-    bot.action(/done_(.+)/, async (ctx) => {
+    bot?.action(/done_(.+)/, async (ctx) => {
         const missionId = ctx.match[1];
         const telegramId = String(ctx.from.id);
         const mission = db.prepare('SELECT * FROM tasks WHERE id = ?').get(missionId);
@@ -174,11 +189,12 @@ function initBot(db) {
     // --- CRON JOBS ---
 
     // Dynamic Daily Reminders (Runs every minute to check if any user needs a reminder)
-    cron.schedule('* * * * *', () => {
-        const now = new Date();
-        const fmt = new Intl.DateTimeFormat('en-GB', {
-            hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Africa/Cairo'
-        });
+    if (bot) {
+        cron.schedule('* * * * *', () => {
+            const now = new Date();
+            const fmt = new Intl.DateTimeFormat('en-GB', {
+                hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Africa/Cairo'
+            });
         const parts = fmt.formatToParts(now);
         const hour = parts.find(p => p.type === 'hour').value;
         const minute = parts.find(p => p.type === 'minute').value;
@@ -213,15 +229,18 @@ function initBot(db) {
                 console.warn("[Bot] No missions found in database to send as reminder.");
             }
         }
-    });
+        });
+    }
 
     // Weekly Summary at Sunday 20:00
-    cron.schedule('0 20 * * 0', () => {
-        const users = db.prepare('SELECT telegram_id FROM telegram_users').all();
-        for (const user of users) {
-            sendWeeklySummaryToUser(user.telegram_id);
-        }
-    }, { timezone: "Africa/Cairo" });
+    if (bot) {
+        cron.schedule('0 20 * * 0', () => {
+            const users = db.prepare('SELECT telegram_id FROM telegram_users').all();
+            for (const user of users) {
+                sendWeeklySummaryToUser(user.telegram_id);
+            }
+        }, { timezone: "Africa/Cairo" });
+    }
 
     function sendWeeklySummaryToUser(telegramId) {
         const lastWeek = new Date();
@@ -265,22 +284,37 @@ function initBot(db) {
 
     // --- EXTERNAL NOTIFICATIONS ---
 
-    bot.sendCongrats = (telegramId, taskTitle, rating = 0, notes = "") => {
+    const broadcastPublicUpdate = ({ title, subtitle }) => {
+        if (!publicBot) return;
+        const users = db.prepare('SELECT telegram_id FROM public_telegram_users').all();
+        const msg =
+            `📢 *Public Site Update*\n\n` +
+            `*${title || 'Unreal Cyber Academy'}*\n` +
+            `${subtitle ? `_${subtitle}_\n` : ''}` +
+            `\n🌍 ${siteUrl}`;
+        users.forEach(u => {
+            publicBot.telegram.sendMessage(u.telegram_id, msg, { parse_mode: 'Markdown' })
+                .catch(err => console.error("Public update notify error:", err.message));
+        });
+    };
+
+    const sendCongrats = (telegramId, taskTitle, rating = 0, notes = "") => {
         const stars = "⭐".repeat(rating) || "Approved";
         const msg = `🎉 *CONGRATULATIONS!* 🏆\n\n` +
             `Your submission for mission "*${taskTitle}*" has been approved by the Commander!\n\n` +
             `🔥 *Performance:* ${stars}\n` +
             (notes ? `💬 *Commander Notes:* _${notes}_\n\n` : "") +
             `Excellent work, keep it up! 🛡️`;
-        return bot.telegram.sendMessage(telegramId, msg, { parse_mode: 'Markdown' });
+        return bot?.telegram.sendMessage(telegramId, msg, { parse_mode: 'Markdown' });
     };
 
-    bot.sendDenial = (telegramId, taskTitle, reason) => {
+    const sendDenial = (telegramId, taskTitle, reason) => {
         const msg = `❌ *MISSION UPDATE*\n\nYour submission for "*${taskTitle}*" needs improvement.\n\n📝 *Commander's Feedback:* ${reason}\n\nPlease check the Mission Center and try again! 🥋`;
-        return bot.telegram.sendMessage(telegramId, msg, { parse_mode: 'Markdown' });
+        return bot?.telegram.sendMessage(telegramId, msg, { parse_mode: 'Markdown' });
     };
 
-    bot.broadcastMission = (mission) => {
+    const broadcastMission = (mission) => {
+        if (!bot) return;
         const activeUsers = db.prepare('SELECT DISTINCT telegram_id FROM telegram_users WHERE website_user_id IS NOT NULL').all();
         console.log(`[Bot] Broadcasting mission "${mission.title}" to ${activeUsers.length} users...`);
         activeUsers.forEach(u => {
@@ -288,20 +322,8 @@ function initBot(db) {
         });
     };
 
-    bot.broadcastPublicUpdate = ({ title, subtitle }) => {
-        const users = db.prepare('SELECT telegram_id FROM telegram_users').all();
-        const msg =
-            `📢 *Public Site Update*\n\n` +
-            `*${title || 'Unreal Cyber Academy'}*\n` +
-            `${subtitle ? `_${subtitle}_\n` : ''}` +
-            `\n🌍 ${siteUrl}`;
-        users.forEach(u => {
-            bot.telegram.sendMessage(u.telegram_id, msg, { parse_mode: 'Markdown' })
-                .catch(err => console.error("Public update notify error:", err.message));
-        });
-    };
-
-    bot.notifyAdminsOfUpload = ({ studentName, taskTitle, url }) => {
+    const notifyAdminsOfUpload = ({ studentName, taskTitle, url }) => {
+        if (!bot) return;
         const admins = db.prepare(`
             SELECT tu.telegram_id 
             FROM telegram_users tu 
@@ -320,22 +342,37 @@ function initBot(db) {
         });
     };
 
-    // Launch with robust error handling for Railway zero-downtime deploys
-    bot.launch({ dropPendingUpdates: true }).catch(err => {
-        if (err.description && err.description.includes('Conflict')) {
-            console.warn("⚠️ Telegram Bot Conflict (409): Another instance is running (likely older container shutting down). This instance will keep trying or wait.");
-            // We do NOT want to crash the process here. 
-            // In a real scenario, this instance might fail to get updates until the other closes.
-        } else {
-            console.error("❌ Telegraf launch failed:", err);
-        }
+    // Launch with robust error handling
+    const launchBot = (instance, name) => {
+        if (!instance) return;
+        instance.launch({ dropPendingUpdates: true }).catch(err => {
+            if (err.description && err.description.includes('Conflict')) {
+                console.warn(`⚠️ ${name} Bot Conflict (409): Another instance is running.`);
+            } else {
+                console.error(`❌ ${name} Bot launch failed:`, err);
+            }
+        });
+    };
+    launchBot(bot, 'Private');
+    launchBot(publicBot, 'Public');
+    console.log("Telegram Bots Initialized (private + public)");
+
+    process.once('SIGINT', () => {
+        bot?.stop('SIGINT');
+        publicBot?.stop('SIGINT');
     });
-    console.log("Telegram Bot v2.0 Initialized (12h format & Proactive flow)");
+    process.once('SIGTERM', () => {
+        bot?.stop('SIGTERM');
+        publicBot?.stop('SIGTERM');
+    });
 
-    process.once('SIGINT', () => bot.stop('SIGINT'));
-    process.once('SIGTERM', () => bot.stop('SIGTERM'));
-
-    return bot;
+    return {
+        broadcastMission,
+        sendCongrats,
+        sendDenial,
+        notifyAdminsOfUpload,
+        broadcastPublicUpdate
+    };
 }
 
 module.exports = { initBot };

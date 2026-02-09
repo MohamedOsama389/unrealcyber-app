@@ -54,7 +54,7 @@ const GameCard: React.FC<GameCardProps> = ({ game }) => {
                     </div>
 
                     <button
-                        onClick={() => navigate(`/games/${game.id}`)}
+                        onClick={() => navigate(`/private/games/${game.id}`)}
                         className="flex items-center space-x-2 bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-600 transition-all shadow-lg active:scale-95"
                     >
                         <span>Play</span>

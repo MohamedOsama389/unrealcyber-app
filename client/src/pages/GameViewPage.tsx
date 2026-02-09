@@ -15,7 +15,7 @@ const GameViewPage: React.FC = () => {
         return (
             <div className="flex flex-col items-center justify-center h-screen bg-slate-50">
                 <h1 className="text-2xl font-bold text-slate-400 mb-4">Game Not Found</h1>
-                <Link to="/games" className="text-blue-500 hover:underline flex items-center gap-2">
+                <Link to="/private/games" className="text-blue-500 hover:underline flex items-center gap-2">
                     <ArrowLeft size={18} /> Back to Library
                 </Link>
             </div>
@@ -28,7 +28,7 @@ const GameViewPage: React.FC = () => {
             <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
                 <div className="flex items-center space-x-4">
                     <Link
-                        to="/games"
+                        to="/private/games"
                         className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-500"
                         title="Back to Library"
                     >

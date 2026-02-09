@@ -34,24 +34,25 @@ const Navbar = () => {
 
     if (!user) return null;
 
+    const base = '/private';
     const navItems = [
-        { path: '/', labelKey: 'nav.dashboard', fallback: 'Dashboard', icon: LayoutDashboard },
-        { path: '/meetings', labelKey: 'nav.meetings', fallback: 'Meetings', icon: Monitor },
-        { path: '/tasks', labelKey: 'nav.tasks', fallback: 'Mission Center', icon: CheckSquare },
-        { path: '/videos', labelKey: 'nav.videos', fallback: 'Recorded Sessions', icon: Video },
-        { path: '/files', labelKey: 'nav.files', fallback: 'Academy Files', icon: FileText },
-        { path: '/vm-rental', labelKey: 'nav.vm', fallback: 'VM Rental', icon: Monitor },
-        { path: '/hands-on', labelKey: 'nav.handsOn', fallback: 'Hands-On Space', icon: Network },
-        { path: '/chat', labelKey: 'nav.chat', fallback: 'Comms Channel', icon: MessageSquare },
+        { path: `${base}/dashboard`, labelKey: 'nav.dashboard', fallback: 'Dashboard', icon: LayoutDashboard },
+        { path: `${base}/meetings`, labelKey: 'nav.meetings', fallback: 'Meetings', icon: Monitor },
+        { path: `${base}/tasks`, labelKey: 'nav.tasks', fallback: 'Mission Center', icon: CheckSquare },
+        { path: `${base}/videos`, labelKey: 'nav.videos', fallback: 'Recorded Sessions', icon: Video },
+        { path: `${base}/files`, labelKey: 'nav.files', fallback: 'Academy Files', icon: FileText },
+        { path: `${base}/vm-rental`, labelKey: 'nav.vm', fallback: 'VM Rental', icon: Monitor },
+        { path: `${base}/hands-on`, labelKey: 'nav.handsOn', fallback: 'Hands-On Space', icon: Network },
+        { path: `${base}/chat`, labelKey: 'nav.chat', fallback: 'Comms Channel', icon: MessageSquare },
     ];
 
     if (user.role === 'admin') {
-        navItems.push({ path: '/admin', labelKey: 'nav.admin', fallback: 'Admin Grid', icon: Shield });
+        navItems.push({ path: `${base}/admin`, labelKey: 'nav.admin', fallback: 'Admin Grid', icon: Shield });
     }
 
     const handleLogout = () => {
         logout();
-        navigate('/login');
+        navigate('/');
     };
 
     return (
@@ -89,11 +90,13 @@ const Navbar = () => {
                         </div>
 
                         <div className="space-y-1 flex-1 overflow-y-auto pr-2 custom-scrollbar">
-                            {navItems.map((item) => (
+                            {navItems.map((item) => {
+                                const navId = item.path.replace('/private/', '') || 'dashboard';
+                                return (
                                 <NavLink
                                     key={item.path}
                                     to={item.path}
-                                    id={`nav-${item.path.replace('/', '') || 'dashboard'}`}
+                                    id={`nav-${navId}`}
                                     onClick={() => setIsOpen(false)}
                                     className={({ isActive }) => `
                                         flex items-center ${language === 'ar' ? 'flex-row-reverse space-x-reverse' : ''} space-x-3 px-4 py-3 rounded-xl transition-all duration-300
@@ -106,7 +109,8 @@ const Navbar = () => {
                                     <item.icon size={20} />
                                     <span className={`font-medium text-sm ${language === 'ar' ? 'text-right w-full' : ''}`}>{t(item.labelKey, item.fallback)}</span>
                                 </NavLink>
-                            ))}
+                                );
+                            })}
                         </div>
 
                         <div className="mt-auto pt-6 border-t border-border shrink-0 pb-6 md:pb-8">

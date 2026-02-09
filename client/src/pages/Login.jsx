@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { Lock, User } from 'lucide-react';
@@ -7,14 +7,59 @@ const Login = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-    const { login } = useAuth();
+    const { login, loginWithGoogle } = useAuth();
     const navigate = useNavigate();
+    const googleBtnRef = useRef(null);
+    const [googleReady, setGoogleReady] = useState(false);
+
+    useEffect(() => {
+        const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+        if (!clientId) return;
+
+        const initGoogle = () => {
+            if (!window.google || !googleBtnRef.current) return;
+            window.google.accounts.id.initialize({
+                client_id: clientId,
+                callback: async (response) => {
+                    const result = await loginWithGoogle(response.credential);
+                    if (result.success) {
+                        navigate('/private/dashboard');
+                    } else {
+                        setError(result.error);
+                    }
+                }
+            });
+            window.google.accounts.id.renderButton(googleBtnRef.current, {
+                theme: 'outline',
+                size: 'large',
+                text: 'continue_with',
+                width: '100%'
+            });
+            setGoogleReady(true);
+        };
+
+        if (window.google) {
+            initGoogle();
+            return;
+        }
+
+        const script = document.createElement('script');
+        script.src = 'https://accounts.google.com/gsi/client';
+        script.async = true;
+        script.defer = true;
+        script.onload = initGoogle;
+        document.body.appendChild(script);
+
+        return () => {
+            script.onload = null;
+        };
+    }, [loginWithGoogle, navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         const result = await login(username, password);
         if (result.success) {
-            navigate('/dashboard');
+            navigate('/private/dashboard');
         } else {
             setError(result.error);
         }
@@ -76,8 +121,23 @@ const Login = () => {
                     </button>
                 </form>
 
-                <div className="mt-6 text-center text-sm text-secondary">
-                    Don't have an account? <Link to="/signup" className="text-cyan-400 hover:text-cyan-300">Sign Up</Link>
+                <div className="mt-6 space-y-4">
+                    <div className="flex items-center gap-3 text-xs text-secondary">
+                        <div className="flex-1 h-px bg-white/10" />
+                        <span>or</span>
+                        <div className="flex-1 h-px bg-white/10" />
+                    </div>
+                    <div className="w-full">
+                        <div ref={googleBtnRef} className="w-full" />
+                        {!googleReady && (
+                            <p className="text-xs text-secondary mt-2">
+                                Google sign-in requires `VITE_GOOGLE_CLIENT_ID`.
+                            </p>
+                        )}
+                    </div>
+                    <div className="text-center text-sm text-secondary">
+                        Don't have an account? <Link to="/private/signup" className="text-cyan-400 hover:text-cyan-300">Sign Up</Link>
+                    </div>
                 </div>
             </div>
         </div>

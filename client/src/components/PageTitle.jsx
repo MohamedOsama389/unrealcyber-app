@@ -9,31 +9,34 @@ const PageTitle = () => {
         let title = 'Unreal Cyber Academy';
 
         switch (true) {
-            case path.startsWith('/dashboard'):
+            case path === '/':
+                title = 'Unreal Cyber Academy';
+                break;
+            case path.startsWith('/private/dashboard'):
                 title = 'Dashboard | UCA';
                 break;
-            case path.startsWith('/meetings'):
+            case path.startsWith('/private/meetings'):
                 title = 'Live Sessions | UCA';
                 break;
-            case path.startsWith('/tasks'):
+            case path.startsWith('/private/tasks'):
                 title = 'Mission Center | UCA';
                 break;
-            case path.startsWith('/videos'):
+            case path.startsWith('/private/videos'):
                 title = 'Recorded Sessions | UCA';
                 break;
-            case path.startsWith('/vm-rental'):
+            case path.startsWith('/private/vm-rental'):
                 title = 'VM Access | UCA';
                 break;
-            case path.startsWith('/chat'):
+            case path.startsWith('/private/chat'):
                 title = 'Comms Channel | UCA';
                 break;
-            case path.startsWith('/admin'):
+            case path.startsWith('/private/admin'):
                 title = 'Command Center | UCA';
                 break;
-            case path.startsWith('/login'):
+            case path.startsWith('/private/login'):
                 title = 'Login | UCA';
                 break;
-            case path.startsWith('/signup'):
+            case path.startsWith('/private/signup'):
                 title = 'Recruit Signup | UCA';
                 break;
             default:

@@ -22,6 +22,10 @@ export const AuthProvider = ({ children }) => {
             const res = await axios.post('/api/auth/login', { username, password });
             const { token, role, username: dbUsername, avatar_id, avatar_version } = res.data;
 
+            if (role?.toLowerCase() !== 'admin') {
+                return { success: false, error: 'Private access is restricted to admins.' };
+            }
+
             const userData = { username: dbUsername, role, avatar_id, avatar_version };
             setUser(userData);
 
@@ -31,6 +35,23 @@ export const AuthProvider = ({ children }) => {
             return { success: true };
         } catch (err) {
             return { success: false, error: err.response?.data?.error || 'Login failed' };
+        }
+    };
+
+    const loginWithGoogle = async (credential) => {
+        try {
+            const res = await axios.post('/api/auth/google', { credential });
+            const { token, role, username: dbUsername, avatar_id, avatar_version } = res.data;
+
+            const userData = { username: dbUsername, role, avatar_id, avatar_version };
+            setUser(userData);
+
+            localStorage.setItem('token', token);
+            localStorage.setItem('user', JSON.stringify(userData));
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            return { success: true };
+        } catch (err) {
+            return { success: false, error: err.response?.data?.error || 'Google login failed' };
         }
     };
 
@@ -48,7 +69,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, updateUser, loading }}>
+        <AuthContext.Provider value={{ user, login, loginWithGoogle, logout, updateUser, loading }}>
             {children}
         </AuthContext.Provider>
     );

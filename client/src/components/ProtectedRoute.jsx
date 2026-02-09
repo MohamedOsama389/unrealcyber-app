@@ -7,11 +7,11 @@ const ProtectedRoute = ({ allowedRoles }) => {
     if (loading) return <div>Loading...</div>;
 
     if (!user) {
-        return <Navigate to="/login" replace />;
+        return <Navigate to="/private/login" replace />;
     }
 
     if (allowedRoles && !allowedRoles.map(r => r.toLowerCase()).includes(user.role?.toLowerCase())) {
-        return <Navigate to="/dashboard" replace />;
+        return <Navigate to="/" replace />;
     }
 
     return <Outlet />;

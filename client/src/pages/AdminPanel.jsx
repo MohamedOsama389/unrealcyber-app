@@ -3,10 +3,36 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Users, FileCheck, Search, Award, Trash2, Key, Star, Edit, Trash, Music, Play, Square, Send, Globe, Pause, Settings } from 'lucide-react';
+import { Shield, Users, FileCheck, Search, Award, Trash2, Key, Star, Edit, Trash, Music, Play, Square, Send, Globe, Pause, Settings, Plus } from 'lucide-react';
 import clsx from 'clsx';
 import StarRating from '../components/StarRating';
 import io from 'socket.io-client';
+
+const DEFAULT_PUBLIC_CONTENT = {
+    hero: {
+        title: 'Unreal Cyber Academy',
+        subtitle: 'Cybersecurity learning, labs, and resources. Watch, practice, and build real skills.',
+        ctaText: 'Watch on YouTube',
+        ctaLink: 'https://www.youtube.com/'
+    },
+    about: {
+        title: 'About the Academy',
+        body: 'Hands-on cybersecurity learning with practical labs, short tutorials, and real-world walkthroughs.'
+    },
+    featured: {
+        title: 'Featured Videos',
+        items: [{ title: 'Intro to Networking', description: 'Quick fundamentals to get started.', url: '' }]
+    },
+    resources: {
+        title: 'Files & Tools',
+        items: [{ title: 'Starter Toolkit', description: 'Download the essentials.', url: '' }]
+    },
+    socials: {
+        youtube: '',
+        telegram: '',
+        discord: ''
+    }
+};
 
 const AdminPanel = () => {
     const { user } = useAuth();
@@ -25,6 +51,9 @@ const AdminPanel = () => {
     const [partyFiles, setPartyFiles] = useState([]);
     const [uploadingParty, setUploadingParty] = useState(false);
     const [siteSettings, setSiteSettings] = useState({ telegram_enabled: 'false', telegram_link: '' });
+    const [publicContent, setPublicContent] = useState(DEFAULT_PUBLIC_CONTENT);
+    const [publicSaving, setPublicSaving] = useState(false);
+    const [publicError, setPublicError] = useState('');
     const [stats, setStats] = useState([]);
     const [sqlText, setSqlText] = useState('');
     const [dbPassword, setDbPassword] = useState('');
@@ -36,6 +65,7 @@ const AdminPanel = () => {
         fetchVotes();
         fetchPartyFiles(); // Fetch party files on component mount
         fetchSiteSettings();
+        fetchPublicContent();
         fetchStats();
 
         const socket = io();
@@ -65,6 +95,30 @@ const AdminPanel = () => {
             setPartyFiles(res.data);
         } catch (err) {
             console.error("Failed to fetch party files:", err);
+        }
+    };
+
+    const fetchPublicContent = async () => {
+        try {
+            const res = await axios.get('/api/public');
+            setPublicContent({ ...DEFAULT_PUBLIC_CONTENT, ...res.data });
+        } catch (err) {
+            console.error("Failed to fetch public content:", err);
+            setPublicContent(DEFAULT_PUBLIC_CONTENT);
+        }
+    };
+
+    const savePublicContent = async () => {
+        if (!publicContent) return;
+        setPublicSaving(true);
+        setPublicError('');
+        try {
+            await axios.put('/api/admin/public', publicContent);
+            alert("Public site updated!");
+        } catch (err) {
+            setPublicError(err.response?.data?.error || 'Failed to save public content');
+        } finally {
+            setPublicSaving(false);
         }
     };
 
@@ -374,6 +428,16 @@ const AdminPanel = () => {
                 >
                     <Music size={20} />
                     <span>Party Option</span>
+                </button>
+                <button
+                    onClick={() => setActiveTab('public')}
+                    className={clsx(
+                        "flex items-center space-x-2 px-6 py-3 rounded-xl font-bold transition-all",
+                        activeTab === 'public' ? "bg-emerald-600 text-white shadow-lg shadow-emerald-500/30" : "bg-panel text-secondary hover:bg-white/10 dark:hover:bg-slate-800 hover:text-primary border border-border"
+                    )}
+                >
+                    <Globe size={20} />
+                    <span>Public Site</span>
                 </button>
                 <button
                     onClick={() => setActiveTab('settings')}
@@ -971,6 +1035,273 @@ const AdminPanel = () => {
                             <Send size={18} className="text-cyan-400" /> Administrative Broadcast Chat (WIP)
                         </h4>
                         <p className="text-sm text-secondary italic">Dedicated slider chat will appear globally when party is active.</p>
+                    </div>
+                </div>
+            )}
+
+            {/* PUBLIC TAB */}
+            {activeTab === 'public' && (
+                <div className="space-y-6">
+                    <div className="glass-panel p-6 border-l-4 border-l-emerald-500 space-y-6">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-xl font-bold text-primary flex items-center">
+                                <Globe className="mr-3 text-emerald-400" size={24} /> Public Site Editor
+                            </h3>
+                            <button
+                                onClick={savePublicContent}
+                                disabled={publicSaving}
+                                className="px-5 py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs shadow-lg shadow-emerald-500/20"
+                            >
+                                {publicSaving ? 'Saving...' : 'Save Public Site'}
+                            </button>
+                        </div>
+
+                        {publicError && (
+                            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                                {publicError}
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-3">
+                                <label className="text-xs font-bold uppercase text-secondary">Hero Title</label>
+                                <input
+                                    className="input-field"
+                                    value={publicContent?.hero?.title || ''}
+                                    onChange={(e) => setPublicContent(prev => ({ ...prev, hero: { ...prev.hero, title: e.target.value } }))}
+                                />
+                            </div>
+                            <div className="space-y-3">
+                                <label className="text-xs font-bold uppercase text-secondary">Hero Subtitle</label>
+                                <textarea
+                                    rows={3}
+                                    className="input-field"
+                                    value={publicContent?.hero?.subtitle || ''}
+                                    onChange={(e) => setPublicContent(prev => ({ ...prev, hero: { ...prev.hero, subtitle: e.target.value } }))}
+                                />
+                            </div>
+                            <div className="space-y-3">
+                                <label className="text-xs font-bold uppercase text-secondary">CTA Text</label>
+                                <input
+                                    className="input-field"
+                                    value={publicContent?.hero?.ctaText || ''}
+                                    onChange={(e) => setPublicContent(prev => ({ ...prev, hero: { ...prev.hero, ctaText: e.target.value } }))}
+                                />
+                            </div>
+                            <div className="space-y-3">
+                                <label className="text-xs font-bold uppercase text-secondary">CTA Link</label>
+                                <input
+                                    className="input-field"
+                                    value={publicContent?.hero?.ctaLink || ''}
+                                    onChange={(e) => setPublicContent(prev => ({ ...prev, hero: { ...prev.hero, ctaLink: e.target.value } }))}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="glass-panel p-6 border border-border space-y-4">
+                        <h4 className="text-lg font-bold text-primary">About Section</h4>
+                        <input
+                            className="input-field"
+                            placeholder="Title"
+                            value={publicContent?.about?.title || ''}
+                            onChange={(e) => setPublicContent(prev => ({ ...prev, about: { ...prev.about, title: e.target.value } }))}
+                        />
+                        <textarea
+                            rows={4}
+                            className="input-field"
+                            placeholder="Body"
+                            value={publicContent?.about?.body || ''}
+                            onChange={(e) => setPublicContent(prev => ({ ...prev, about: { ...prev.about, body: e.target.value } }))}
+                        />
+                    </div>
+
+                    <div className="glass-panel p-6 border border-border space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h4 className="text-lg font-bold text-primary">Featured Videos</h4>
+                            <button
+                                onClick={() => setPublicContent(prev => ({
+                                    ...prev,
+                                    featured: {
+                                        ...prev.featured,
+                                        items: [...(prev.featured?.items || []), { title: '', description: '', url: '' }]
+                                    }
+                                }))}
+                                className="text-xs font-bold text-cyan-400 flex items-center gap-2"
+                            >
+                                <Plus size={14} /> Add Video
+                            </button>
+                        </div>
+                        <input
+                            className="input-field"
+                            placeholder="Section title"
+                            value={publicContent?.featured?.title || ''}
+                            onChange={(e) => setPublicContent(prev => ({ ...prev, featured: { ...prev.featured, title: e.target.value } }))}
+                        />
+                        <div className="space-y-4">
+                            {(publicContent?.featured?.items || []).map((item, idx) => (
+                                <div key={idx} className="p-4 rounded-2xl border border-white/10 bg-panel/60 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <p className="text-xs font-bold text-secondary">Video {idx + 1}</p>
+                                        <button
+                                            onClick={() => setPublicContent(prev => ({
+                                                ...prev,
+                                                featured: {
+                                                    ...prev.featured,
+                                                    items: prev.featured.items.filter((_, i) => i !== idx)
+                                                }
+                                            }))}
+                                            className="text-red-400 hover:text-red-300"
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+                                    </div>
+                                    <input
+                                        className="input-field"
+                                        placeholder="Title"
+                                        value={item.title}
+                                        onChange={(e) => setPublicContent(prev => ({
+                                            ...prev,
+                                            featured: {
+                                                ...prev.featured,
+                                                items: prev.featured.items.map((v, i) => i === idx ? { ...v, title: e.target.value } : v)
+                                            }
+                                        }))}
+                                    />
+                                    <textarea
+                                        rows={2}
+                                        className="input-field"
+                                        placeholder="Description"
+                                        value={item.description}
+                                        onChange={(e) => setPublicContent(prev => ({
+                                            ...prev,
+                                            featured: {
+                                                ...prev.featured,
+                                                items: prev.featured.items.map((v, i) => i === idx ? { ...v, description: e.target.value } : v)
+                                            }
+                                        }))}
+                                    />
+                                    <input
+                                        className="input-field"
+                                        placeholder="YouTube or video link"
+                                        value={item.url}
+                                        onChange={(e) => setPublicContent(prev => ({
+                                            ...prev,
+                                            featured: {
+                                                ...prev.featured,
+                                                items: prev.featured.items.map((v, i) => i === idx ? { ...v, url: e.target.value } : v)
+                                            }
+                                        }))}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="glass-panel p-6 border border-border space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h4 className="text-lg font-bold text-primary">Resources</h4>
+                            <button
+                                onClick={() => setPublicContent(prev => ({
+                                    ...prev,
+                                    resources: {
+                                        ...prev.resources,
+                                        items: [...(prev.resources?.items || []), { title: '', description: '', url: '' }]
+                                    }
+                                }))}
+                                className="text-xs font-bold text-cyan-400 flex items-center gap-2"
+                            >
+                                <Plus size={14} /> Add Resource
+                            </button>
+                        </div>
+                        <input
+                            className="input-field"
+                            placeholder="Section title"
+                            value={publicContent?.resources?.title || ''}
+                            onChange={(e) => setPublicContent(prev => ({ ...prev, resources: { ...prev.resources, title: e.target.value } }))}
+                        />
+                        <div className="space-y-4">
+                            {(publicContent?.resources?.items || []).map((item, idx) => (
+                                <div key={idx} className="p-4 rounded-2xl border border-white/10 bg-panel/60 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <p className="text-xs font-bold text-secondary">Resource {idx + 1}</p>
+                                        <button
+                                            onClick={() => setPublicContent(prev => ({
+                                                ...prev,
+                                                resources: {
+                                                    ...prev.resources,
+                                                    items: prev.resources.items.filter((_, i) => i !== idx)
+                                                }
+                                            }))}
+                                            className="text-red-400 hover:text-red-300"
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+                                    </div>
+                                    <input
+                                        className="input-field"
+                                        placeholder="Title"
+                                        value={item.title}
+                                        onChange={(e) => setPublicContent(prev => ({
+                                            ...prev,
+                                            resources: {
+                                                ...prev.resources,
+                                                items: prev.resources.items.map((v, i) => i === idx ? { ...v, title: e.target.value } : v)
+                                            }
+                                        }))}
+                                    />
+                                    <textarea
+                                        rows={2}
+                                        className="input-field"
+                                        placeholder="Description"
+                                        value={item.description}
+                                        onChange={(e) => setPublicContent(prev => ({
+                                            ...prev,
+                                            resources: {
+                                                ...prev.resources,
+                                                items: prev.resources.items.map((v, i) => i === idx ? { ...v, description: e.target.value } : v)
+                                            }
+                                        }))}
+                                    />
+                                    <input
+                                        className="input-field"
+                                        placeholder="Link"
+                                        value={item.url}
+                                        onChange={(e) => setPublicContent(prev => ({
+                                            ...prev,
+                                            resources: {
+                                                ...prev.resources,
+                                                items: prev.resources.items.map((v, i) => i === idx ? { ...v, url: e.target.value } : v)
+                                            }
+                                        }))}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="glass-panel p-6 border border-border space-y-4">
+                        <h4 className="text-lg font-bold text-primary">Social Links</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <input
+                                className="input-field"
+                                placeholder="YouTube URL"
+                                value={publicContent?.socials?.youtube || ''}
+                                onChange={(e) => setPublicContent(prev => ({ ...prev, socials: { ...prev.socials, youtube: e.target.value } }))}
+                            />
+                            <input
+                                className="input-field"
+                                placeholder="Telegram URL"
+                                value={publicContent?.socials?.telegram || ''}
+                                onChange={(e) => setPublicContent(prev => ({ ...prev, socials: { ...prev.socials, telegram: e.target.value } }))}
+                            />
+                            <input
+                                className="input-field"
+                                placeholder="Discord URL"
+                                value={publicContent?.socials?.discord || ''}
+                                onChange={(e) => setPublicContent(prev => ({ ...prev, socials: { ...prev.socials, discord: e.target.value } }))}
+                            />
+                        </div>
                     </div>
                 </div>
             )}

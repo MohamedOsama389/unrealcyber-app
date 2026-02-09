@@ -549,7 +549,7 @@ const Dashboard = () => {
                     </div>
                     <div className="mt-6 md:mt-0 flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4 w-full md:w-auto">
                         <a
-                            href={featuredFile.folder_id ? `/files?folderId=${featuredFile.folder_id}&highlightId=${featuredFile.id}` : `/files?highlightId=${featuredFile.id}`}
+                            href={featuredFile.folder_id ? `/private/files?folderId=${featuredFile.folder_id}&highlightId=${featuredFile.id}` : `/private/files?highlightId=${featuredFile.id}`}
                             className="flex-1 md:flex-none flex items-center justify-center space-x-2 px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-purple-500/20"
                         >
                             <Layout size={18} />
@@ -577,7 +577,7 @@ const Dashboard = () => {
                         {featuredFolders.map(folder => (
                             <a
                                 key={folder.id}
-                                href={folder.parent_id === '14nYLGu1H9eqQNCHxk2JXot2G42WY2xN_' ? `/files?folderId=${folder.id}` : `/videos?folderId=${folder.id}`}
+                                href={folder.parent_id === '14nYLGu1H9eqQNCHxk2JXot2G42WY2xN_' ? `/private/files?folderId=${folder.id}` : `/private/videos?folderId=${folder.id}`}
                                 className="flex flex-col items-center p-4 bg-panel border-border rounded-xl hover:bg-white/10 dark:hover:bg-slate-800 transition-all group border-l-2 border-l-yellow-500 shadow-sm"
                             >
                                 <Folder size={32} className="text-yellow-500 mb-2 group-hover:scale-110 transition-transform" />

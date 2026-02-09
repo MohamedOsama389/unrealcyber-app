@@ -13,7 +13,7 @@ const Signup = () => {
         e.preventDefault();
         try {
             await axios.post('/api/auth/register', { username, password });
-            navigate('/login');
+            navigate('/private/login');
         } catch (err) {
             setError(err.response?.data?.error || 'Registration failed');
         }
@@ -75,7 +75,7 @@ const Signup = () => {
                 </form>
 
                 <div className="mt-6 text-center text-sm text-secondary">
-                    Already have an account? <Link to="/login" className="text-cyan-400 hover:text-cyan-300">Log In</Link>
+                    Already have an account? <Link to="/private/login" className="text-cyan-400 hover:text-cyan-300">Log In</Link>
                 </div>
             </div>
         </div>

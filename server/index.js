@@ -15,6 +15,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const driveService = require('./driveService');
+const { OAuth2Client } = require('google-auth-library');
+const crypto = require('crypto');
 
 // Utility: normalize Google Drive IDs from links or raw IDs
 const extractDriveId = (raw) => {
@@ -37,6 +39,61 @@ const extractDriveId = (raw) => {
     }
     const fallback = raw.match(/[-\w]{15,}/);
     return fallback ? fallback[0] : null;
+};
+
+const DEFAULT_PUBLIC_CONTENT = {
+    hero: {
+        title: 'Unreal Cyber Academy',
+        subtitle: 'Cybersecurity learning, labs, and resources. Watch, practice, and build real skills.',
+        ctaText: 'Watch on YouTube',
+        ctaLink: 'https://www.youtube.com/'
+    },
+    about: {
+        title: 'About the Academy',
+        body: 'Hands-on cybersecurity learning with practical labs, short tutorials, and real-world walkthroughs.'
+    },
+    featured: {
+        title: 'Featured Videos',
+        items: [
+            { title: 'Intro to Networking', description: 'Quick fundamentals to get started.', url: '' }
+        ]
+    },
+    resources: {
+        title: 'Files & Tools',
+        items: [
+            { title: 'Starter Toolkit', description: 'Download the essentials.', url: '' }
+        ]
+    },
+    socials: {
+        youtube: '',
+        telegram: '',
+        discord: ''
+    }
+};
+
+const getPublicContent = () => {
+    try {
+        const row = db.prepare('SELECT value FROM site_settings WHERE key = ?').get('public_site_content');
+        if (!row) {
+            db.prepare('INSERT INTO site_settings (key, value) VALUES (?, ?)').run('public_site_content', JSON.stringify(DEFAULT_PUBLIC_CONTENT));
+            return DEFAULT_PUBLIC_CONTENT;
+        }
+        const parsed = JSON.parse(row.value);
+        return { ...DEFAULT_PUBLIC_CONTENT, ...parsed };
+    } catch (err) {
+        console.error('[Public] Failed to load public content:', err.message);
+        return DEFAULT_PUBLIC_CONTENT;
+    }
+};
+
+const savePublicContent = (content) => {
+    const payload = JSON.stringify(content || DEFAULT_PUBLIC_CONTENT);
+    const existing = db.prepare('SELECT key FROM site_settings WHERE key = ?').get('public_site_content');
+    if (existing) {
+        db.prepare('UPDATE site_settings SET value = ? WHERE key = ?').run(payload, 'public_site_content');
+    } else {
+        db.prepare('INSERT INTO site_settings (key, value) VALUES (?, ?)').run('public_site_content', payload);
+    }
 };
 
 let botInstance;
@@ -145,6 +202,57 @@ app.post('/api/auth/login', (req, res) => {
             avatar_version: user.avatar_version,
             streak_count: newStreak
         });
+    }
+});
+
+// Google OAuth (Admin-only)
+app.post('/api/auth/google', async (req, res) => {
+    try {
+        const { credential } = req.body;
+        if (!credential) return res.status(400).json({ error: "Missing Google credential" });
+
+        const clientId = process.env.GOOGLE_CLIENT_ID;
+        if (!clientId) return res.status(500).json({ error: "Google client ID not configured" });
+
+        const oauthClient = new OAuth2Client(clientId);
+        const ticket = await oauthClient.verifyIdToken({
+            idToken: credential,
+            audience: clientId
+        });
+        const payload = ticket.getPayload();
+        if (!payload || !payload.email) return res.status(401).json({ error: "Invalid Google token" });
+        if (!payload.email_verified) return res.status(401).json({ error: "Google email not verified" });
+
+        const allowlist = (process.env.GOOGLE_ADMIN_EMAILS || '')
+            .split(',')
+            .map(e => e.trim().toLowerCase())
+            .filter(Boolean);
+        if (allowlist.length === 0) {
+            return res.status(403).json({ error: "Admin allowlist not configured" });
+        }
+        if (!allowlist.includes(payload.email.toLowerCase())) {
+            return res.status(403).json({ error: "Not authorized for private access" });
+        }
+
+        let user = db.prepare('SELECT * FROM users WHERE username = ?').get(payload.email);
+        if (!user) {
+            const randomPass = crypto.randomBytes(32).toString('hex');
+            const hash = bcrypt.hashSync(randomPass, 10);
+            const result = db.prepare('INSERT INTO users (username, password, role) VALUES (?, ?, ?)').run(payload.email, hash, 'admin');
+            user = db.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid);
+        }
+
+        const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, SECRET_KEY);
+        res.json({
+            token,
+            role: user.role,
+            username: user.username,
+            avatar_id: user.avatar_id,
+            avatar_version: user.avatar_version
+        });
+    } catch (err) {
+        console.error("[Auth] Google login failed:", err.message);
+        res.status(500).json({ error: "Google login failed" });
     }
 });
 
@@ -449,6 +557,26 @@ app.get('/api/settings', (req, res) => {
     } catch (err) {
         console.error("[API Error] /api/settings (GET):", err);
         res.status(500).json({ error: err.message });
+    }
+});
+
+// --- PUBLIC SITE CONTENT ---
+app.get('/api/public', (req, res) => {
+    try {
+        const content = getPublicContent();
+        res.json(content);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to load public content" });
+    }
+});
+
+app.put('/api/admin/public', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: "Unauthorized" });
+    try {
+        savePublicContent(req.body);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: "Failed to save public content" });
     }
 });
 

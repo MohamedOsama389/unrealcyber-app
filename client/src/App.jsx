@@ -21,50 +21,54 @@ import GameViewPage from './pages/GameViewPage';
 import AtomGame from './pages/AtomGame';
 import HandsOn from './pages/HandsOn';
 import AdminPanel from './pages/AdminPanel';
+import PublicHome from './pages/PublicHome';
 import clsx from 'clsx';
 
 function AppContent() {
   const { user } = useAuth();
   const { language } = useLanguage();
-  const isAuthPage = ['/login', '/signup'].includes(window.location.pathname);
+  const path = window.location.pathname;
+  const isPrivateRoute = path.startsWith('/private');
+  const isAuthPage = ['/private/login', '/private/signup'].includes(path);
+  const showPrivateShell = isPrivateRoute && !isAuthPage;
 
   return (
     <div className={clsx(
       "flex min-h-screen bg-app text-primary font-sans selection:bg-cyan-500/30",
       language === 'ar' && "flex-row-reverse"
     )}>
-      {!isAuthPage && <Navbar />}
+      {showPrivateShell && <Navbar />}
       <div className={clsx(
         "flex-1 pt-16 md:pt-0 transition-all duration-300",
-        !isAuthPage && (language === 'ar' ? "md:mr-72" : "md:ml-72"),
+        showPrivateShell && (language === 'ar' ? "md:mr-72" : "md:ml-72"),
         language === 'ar' && "text-right"
       )}>
         <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-
-          <Route element={<ProtectedRoute />}>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/meetings" element={<Meetings />} />
-            <Route path="/tasks" element={<Tasks />} />
-            <Route path="/videos" element={<Videos />} />
-            <Route path="/files" element={<Files />} />
-            <Route path="/vm-rental" element={<VMRental />} />
-            <Route path="/chat" element={<Chat />} />
-            <Route path="/games" element={<Games />} />
-            <Route path="/games/:gameId" element={<GameViewPage />} />
-            <Route path="/games/atom-builder" element={<AtomGame />} />
-            <Route path="/hands-on" element={<HandsOn />} />
-          </Route>
+          <Route path="/" element={<PublicHome />} />
+          <Route path="/private/login" element={<Login />} />
+          <Route path="/private/signup" element={<Signup />} />
 
           <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
-            <Route path="/admin" element={<AdminPanel />} />
+            <Route path="/private" element={<Navigate to="/private/dashboard" replace />} />
+            <Route path="/private/dashboard" element={<Dashboard />} />
+            <Route path="/private/meetings" element={<Meetings />} />
+            <Route path="/private/tasks" element={<Tasks />} />
+            <Route path="/private/videos" element={<Videos />} />
+            <Route path="/private/files" element={<Files />} />
+            <Route path="/private/vm-rental" element={<VMRental />} />
+            <Route path="/private/chat" element={<Chat />} />
+            <Route path="/private/games" element={<Games />} />
+            <Route path="/private/games/:gameId" element={<GameViewPage />} />
+            <Route path="/private/games/atom-builder" element={<AtomGame />} />
+            <Route path="/private/hands-on" element={<HandsOn />} />
+            <Route path="/private/admin" element={<AdminPanel />} />
           </Route>
+
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
-      <TutorialTour />
-      <PartyOverlay />
+      {showPrivateShell && <TutorialTour />}
+      {showPrivateShell && <PartyOverlay />}
     </div>
   );
 }

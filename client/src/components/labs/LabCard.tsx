@@ -64,9 +64,10 @@ const LabCard = ({ lab, isAdmin, onEdit, onDelete }: LabCardProps) => {
     const thumbnailUrl = thumbnailId
         ? `${apiBase}/api/labs/thumbnail/${thumbnailId}`
         : lab.thumbnail_link;
-    // Prefer the original public Drive link so it opens in a new tab "normally".
-    const downloadUrl = lab.drive_link || (lab.file_id ? `${apiBase}/api/labs/download/${lab.file_id}` : '#');
+    const downloadUrl = `${apiBase}/api/labs/download/by-id/${lab.id}`;
     const videoUrl = lab.video_link || lab.drive_link;
+    const isDriveVideo = Boolean(videoUrl && (videoUrl.includes('drive.google.com') || /[-\w]{15,}/.test(videoUrl)) && !videoUrl.includes('youtube') && !videoUrl.includes('youtu.be'));
+    const videoHref = isDriveVideo ? `${apiBase}/api/labs/video/${lab.id}` : videoUrl;
     const extras = lab.extra_files || [];
     const description = lab.description || "Experimental lab environment. Download and launch to practice advanced networking scenarios locally.";
     const isLong = description.length > 90 || description.split(' ').length > 16;
@@ -152,7 +153,7 @@ const LabCard = ({ lab, isAdmin, onEdit, onDelete }: LabCardProps) => {
                         <span>Download Lab</span>
                     </button>
                     <button
-                        onClick={() => videoUrl ? window.open(videoUrl, '_blank') : window.open(downloadUrl, '_blank')}
+                        onClick={() => videoHref ? window.open(videoHref, '_blank') : window.open(downloadUrl, '_blank')}
                         className="p-3 border border-white/10 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all flex items-center justify-center"
                     >
                         <Video size={18} />
@@ -166,11 +167,11 @@ const LabCard = ({ lab, isAdmin, onEdit, onDelete }: LabCardProps) => {
                             <span>Supporting Files</span>
                         </div>
                         <div className="flex flex-wrap gap-2">
-                            {extras.map((file) => {
-                                const url = file.webViewLink || `${apiBase}/api/labs/download/${file.id}`;
+                            {extras.map((file, idx) => {
+                                const url = `${apiBase}/api/labs/extra/${lab.id}/${idx}`;
                                 return (
                                     <button
-                                        key={file.id}
+                                        key={file.id || idx}
                                         onClick={() => window.open(url, '_blank')}
                                         className="text-xs px-3 py-2 rounded-xl bg-slate-800/60 border border-white/5 text-slate-200 hover:border-cyan-400/40 hover:text-white transition-all"
                                     >

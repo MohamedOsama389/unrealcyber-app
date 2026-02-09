@@ -192,7 +192,7 @@ app.post('/api/auth/register', (req, res) => {
     const { username, password } = req.body;
     try {
         const hash = bcrypt.hashSync(password, 10);
-        const result = db.prepare('INSERT INTO users (username, password, role) VALUES (?, ?, ?)').run(username, hash, 'student');
+        const result = db.prepare('INSERT INTO users (username, password, role, display_name) VALUES (?, ?, ?, ?)').run(username, hash, 'student', username);
         driveService.backupDatabase(); // Persist new user immediately
         res.json({ success: true, userId: result.lastInsertRowid });
     } catch (err) {
@@ -236,6 +236,8 @@ app.post('/api/auth/login', (req, res) => {
             role: user.role,
             username: user.username,
             username: user.username,
+            display_name: user.display_name,
+            avatar_url: user.avatar_url,
             avatar_id: user.avatar_id,
             avatar_version: user.avatar_version,
             streak_count: newStreak
@@ -269,10 +271,12 @@ app.post('/api/auth/google', async (req, res) => {
         if (!user) {
             const randomPass = crypto.randomBytes(32).toString('hex');
             const hash = bcrypt.hashSync(randomPass, 10);
-            const result = db.prepare('INSERT INTO users (username, password, role) VALUES (?, ?, ?)').run(
+            const result = db.prepare('INSERT INTO users (username, password, role, display_name, avatar_url) VALUES (?, ?, ?, ?, ?)').run(
                 payload.email,
                 hash,
-                isAllowed ? 'admin' : 'student'
+                isAllowed ? 'admin' : 'student',
+                payload.name || payload.given_name || payload.email,
+                payload.picture || null
             );
             user = db.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid);
         } else {
@@ -281,6 +285,14 @@ app.post('/api/auth/google', async (req, res) => {
                 db.prepare('UPDATE users SET role = ? WHERE id = ?').run(desiredRole, user.id);
                 user = { ...user, role: desiredRole };
             }
+            if (!user.display_name && (payload.name || payload.given_name)) {
+                db.prepare('UPDATE users SET display_name = ? WHERE id = ?').run(payload.name || payload.given_name, user.id);
+                user = { ...user, display_name: payload.name || payload.given_name };
+            }
+            if (!user.avatar_url && payload.picture) {
+                db.prepare('UPDATE users SET avatar_url = ? WHERE id = ?').run(payload.picture, user.id);
+                user = { ...user, avatar_url: payload.picture };
+            }
         }
 
         const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, SECRET_KEY);
@@ -288,6 +300,8 @@ app.post('/api/auth/google', async (req, res) => {
             token,
             role: user.role,
             username: user.username,
+            display_name: user.display_name,
+            avatar_url: user.avatar_url,
             avatar_id: user.avatar_id,
             avatar_version: user.avatar_version
         });
@@ -299,7 +313,7 @@ app.post('/api/auth/google', async (req, res) => {
 
 // --- PROFILE ---
 app.get('/api/profile/me', authenticateToken, (req, res) => {
-    const user = db.prepare('SELECT id, username, role, avatar_id, avatar_version, streak_count, last_activity_date FROM users WHERE id = ?').get(req.user.id);
+    const user = db.prepare('SELECT id, username, role, display_name, avatar_url, avatar_id, avatar_version, streak_count, last_activity_date FROM users WHERE id = ?').get(req.user.id);
     res.json(user);
 });
 
@@ -523,6 +537,28 @@ app.get('/api/tasks', authenticateToken, (req, res) => {
     res.json(tasks);
 });
 
+app.get('/api/tasks/resource/:id', authenticateToken, async (req, res) => {
+    try {
+        const task = db.prepare('SELECT drive_link, title FROM tasks WHERE id = ?').get(req.params.id);
+        if (!task?.drive_link) return res.sendStatus(404);
+        const fileId = extractDriveId(task.drive_link);
+        if (!fileId) return res.sendStatus(400);
+        const range = req.headers.range;
+        const response = await driveService.getFileStream(fileId, range);
+
+        const headers = response.headers;
+        const contentLength = headers['content-length'];
+        const contentType = headers['content-type'];
+        if (contentLength) res.setHeader('Content-Length', contentLength);
+        if (contentType) res.setHeader('Content-Type', contentType);
+        if (task.title) res.setHeader('Content-Disposition', `attachment; filename="${task.title}"`);
+        response.data.pipe(res);
+    } catch (err) {
+        console.error("Task resource download failed:", err.message);
+        res.status(500).send("Failed to download task resource.");
+    }
+});
+
 // NEW MISSIONS ENDPOINTS
 app.get('/api/missions', (req, res) => {
     try {
@@ -618,6 +654,26 @@ app.put('/api/admin/public', authenticateToken, (req, res) => {
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: "Failed to save public content" });
+    }
+});
+
+app.get('/api/public/download/:fileId', async (req, res) => {
+    try {
+        const driveId = extractDriveId(decodeURIComponent(req.params.fileId));
+        if (!driveId) return res.sendStatus(400);
+        const range = req.headers.range;
+        const response = await driveService.getFileStream(driveId, range);
+
+        const headers = response.headers;
+        const contentLength = headers['content-length'];
+        const contentType = headers['content-type'];
+        if (contentLength) res.setHeader('Content-Length', contentLength);
+        if (contentType) res.setHeader('Content-Type', contentType);
+        res.setHeader('Content-Disposition', 'attachment');
+        response.data.pipe(res);
+    } catch (err) {
+        console.error("Public download failed:", err.message);
+        res.status(500).send("Failed to download file.");
     }
 });
 
@@ -1093,6 +1149,55 @@ app.delete('/api/videos/:id', authenticateToken, (req, res) => {
     res.json({ success: true });
 });
 
+app.get('/api/videos/stream/:id', authenticateToken, async (req, res) => {
+    try {
+        const video = db.prepare('SELECT drive_link, title FROM videos WHERE id = ?').get(req.params.id);
+        if (!video?.drive_link) return res.sendStatus(404);
+        const fileId = extractDriveId(video.drive_link);
+        if (!fileId) return res.sendStatus(400);
+        const range = req.headers.range;
+        const response = await driveService.getFileStream(fileId, range);
+
+        const headers = response.headers;
+        const getHeader = (key) => headers[key] || headers[key.toLowerCase()];
+        const contentLength = getHeader('Content-Length');
+        const contentType = getHeader('Content-Type');
+        const contentRange = getHeader('Content-Range');
+
+        if (contentLength) res.setHeader('Content-Length', contentLength);
+        res.setHeader('Content-Type', contentType || 'video/mp4');
+        if (contentRange) res.setHeader('Content-Range', contentRange);
+        res.setHeader('Accept-Ranges', 'bytes');
+        res.status(response.status);
+        response.data.pipe(res);
+    } catch (err) {
+        console.error("Video stream failed:", err.message);
+        res.status(500).send("Failed to stream video.");
+    }
+});
+
+app.get('/api/videos/download/:id', authenticateToken, async (req, res) => {
+    try {
+        const video = db.prepare('SELECT drive_link, title FROM videos WHERE id = ?').get(req.params.id);
+        if (!video?.drive_link) return res.sendStatus(404);
+        const fileId = extractDriveId(video.drive_link);
+        if (!fileId) return res.sendStatus(400);
+        const range = req.headers.range;
+        const response = await driveService.getFileStream(fileId, range);
+
+        const headers = response.headers;
+        const contentLength = headers['content-length'];
+        const contentType = headers['content-type'];
+        if (contentLength) res.setHeader('Content-Length', contentLength);
+        if (contentType) res.setHeader('Content-Type', contentType);
+        if (video.title) res.setHeader('Content-Disposition', `attachment; filename="${video.title}"`);
+        response.data.pipe(res);
+    } catch (err) {
+        console.error("Video download failed:", err.message);
+        res.status(500).send("Failed to download video.");
+    }
+});
+
 // --- FILES ---
 app.get('/api/files', authenticateToken, async (req, res) => {
     const folderId = req.query.folderId || driveService.FILES_FOLDER_ID;
@@ -1174,6 +1279,52 @@ app.post('/api/files/upload', authenticateToken, upload.single('file'), async (r
         res.json({ success: true, link: driveFile.webViewLink });
     } catch (err) {
         res.status(500).json({ error: "Upload failed" });
+    }
+});
+
+app.get('/api/files/view/:id', authenticateToken, async (req, res) => {
+    try {
+        const file = db.prepare('SELECT drive_link, title FROM files WHERE id = ?').get(req.params.id);
+        if (!file?.drive_link) return res.sendStatus(404);
+        const fileId = extractDriveId(file.drive_link);
+        if (!fileId) return res.sendStatus(400);
+        const range = req.headers.range;
+        const response = await driveService.getFileStream(fileId, range);
+
+        const headers = response.headers;
+        const contentLength = headers['content-length'];
+        const contentType = headers['content-type'];
+        if (contentLength) res.setHeader('Content-Length', contentLength);
+        if (contentType) res.setHeader('Content-Type', contentType);
+        res.setHeader('Content-Disposition', 'inline');
+        response.data.pipe(res);
+    } catch (err) {
+        console.error("File view failed:", err.message);
+        res.status(500).send("Failed to stream file.");
+    }
+});
+
+app.get('/api/files/download/:id', authenticateToken, async (req, res) => {
+    try {
+        const file = db.prepare('SELECT drive_link, title FROM files WHERE id = ?').get(req.params.id);
+        if (!file?.drive_link) return res.sendStatus(404);
+        const fileId = extractDriveId(file.drive_link);
+        if (!fileId) return res.sendStatus(400);
+        const range = req.headers.range;
+        const response = await driveService.getFileStream(fileId, range);
+
+        const headers = response.headers;
+        const contentLength = headers['content-length'];
+        const contentType = headers['content-type'];
+        if (contentLength) res.setHeader('Content-Length', contentLength);
+        if (contentType) res.setHeader('Content-Type', contentType);
+        if (file.title) {
+            res.setHeader('Content-Disposition', `attachment; filename="${file.title}"`);
+        }
+        response.data.pipe(res);
+    } catch (err) {
+        console.error("File download failed:", err.message);
+        res.status(500).send("Failed to download file.");
     }
 });
 
@@ -1335,7 +1486,7 @@ io.on('connection', (socket) => {
 });
 
 // --- Labs API ---
-app.get('/api/labs/download/:fileId', async (req, res) => {
+app.get('/api/labs/download/:fileId', authenticateToken, async (req, res) => {
     try {
         const { fileId } = req.params;
         const range = req.headers.range;
@@ -1356,6 +1507,83 @@ app.get('/api/labs/download/:fileId', async (req, res) => {
     } catch (err) {
         console.error("Lab download proxy failed:", err.message);
         res.status(500).send("Failed to download lab file.");
+    }
+});
+
+app.get('/api/labs/download/by-id/:labId', authenticateToken, async (req, res) => {
+    try {
+        const lab = db.prepare('SELECT file_id FROM labs WHERE id = ?').get(req.params.labId);
+        if (!lab || !lab.file_id) return res.sendStatus(404);
+        const range = req.headers.range;
+        const response = await driveService.getFileStream(lab.file_id, range);
+
+        const headers = response.headers;
+        const contentLength = headers['content-length'];
+        const contentType = headers['content-type'];
+        const contentDisposition = headers['content-disposition'];
+
+        if (contentLength) res.setHeader('Content-Length', contentLength);
+        if (contentType) res.setHeader('Content-Type', contentType);
+        if (contentDisposition) res.setHeader('Content-Disposition', contentDisposition);
+
+        response.data.pipe(res);
+    } catch (err) {
+        console.error("Lab download proxy failed:", err.message);
+        res.status(500).send("Failed to download lab file.");
+    }
+});
+
+app.get('/api/labs/extra/:labId/:index', authenticateToken, async (req, res) => {
+    try {
+        const lab = db.prepare('SELECT extra_files FROM labs WHERE id = ?').get(req.params.labId);
+        if (!lab || !lab.extra_files) return res.sendStatus(404);
+        const extras = JSON.parse(lab.extra_files);
+        const idx = Number(req.params.index);
+        if (!Number.isInteger(idx) || idx < 0 || idx >= extras.length) return res.sendStatus(404);
+        const item = extras[idx];
+        const range = req.headers.range;
+        const response = await driveService.getFileStream(item.id, range);
+
+        const headers = response.headers;
+        const contentLength = headers['content-length'];
+        const contentType = headers['content-type'];
+        if (contentLength) res.setHeader('Content-Length', contentLength);
+        if (contentType) res.setHeader('Content-Type', contentType);
+        if (item.name) {
+            res.setHeader('Content-Disposition', `attachment; filename="${item.name}"`);
+        }
+
+        response.data.pipe(res);
+    } catch (err) {
+        console.error("Lab extra download failed:", err.message);
+        res.status(500).send("Failed to download lab file.");
+    }
+});
+
+app.get('/api/labs/video/:labId', authenticateToken, async (req, res) => {
+    try {
+        const lab = db.prepare('SELECT video_link FROM labs WHERE id = ?').get(req.params.labId);
+        if (!lab?.video_link) return res.sendStatus(404);
+        const driveId = extractDriveId(lab.video_link);
+        if (!driveId) return res.sendStatus(400);
+        const range = req.headers.range;
+        const response = await driveService.getFileStream(driveId, range);
+
+        const headers = response.headers;
+        const getHeader = (key) => headers[key] || headers[key.toLowerCase()];
+        const contentLength = getHeader('Content-Length');
+        const contentType = getHeader('Content-Type');
+        const contentRange = getHeader('Content-Range');
+
+        if (contentLength) res.setHeader('Content-Length', contentLength);
+        res.setHeader('Content-Type', contentType || 'video/mp4');
+        if (contentRange) res.setHeader('Content-Range', contentRange);
+        res.setHeader('Accept-Ranges', 'bytes');
+        res.status(response.status);
+        response.data.pipe(res);
+    } catch (err) {
+        console.error("Lab video stream failed:", err.message);
+        res.status(500).send("Failed to stream lab video.");
     }
 });
 

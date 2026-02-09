@@ -343,24 +343,21 @@ const Videos = () => {
                                     className="glass-panel overflow-hidden group hover:border-cyan-500/50 transition-colors"
                                 >
                                     <div className="aspect-video bg-slate-900 relative">
-                                        <iframe
-                                            src={getVideoEmbedUrl(vid.drive_link)}
-                                            className="w-full h-full border-0"
-                                            allow="autoplay; fullscreen; picture-in-picture"
-                                            allowFullScreen
-                                            title={vid.title}
-                                        ></iframe>
+                                        <video
+                                            src={`/api/videos/stream/${vid.id}`}
+                                            className="w-full h-full object-contain"
+                                            controls
+                                            preload="metadata"
+                                        />
                                     </div>
                                     <div className="p-4">
                                         <h3 className="font-bold text-primary text-lg mb-2 truncate" title={vid.title}>{vid.title}</h3>
                                         <div className="flex space-x-2">
                                             <a
-                                                href={vid.drive_link}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
+                                                href={`/api/videos/download/${vid.id}`}
                                                 className="flex-1 text-center py-2 bg-panel border border-border hover:bg-white/10 dark:hover:bg-slate-700 rounded-lg text-sm font-medium transition-colors text-primary"
                                             >
-                                                Open in Drive
+                                                Download
                                             </a>
                                             {user.role === 'admin' && (
                                                 <button

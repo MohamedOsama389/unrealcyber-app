@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import StarRating from '../components/StarRating';
-import { Activity, Calendar, CheckCircle, Award, Server, Play, FileText, Eye, Star, Folder, Layout, Plus, Trash2, CheckCircle2 } from 'lucide-react';
+import { Activity, Calendar, CheckCircle, Award, Server, Play, FileText, Eye, Star, Folder, Layout, Plus, Trash2, CheckCircle2, Download } from 'lucide-react';
 import io from 'socket.io-client';
 import { useNavigate } from 'react-router-dom'; // Added import for useNavigate
 import clsx from 'clsx'; // Added import for clsx
@@ -299,11 +299,17 @@ const Dashboard = () => {
                                     src={`https://lh3.googleusercontent.com/d/${user.avatar_id}?v=${user.avatar_version || 0}`}
                                     className="w-full h-full rounded-full object-cover border-4 border-app"
                                     alt="Avatar"
-                                    onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${user.username}&background=22d3ee&color=fff`; }}
+                                    onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${user.display_name || user.username}&background=22d3ee&color=fff`; }}
+                                />
+                            ) : user?.avatar_url ? (
+                                <img
+                                    src={user.avatar_url}
+                                    className="w-full h-full rounded-full object-cover border-4 border-app"
+                                    alt="Avatar"
                                 />
                             ) : (
                                 <div className="w-full h-full rounded-full flex items-center justify-center bg-panel text-3xl font-bold border-4 border-app text-primary">
-                                    {user.username[0].toUpperCase()}
+                                    {(user.display_name || user.username)[0].toUpperCase()}
                                 </div>
                             )}
                         </div>
@@ -337,7 +343,7 @@ const Dashboard = () => {
 
                         <div className="flex flex-col items-center md:items-end">
                             <h1 className="text-3xl font-bold text-primary">
-                                Welcome, <span className="text-cyan-400">{user.username}</span>
+                                Welcome, <span className="text-cyan-400">{user.display_name || user.username}</span>
                             </h1>
                             <p className="text-secondary flex items-center gap-2">
                                 <Activity size={14} className="text-cyan-500" />
@@ -464,24 +470,21 @@ const Dashboard = () => {
                     </div>
                     <div className="flex flex-col md:flex-row">
                         <div className="w-full md:w-2/3 aspect-video bg-black/20">
-                            <iframe
-                                src={getVideoEmbedUrl(featuredVideo.drive_link)}
-                                className="w-full h-full"
-                                allow="autoplay; fullscreen; picture-in-picture"
-                                allowFullScreen
-                                title={featuredVideo.title}
-                            ></iframe>
+                            <video
+                                src={`/api/videos/stream/${featuredVideo.id}`}
+                                className="w-full h-full object-contain"
+                                controls
+                                preload="metadata"
+                            />
                         </div>
                         <div className="p-6 flex flex-col justify-center">
                             <h2 className="text-2xl font-bold text-primary mb-2">{featuredVideo.title}</h2>
                             <p className="text-secondary mb-4">Recommended viewing for this week's module.</p>
                             <a
-                                href={featuredVideo.drive_link}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                href={`/api/videos/download/${featuredVideo.id}`}
                                 className="btn-primary text-center"
                             >
-                                Open in Drive
+                                Download Session
                             </a>
                         </div>
                     </div>
@@ -556,13 +559,11 @@ const Dashboard = () => {
                             <span>View in App</span>
                         </a>
                         <a
-                            href={featuredFile.drive_link}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            href={`/api/files/download/${featuredFile.id}`}
                             className="flex-1 md:flex-none flex items-center justify-center space-x-2 px-6 py-3 bg-panel border border-border hover:bg-white/10 dark:hover:bg-slate-700 text-primary rounded-xl font-bold transition-all"
                         >
-                            <Eye size={18} />
-                            <span>Open Drive</span>
+                            <Download size={18} />
+                            <span>Download</span>
                         </a>
                     </div>
                 </motion.div>

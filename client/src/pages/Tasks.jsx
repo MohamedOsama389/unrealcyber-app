@@ -476,13 +476,11 @@ const TaskCard = ({ task, user, getTaskStatus, allSubmissions, fetchAllSubmissio
 
                 {task.drive_link && (
                     <a
-                        href={task.drive_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        href={`/api/tasks/resource/${task.id}`}
                         className="inline-flex items-center text-cyan-400 hover:text-cyan-300 mb-6 text-sm"
                     >
                         <ExternalLink size={14} className="mr-1" />
-                        Access Resources (GDrive)
+                        Access Resources
                     </a>
                 )}
             </div>

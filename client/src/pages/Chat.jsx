@@ -46,6 +46,8 @@ const Chat = () => {
 
         socketRef.current.emit('send_message', {
             username: user.username,
+            display_name: user.display_name,
+            avatar_url: user.avatar_url,
             content: input
         });
         setInput('');
@@ -68,6 +70,7 @@ const Chat = () => {
                 >
                     {messages.map((msg, idx) => {
                         const isMe = msg.username === user.username;
+                        const displayName = msg.display_name || msg.username;
                         return (
                             <div
                                 key={idx}
@@ -80,16 +83,22 @@ const Chat = () => {
                                                 src={`https://lh3.googleusercontent.com/d/${msg.avatar_id}?v=${msg.avatar_version || 0}`}
                                                 className="w-full h-full object-cover"
                                                 alt=""
-                                                onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${msg.username}&background=22d3ee&color=fff`; }}
+                                                onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${displayName}&background=22d3ee&color=fff`; }}
+                                            />
+                                        ) : msg.avatar_url ? (
+                                            <img
+                                                src={msg.avatar_url}
+                                                className="w-full h-full object-cover"
+                                                alt=""
                                             />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-white bg-gradient-to-tr from-cyan-500 to-blue-600 uppercase">
-                                                {msg.username[0]}
+                                                {displayName[0]}
                                             </div>
                                         )}
                                     </div>
                                     <span className={`text-xs font-bold ${isMe ? 'text-cyan-400' : 'text-purple-400'}`}>
-                                        {msg.username}
+                                        {displayName}
                                     </span>
                                     <span className="text-[10px] text-slate-500">
                                         {format(new Date(msg.timestamp), 'h:mm a')}

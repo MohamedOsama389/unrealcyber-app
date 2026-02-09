@@ -33,6 +33,11 @@ const DEFAULT_PUBLIC_CONTENT = {
     }
 };
 
+const isDriveLink = (url) => {
+    if (!url) return false;
+    return url.includes('drive.google.com') || /[-\w]{15,}/.test(url);
+};
+
 const getYoutubeEmbed = (url) => {
     if (!url) return '';
     try {
@@ -182,9 +187,22 @@ const PublicHome = () => {
                                     </>
                                 )}
                                 {user && (
-                                    <div className="flex flex-col gap-3">
-                                        <div className="text-xs text-secondary">
-                                            Signed in as <span className="text-primary font-semibold">{user.username}</span>
+                                    <div className="flex flex-col gap-3 p-4 rounded-2xl bg-panel/60 border border-white/5">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full overflow-hidden border border-white/10 bg-panel">
+                                                {user.avatar_id ? (
+                                                    <img src={`https://lh3.googleusercontent.com/d/${user.avatar_id}?v=${user.avatar_version || 0}`} className="w-full h-full object-cover" alt="" />
+                                                ) : user.avatar_url ? (
+                                                    <img src={user.avatar_url} className="w-full h-full object-cover" alt="" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-white bg-gradient-to-tr from-cyan-500 to-blue-600 uppercase">
+                                                        {(user.display_name || user.username)[0]}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="text-xs text-secondary">
+                                                Signed in as <span className="text-primary font-semibold">{user.display_name || user.username}</span>
+                                            </div>
                                         </div>
                                         {user.role === 'admin' && (
                                             <a
@@ -283,13 +301,16 @@ const PublicHome = () => {
                         <h2 className="text-2xl font-bold">{content.resources?.title}</h2>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {resourceItems.map((item, idx) => (
+                        {resourceItems.map((item, idx) => {
+                            const isDrive = isDriveLink(item.url);
+                            const downloadHref = isDrive ? `/api/public/download/${encodeURIComponent(item.url)}` : item.url;
+                            return (
                             <div key={`${item.title}-${idx}`} className="glass-panel p-6 border-white/10">
                                 <h3 className="text-lg font-bold mb-2">{item.title}</h3>
                                 <p className="text-secondary text-sm mb-4">{item.description}</p>
                                 {item.url && (
                                     <a
-                                        href={item.url}
+                                        href={downloadHref}
                                         target="_blank"
                                         rel="noreferrer"
                                         className="inline-flex items-center gap-2 text-xs font-bold text-cyan-400 hover:text-cyan-300"
@@ -299,7 +320,7 @@ const PublicHome = () => {
                                     </a>
                                 )}
                             </div>
-                        ))}
+                        )})}
                     </div>
                 </section>
             </main>

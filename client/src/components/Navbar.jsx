@@ -123,6 +123,12 @@ const Navbar = () => {
                                             alt="Nav Avatar"
                                             onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${user.username}&background=22d3ee&color=fff`; }}
                                         />
+                                    ) : user?.avatar_url ? (
+                                        <img
+                                            src={user.avatar_url}
+                                            className="w-full h-full object-cover"
+                                            alt="Nav Avatar"
+                                        />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center font-bold text-white bg-gradient-to-tr from-cyan-500 to-blue-600">
                                             {user.username[0].toUpperCase()}
@@ -130,7 +136,7 @@ const Navbar = () => {
                                     )}
                                 </div>
                                 <div className="overflow-hidden">
-                                    <p className="text-primary font-bold truncate">{user.username}</p>
+                                    <p className="text-primary font-bold truncate">{user.display_name || user.username}</p>
                                     <p className="text-xs text-secondary capitalize">{user.role}</p>
                                 </div>
                             </div>

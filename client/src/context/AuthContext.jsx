@@ -20,13 +20,13 @@ export const AuthProvider = ({ children }) => {
     const login = async (username, password) => {
         try {
             const res = await axios.post('/api/auth/login', { username, password });
-            const { token, role, username: dbUsername, avatar_id, avatar_version } = res.data;
+            const { token, role, username: dbUsername, avatar_id, avatar_version, display_name, avatar_url } = res.data;
 
             if (role?.toLowerCase() !== 'admin') {
                 return { success: false, error: 'Private access is restricted to admins.' };
             }
 
-            const userData = { username: dbUsername, role, avatar_id, avatar_version };
+            const userData = { username: dbUsername, role, avatar_id, avatar_version, display_name, avatar_url };
             setUser(userData);
 
             localStorage.setItem('token', token);
@@ -41,13 +41,13 @@ export const AuthProvider = ({ children }) => {
     const loginWithGoogle = async (credential, options = {}) => {
         try {
             const res = await axios.post('/api/auth/google', { credential });
-            const { token, role, username: dbUsername, avatar_id, avatar_version } = res.data;
+            const { token, role, username: dbUsername, avatar_id, avatar_version, display_name, avatar_url } = res.data;
 
             if (options.requireAdmin && role?.toLowerCase() !== 'admin') {
                 return { success: false, error: 'Not authorized for private access.' };
             }
 
-            const userData = { username: dbUsername, role, avatar_id, avatar_version };
+            const userData = { username: dbUsername, role, avatar_id, avatar_version, display_name, avatar_url };
             setUser(userData);
 
             localStorage.setItem('token', token);

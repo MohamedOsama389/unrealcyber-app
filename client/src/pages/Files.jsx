@@ -331,7 +331,7 @@ const Files = () => {
                                         </p>
                                         <div className="flex space-x-3">
                                             <a
-                                                href={file.drive_link}
+                                                href={`/api/files/view/${file.id}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="flex-1 flex items-center justify-center space-x-2 py-2.5 bg-panel border border-border hover:bg-white/10 dark:hover:bg-slate-700 text-primary rounded-xl text-sm font-bold transition-all"
@@ -340,7 +340,7 @@ const Files = () => {
                                                 <span>View</span>
                                             </a>
                                             <a
-                                                href={file.drive_link.replace('/view', '/download')}
+                                                href={`/api/files/download/${file.id}`}
                                                 className="px-4 flex items-center justify-center bg-purple-600 hover:bg-purple-500 text-white rounded-xl transition-all"
                                                 title="Download"
                                             >

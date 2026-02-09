@@ -45,6 +45,7 @@ const TutorialTour = () => {
     const [currentStep, setCurrentStep] = useState(-1);
     const [coords, setCoords] = useState({ top: 0, left: 0, width: 0, height: 0 });
     const [isComplete, setIsComplete] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
         // Check if user has seen the tour
@@ -54,6 +55,15 @@ const TutorialTour = () => {
         } else {
             setIsComplete(true);
         }
+
+        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        window.addEventListener('orientationchange', handleResize);
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            window.removeEventListener('orientationchange', handleResize);
+        };
     }, []);
 
     useEffect(() => {
@@ -75,7 +85,7 @@ const TutorialTour = () => {
                 handleNext();
             }
         }
-    }, [currentStep]);
+    }, [currentStep, isMobile]);
 
     const handleNext = () => {
         if (currentStep < TOUR_STEPS.length - 1) {
@@ -125,20 +135,37 @@ const TutorialTour = () => {
                 <motion.div
                     key={currentStep}
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{
-                        opacity: 1,
-                        y: 0,
-                        scale: 1,
-                        top: coords.top + coords.height / 2 - 100, // Balanced position
-                        left: coords.left + coords.width + 24
-                    }}
+                    animate={
+                        isMobile
+                            ? {
+                                  opacity: 1,
+                                  y: 0,
+                                  scale: 1,
+                                  bottom: 24,
+                                  left: '50%',
+                                  translateX: '-50%',
+                              }
+                            : {
+                                  opacity: 1,
+                                  y: 0,
+                                  scale: 1,
+                                  top: Math.min(
+                                      Math.max(coords.top - 20, 16),
+                                      window.innerHeight - 240
+                                  ),
+                                  left: Math.min(
+                                      coords.left + coords.width + 24,
+                                      window.innerWidth - 340
+                                  )
+                              }
+                    }
                     exit={{ opacity: 0, scale: 0.95 }}
-                    className="absolute w-80 bg-slate-900 border border-white/10 rounded-3xl p-6 shadow-2xl pointer-events-auto z-[102]"
-                    style={{
-                        position: 'absolute',
-                        // Handle collision with bottom of screen
-                        transform: 'translateY(0)'
-                    }}
+                    className={`${
+                        isMobile
+                            ? 'fixed w-[90vw] max-w-sm left-1/2 -translate-x-1/2'
+                            : 'absolute w-80'
+                    } bg-slate-900 border border-white/10 rounded-3xl p-6 shadow-2xl pointer-events-auto z-[102]`}
+                    style={{ position: isMobile ? 'fixed' : 'absolute' }}
                 >
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center space-x-2 text-cyan-400">

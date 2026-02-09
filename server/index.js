@@ -650,11 +650,22 @@ app.get('/api/public', (req, res) => {
 app.put('/api/admin/public', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.status(403).json({ error: "Unauthorized" });
     try {
-        savePublicContent(req.body);
+        const previous = getPublicContent();
+        const next = req.body;
+        savePublicContent(next);
+
         if (botInstance?.broadcastPublicUpdate) {
+            const normalize = (item) => `${item?.title || ''}|${item?.url || ''}`;
+            const prevVideos = new Set((previous.featured?.items || []).map(normalize));
+            const prevResources = new Set((previous.resources?.items || []).map(normalize));
+            const newVideos = (next.featured?.items || []).filter(i => !prevVideos.has(normalize(i)));
+            const newResources = (next.resources?.items || []).filter(i => !prevResources.has(normalize(i)));
+
             botInstance.broadcastPublicUpdate({
-                title: req.body?.hero?.title || 'Unreal Cyber Academy',
-                subtitle: req.body?.hero?.subtitle || ''
+                title: next?.hero?.title || 'Unreal Cyber Academy',
+                subtitle: next?.hero?.subtitle || '',
+                newVideos,
+                newResources
             });
         }
         res.json({ success: true });

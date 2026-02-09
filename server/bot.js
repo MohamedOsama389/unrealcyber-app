@@ -284,13 +284,21 @@ function initBot(db) {
 
     // --- EXTERNAL NOTIFICATIONS ---
 
-    const broadcastPublicUpdate = ({ title, subtitle }) => {
+    const broadcastPublicUpdate = ({ title, subtitle, newVideos = [], newResources = [] }) => {
         if (!publicBot) return;
         const users = db.prepare('SELECT telegram_id FROM public_telegram_users').all();
+        const listBlock = (label, items) => {
+            if (!items || items.length === 0) return '';
+            const lines = items.slice(0, 5).map(i => `• ${i.title || 'New release'}`).join('\n');
+            return `\n*${label}*\n${lines}\n`;
+        };
+
         const msg =
-            `📢 *Public Site Update*\n\n` +
+            `📢 *Public Update*\n\n` +
             `*${title || 'Unreal Cyber Academy'}*\n` +
             `${subtitle ? `_${subtitle}_\n` : ''}` +
+            `${listBlock('New Episodes', newVideos)}` +
+            `${listBlock('New Files', newResources)}` +
             `\n🌍 ${siteUrl}`;
         users.forEach(u => {
             publicBot.telegram.sendMessage(u.telegram_id, msg, { parse_mode: 'Markdown' })

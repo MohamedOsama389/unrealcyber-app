@@ -651,6 +651,12 @@ app.put('/api/admin/public', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.status(403).json({ error: "Unauthorized" });
     try {
         savePublicContent(req.body);
+        if (botInstance?.broadcastPublicUpdate) {
+            botInstance.broadcastPublicUpdate({
+                title: req.body?.hero?.title || 'Unreal Cyber Academy',
+                subtitle: req.body?.hero?.subtitle || ''
+            });
+        }
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: "Failed to save public content" });
@@ -1440,7 +1446,7 @@ io.on('connection', (socket) => {
 
     // Send recent messages
     const recent = db.prepare(`
-        SELECT m.*, u.avatar_id, u.avatar_version 
+        SELECT m.*, u.avatar_id, u.avatar_version, u.display_name, u.avatar_url
         FROM messages m 
         LEFT JOIN users u ON m.username = u.username 
         ORDER BY m.timestamp DESC 
@@ -1451,14 +1457,16 @@ io.on('connection', (socket) => {
     socket.on('send_message', (data) => {
         // data: { username, content }
         const result = db.prepare('INSERT INTO messages (username, content) VALUES (?, ?)').run(data.username, data.content);
-        const user = db.prepare('SELECT avatar_id, avatar_version FROM users WHERE username = ?').get(data.username);
+        const user = db.prepare('SELECT avatar_id, avatar_version, display_name, avatar_url FROM users WHERE username = ?').get(data.username);
         const msg = {
             id: result.lastInsertRowid,
             username: data.username,
             content: data.content,
             timestamp: new Date(),
             avatar_id: user?.avatar_id,
-            avatar_version: user?.avatar_version
+            avatar_version: user?.avatar_version,
+            display_name: user?.display_name,
+            avatar_url: user?.avatar_url
         };
         io.emit('new_message', msg);
     });

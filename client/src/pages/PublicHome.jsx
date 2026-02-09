@@ -222,6 +222,20 @@ const PublicHome = () => {
                                     </div>
                                 )}
                             </div>
+                            {content.socials?.telegram && (
+                                <div className="mt-6 flex items-center gap-3 text-xs text-secondary">
+                                    <a
+                                        href={content.socials.telegram}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 hover:border-cyan-400/40 text-secondary hover:text-primary transition-colors font-bold"
+                                    >
+                                        Join Telegram Updates
+                                        <ArrowUpRight size={14} />
+                                    </a>
+                                    <span>Get public updates without logging in.</span>
+                                </div>
+                            )}
                         </div>
                         <div className="glass-panel border-cyan-500/20 p-6">
                             <div className="text-xs uppercase tracking-[0.2em] text-cyan-400 mb-4">Latest Focus</div>

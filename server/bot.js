@@ -90,7 +90,7 @@ function initBot(db) {
         if (linkedUser) {
             ctx.reply(`Welcome back, ${linkedUser.username}! 🛡️\n\nYour account is linked. Use /time to change reminder settings.`);
         } else {
-            ctx.reply(`Welcome to Unreal Cyber Academy Bot! 🛡️\n\nPlease link your website account to receive daily missions.\n\nUse /login to start.`);
+            ctx.reply(`Welcome to Unreal Cyber Academy Bot! 🛡️\n\nYou'll receive public updates automatically.\n\nIf you want daily missions, link your website account with /login.`);
         }
     });
 
@@ -285,6 +285,19 @@ function initBot(db) {
         console.log(`[Bot] Broadcasting mission "${mission.title}" to ${activeUsers.length} users...`);
         activeUsers.forEach(u => {
             sendMission(u.telegram_id, mission);
+        });
+    };
+
+    bot.broadcastPublicUpdate = ({ title, subtitle }) => {
+        const users = db.prepare('SELECT telegram_id FROM telegram_users').all();
+        const msg =
+            `📢 *Public Site Update*\n\n` +
+            `*${title || 'Unreal Cyber Academy'}*\n` +
+            `${subtitle ? `_${subtitle}_\n` : ''}` +
+            `\n🌍 ${siteUrl}`;
+        users.forEach(u => {
+            bot.telegram.sendMessage(u.telegram_id, msg, { parse_mode: 'Markdown' })
+                .catch(err => console.error("Public update notify error:", err.message));
         });
     };
 

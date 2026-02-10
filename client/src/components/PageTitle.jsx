@@ -10,7 +10,10 @@ const PageTitle = () => {
 
         switch (true) {
             case path === '/':
-                title = 'Unreal Cyber Academy';
+                title = 'UnrealCyber Vision';
+                break;
+            case path.startsWith('/vision/'):
+                title = 'Vision | UnrealCyber';
                 break;
             case path.startsWith('/private/dashboard'):
                 title = 'Dashboard | UCA';

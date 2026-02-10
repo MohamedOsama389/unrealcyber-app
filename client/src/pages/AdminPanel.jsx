@@ -7,45 +7,7 @@ import { Shield, Users, FileCheck, Search, Award, Trash2, Key, Star, Edit, Trash
 import clsx from 'clsx';
 import StarRating from '../components/StarRating';
 import io from 'socket.io-client';
-
-const DEFAULT_PUBLIC_CONTENT = {
-    hero: {
-        title: 'UnrealCyber Vision',
-        subtitle: 'Networking, ethical hacking, and programming. Learn fast, build real skills.',
-        ctaText: 'Watch on YouTube',
-        ctaLink: 'https://www.youtube.com/'
-    },
-    pillars: [
-        { title: 'Networking', description: 'Routing, switching, protocols, and real labs.' },
-        { title: 'Ethical Hacking', description: 'Hands-on offensive security and defense.' },
-        { title: 'Programming', description: 'Automation, scripts, and tools that scale.' }
-    ],
-    sections: [
-        {
-            key: 'networking',
-            title: 'Networking',
-            description: 'Core networking foundations and lab walkthroughs.',
-            videos: [{ title: 'Intro to Networking', description: 'Quick fundamentals to get started.', url: '', downloads: [] }]
-        },
-        {
-            key: 'ethical-hacking',
-            title: 'Ethical Hacking',
-            description: 'Red-team mindset, tooling, and practical exploits.',
-            videos: []
-        },
-        {
-            key: 'programming',
-            title: 'Programming',
-            description: 'Build scripts, automation, and security tooling.',
-            videos: []
-        }
-    ],
-    socials: {
-        youtube: '',
-        telegram: '',
-        discord: ''
-    }
-};
+import { DEFAULT_PUBLIC_CONTENT, normalizePublicContent } from '../data/publicSite';
 
 const AdminPanel = () => {
     const { user } = useAuth();
@@ -119,7 +81,7 @@ const AdminPanel = () => {
     const fetchPublicContent = async () => {
         try {
             const res = await axios.get('/api/public');
-            setPublicContent({ ...DEFAULT_PUBLIC_CONTENT, ...res.data });
+            setPublicContent(normalizePublicContent(res.data));
         } catch (err) {
             console.error("Failed to fetch public content:", err);
             setPublicContent(DEFAULT_PUBLIC_CONTENT);

@@ -22,6 +22,8 @@ import AtomGame from './pages/AtomGame';
 import HandsOn from './pages/HandsOn';
 import AdminPanel from './pages/AdminPanel';
 import PublicHome from './pages/PublicHome';
+import PublicSection from './pages/PublicSection';
+import PublicVideo from './pages/PublicVideo';
 import clsx from 'clsx';
 
 function AppContent() {
@@ -45,6 +47,8 @@ function AppContent() {
       )}>
         <Routes>
           <Route path="/" element={<PublicHome />} />
+          <Route path="/vision/:sectionKey" element={<PublicSection />} />
+          <Route path="/vision/:sectionKey/:videoSlug" element={<PublicVideo />} />
           <Route path="/private/login" element={<Login />} />
           <Route path="/private/signup" element={<Signup />} />
 

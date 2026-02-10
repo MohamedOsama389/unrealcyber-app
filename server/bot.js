@@ -93,7 +93,8 @@ function initBot(db) {
             if (linkedUser) {
                 ctx.reply(`Welcome back, ${linkedUser.username}! 🛡️\n\nYour account is linked. Use /time to change reminder settings.`);
             } else {
-                ctx.reply(`Welcome to Unreal Cyber Academy Bot! 🛡️\n\nIf you want daily missions, link your website account with /login.`);
+                sessions[ctx.from.id] = { step: 'email' };
+                ctx.reply(`Welcome to Unreal Cyber Academy Bot! 🛡️\n\nSend your website email to request access (or type /login).`);
             }
         });
     }

@@ -112,6 +112,7 @@ const PublicHome = () => {
     }, [loginWithGoogle, user]);
 
     const featuredItems = content.featured?.items || [];
+    const topFeatured = featuredItems[0];
     const resourceItems = content.resources?.items || [];
 
     return (
@@ -249,16 +250,40 @@ const PublicHome = () => {
                                 </div>
                             )}
                         </div>
-                        <div className="glass-panel border-cyan-500/20 p-6">
-                            <div className="text-xs uppercase tracking-[0.2em] text-cyan-400 mb-4">Latest Focus</div>
-                            <h3 className="text-xl font-bold mb-3">{content.featured?.title}</h3>
-                            <p className="text-secondary text-sm leading-relaxed">
-                                {featuredItems[0]?.description || 'Short, clear walkthroughs and practical labs tailored for learners.'}
-                            </p>
-                            <div className="mt-6 flex items-center gap-3 text-xs text-secondary">
-                                <span className="px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">Hands-on</span>
-                                <span className="px-3 py-1 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20">Beginner to Pro</span>
-                            </div>
+                        <div className="glass-panel border-cyan-500/20 p-6 space-y-3">
+                            <div className="text-xs uppercase tracking-[0.2em] text-cyan-400">Latest Focus</div>
+                            <h3 className="text-xl font-bold">{content.featured?.title || 'Featured Videos'}</h3>
+                            {topFeatured ? (
+                                <>
+                                    <p className="text-secondary text-sm leading-relaxed">{topFeatured.description}</p>
+                                    {getYoutubeEmbed(topFeatured.url) ? (
+                                        <div className="aspect-video w-full rounded-xl overflow-hidden border border-white/5">
+                                            <iframe
+                                                src={getYoutubeEmbed(topFeatured.url)}
+                                                className="w-full h-full"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                allowFullScreen
+                                            />
+                                        </div>
+                                    ) : (
+                                        topFeatured.url && (
+                                            <a
+                                                href={topFeatured.url}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="inline-flex items-center gap-2 text-xs font-bold text-cyan-400 hover:text-cyan-300"
+                                            >
+                                                Watch
+                                                <ArrowUpRight size={14} />
+                                            </a>
+                                        )
+                                    )}
+                                </>
+                            ) : (
+                                <p className="text-secondary text-sm leading-relaxed">
+                                    Add a featured video in the admin panel to showcase it here.
+                                </p>
+                            )}
                         </div>
                     </div>
                 </section>

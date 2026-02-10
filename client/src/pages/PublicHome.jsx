@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
-import { ArrowUpRight, Play, ShieldCheck } from 'lucide-react';
+import { ArrowUpRight, Play, ShieldCheck, Send } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const DEFAULT_PUBLIC_CONTENT = {
@@ -142,6 +142,18 @@ const PublicHome = () => {
                             <Play size={14} />
                             {content.hero?.ctaText || 'Watch on YouTube'}
                         </a>
+                        {content.socials?.telegram && (
+                            <a
+                                href={content.socials.telegram}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-white/10 text-secondary hover:text-primary hover:border-cyan-400/40 transition-colors text-xs font-bold"
+                                title="Join Telegram updates"
+                            >
+                                <Send size={14} />
+                                Telegram
+                            </a>
+                        )}
                     </div>
                 </div>
             </header>

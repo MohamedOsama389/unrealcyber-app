@@ -146,7 +146,7 @@ function initBot(db) {
         const text = ctx.message.text.trim();
 
         if (session.step === 'username') {
-            const user = db.prepare('SELECT * FROM users WHERE username = ?').get(text);
+            const user = db.prepare('SELECT * FROM users WHERE LOWER(username) = LOWER(?)').get(text);
             if (!user) return ctx.reply("User not found. Try /login again.");
             session.username = text;
             session.step = 'password';

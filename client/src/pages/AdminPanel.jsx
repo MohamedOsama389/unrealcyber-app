@@ -10,23 +10,36 @@ import io from 'socket.io-client';
 
 const DEFAULT_PUBLIC_CONTENT = {
     hero: {
-        title: 'Unreal Cyber Academy',
-        subtitle: 'Cybersecurity learning, labs, and resources. Watch, practice, and build real skills.',
+        title: 'UnrealCyber Vision',
+        subtitle: 'Networking, ethical hacking, and programming. Learn fast, build real skills.',
         ctaText: 'Watch on YouTube',
         ctaLink: 'https://www.youtube.com/'
     },
-    about: {
-        title: 'About the Academy',
-        body: 'Hands-on cybersecurity learning with practical labs, short tutorials, and real-world walkthroughs.'
-    },
-    featured: {
-        title: 'Featured Videos',
-        items: [{ title: 'Intro to Networking', description: 'Quick fundamentals to get started.', url: '' }]
-    },
-    resources: {
-        title: 'Files & Tools',
-        items: [{ title: 'Starter Toolkit', description: 'Download the essentials.', url: '' }]
-    },
+    pillars: [
+        { title: 'Networking', description: 'Routing, switching, protocols, and real labs.' },
+        { title: 'Ethical Hacking', description: 'Hands-on offensive security and defense.' },
+        { title: 'Programming', description: 'Automation, scripts, and tools that scale.' }
+    ],
+    sections: [
+        {
+            key: 'networking',
+            title: 'Networking',
+            description: 'Core networking foundations and lab walkthroughs.',
+            videos: [{ title: 'Intro to Networking', description: 'Quick fundamentals to get started.', url: '', downloads: [] }]
+        },
+        {
+            key: 'ethical-hacking',
+            title: 'Ethical Hacking',
+            description: 'Red-team mindset, tooling, and practical exploits.',
+            videos: []
+        },
+        {
+            key: 'programming',
+            title: 'Programming',
+            description: 'Build scripts, automation, and security tooling.',
+            videos: []
+        }
+    ],
     socials: {
         youtube: '',
         telegram: '',
@@ -54,6 +67,7 @@ const AdminPanel = () => {
     const [publicContent, setPublicContent] = useState(DEFAULT_PUBLIC_CONTENT);
     const [publicSaving, setPublicSaving] = useState(false);
     const [publicError, setPublicError] = useState('');
+    const [publicUploading, setPublicUploading] = useState(false);
     const [privateAllowlist, setPrivateAllowlist] = useState([]);
     const [privateEmailInput, setPrivateEmailInput] = useState('');
     const [privateSaving, setPrivateSaving] = useState(false);
@@ -110,6 +124,104 @@ const AdminPanel = () => {
             console.error("Failed to fetch public content:", err);
             setPublicContent(DEFAULT_PUBLIC_CONTENT);
         }
+    };
+
+    const uploadPublicAsset = async (file, kind = 'file') => {
+        if (!file) return '';
+        setPublicUploading(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('kind', kind);
+            const res = await axios.post('/api/admin/public/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            return res.data.link;
+        } catch (err) {
+            alert(err.response?.data?.error || 'Upload failed');
+            return '';
+        } finally {
+            setPublicUploading(false);
+        }
+    };
+
+    const updateSection = (sectionIndex, patch) => {
+        setPublicContent(prev => {
+            const sections = [...(prev.sections || DEFAULT_PUBLIC_CONTENT.sections)];
+            sections[sectionIndex] = { ...sections[sectionIndex], ...patch };
+            return { ...prev, sections };
+        });
+    };
+
+    const updateVideo = (sectionIndex, videoIndex, patch) => {
+        setPublicContent(prev => {
+            const sections = [...(prev.sections || DEFAULT_PUBLIC_CONTENT.sections)];
+            const section = sections[sectionIndex] || {};
+            const videos = [...(section.videos || [])];
+            videos[videoIndex] = { ...videos[videoIndex], ...patch };
+            sections[sectionIndex] = { ...section, videos };
+            return { ...prev, sections };
+        });
+    };
+
+    const addVideo = (sectionIndex) => {
+        setPublicContent(prev => {
+            const sections = [...(prev.sections || DEFAULT_PUBLIC_CONTENT.sections)];
+            const section = sections[sectionIndex] || {};
+            const videos = [...(section.videos || []), { title: '', description: '', url: '', downloads: [] }];
+            sections[sectionIndex] = { ...section, videos };
+            return { ...prev, sections };
+        });
+    };
+
+    const removeVideo = (sectionIndex, videoIndex) => {
+        setPublicContent(prev => {
+            const sections = [...(prev.sections || DEFAULT_PUBLIC_CONTENT.sections)];
+            const section = sections[sectionIndex] || {};
+            const videos = (section.videos || []).filter((_, i) => i !== videoIndex);
+            sections[sectionIndex] = { ...section, videos };
+            return { ...prev, sections };
+        });
+    };
+
+    const addDownload = (sectionIndex, videoIndex) => {
+        setPublicContent(prev => {
+            const sections = [...(prev.sections || DEFAULT_PUBLIC_CONTENT.sections)];
+            const section = sections[sectionIndex] || {};
+            const videos = [...(section.videos || [])];
+            const video = videos[videoIndex] || {};
+            const downloads = [...(video.downloads || []), { title: '', url: '' }];
+            videos[videoIndex] = { ...video, downloads };
+            sections[sectionIndex] = { ...section, videos };
+            return { ...prev, sections };
+        });
+    };
+
+    const updateDownload = (sectionIndex, videoIndex, downloadIndex, patch) => {
+        setPublicContent(prev => {
+            const sections = [...(prev.sections || DEFAULT_PUBLIC_CONTENT.sections)];
+            const section = sections[sectionIndex] || {};
+            const videos = [...(section.videos || [])];
+            const video = videos[videoIndex] || {};
+            const downloads = [...(video.downloads || [])];
+            downloads[downloadIndex] = { ...downloads[downloadIndex], ...patch };
+            videos[videoIndex] = { ...video, downloads };
+            sections[sectionIndex] = { ...section, videos };
+            return { ...prev, sections };
+        });
+    };
+
+    const removeDownload = (sectionIndex, videoIndex, downloadIndex) => {
+        setPublicContent(prev => {
+            const sections = [...(prev.sections || DEFAULT_PUBLIC_CONTENT.sections)];
+            const section = sections[sectionIndex] || {};
+            const videos = [...(section.videos || [])];
+            const video = videos[videoIndex] || {};
+            const downloads = (video.downloads || []).filter((_, i) => i !== downloadIndex);
+            videos[videoIndex] = { ...video, downloads };
+            sections[sectionIndex] = { ...section, videos };
+            return { ...prev, sections };
+        });
     };
 
     const fetchPrivateAllowlist = async () => {
@@ -1146,97 +1258,28 @@ const AdminPanel = () => {
                     </div>
 
                     <div className="glass-panel p-6 border border-border space-y-4">
-                        <h4 className="text-lg font-bold text-primary">About Section</h4>
-                        <input
-                            className="input-field"
-                            placeholder="Title"
-                            value={publicContent?.about?.title || ''}
-                            onChange={(e) => setPublicContent(prev => ({ ...prev, about: { ...prev.about, title: e.target.value } }))}
-                        />
-                        <textarea
-                            rows={4}
-                            className="input-field"
-                            placeholder="Body"
-                            value={publicContent?.about?.body || ''}
-                            onChange={(e) => setPublicContent(prev => ({ ...prev, about: { ...prev.about, body: e.target.value } }))}
-                        />
-                    </div>
-
-                    <div className="glass-panel p-6 border border-border space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h4 className="text-lg font-bold text-primary">Featured Videos</h4>
-                            <button
-                                onClick={() => setPublicContent(prev => ({
-                                    ...prev,
-                                    featured: {
-                                        ...prev.featured,
-                                        items: [...(prev.featured?.items || []), { title: '', description: '', url: '' }]
-                                    }
-                                }))}
-                                className="text-xs font-bold text-cyan-400 flex items-center gap-2"
-                            >
-                                <Plus size={14} /> Add Video
-                            </button>
-                        </div>
-                        <input
-                            className="input-field"
-                            placeholder="Section title"
-                            value={publicContent?.featured?.title || ''}
-                            onChange={(e) => setPublicContent(prev => ({ ...prev, featured: { ...prev.featured, title: e.target.value } }))}
-                        />
+                        <h4 className="text-lg font-bold text-primary">Vision Pillars</h4>
                         <div className="space-y-4">
-                            {(publicContent?.featured?.items || []).map((item, idx) => (
+                            {(publicContent?.pillars || []).map((pillar, idx) => (
                                 <div key={idx} className="p-4 rounded-2xl border border-white/10 bg-panel/60 space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <p className="text-xs font-bold text-secondary">Video {idx + 1}</p>
-                                        <button
-                                            onClick={() => setPublicContent(prev => ({
-                                                ...prev,
-                                                featured: {
-                                                    ...prev.featured,
-                                                    items: prev.featured.items.filter((_, i) => i !== idx)
-                                                }
-                                            }))}
-                                            className="text-red-400 hover:text-red-300"
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
+                                    <p className="text-xs font-bold text-secondary">Pillar {idx + 1}</p>
                                     <input
                                         className="input-field"
                                         placeholder="Title"
-                                        value={item.title}
+                                        value={pillar.title || ''}
                                         onChange={(e) => setPublicContent(prev => ({
                                             ...prev,
-                                            featured: {
-                                                ...prev.featured,
-                                                items: prev.featured.items.map((v, i) => i === idx ? { ...v, title: e.target.value } : v)
-                                            }
+                                            pillars: (prev.pillars || []).map((p, i) => i === idx ? { ...p, title: e.target.value } : p)
                                         }))}
                                     />
                                     <textarea
                                         rows={2}
                                         className="input-field"
                                         placeholder="Description"
-                                        value={item.description}
+                                        value={pillar.description || ''}
                                         onChange={(e) => setPublicContent(prev => ({
                                             ...prev,
-                                            featured: {
-                                                ...prev.featured,
-                                                items: prev.featured.items.map((v, i) => i === idx ? { ...v, description: e.target.value } : v)
-                                            }
-                                        }))}
-                                    />
-                                    <input
-                                        className="input-field"
-                                        placeholder="YouTube or video link"
-                                        value={item.url}
-                                        onChange={(e) => setPublicContent(prev => ({
-                                            ...prev,
-                                            featured: {
-                                                ...prev.featured,
-                                                items: prev.featured.items.map((v, i) => i === idx ? { ...v, url: e.target.value } : v)
-                                            }
+                                            pillars: (prev.pillars || []).map((p, i) => i === idx ? { ...p, description: e.target.value } : p)
                                         }))}
                                     />
                                 </div>
@@ -1244,83 +1287,137 @@ const AdminPanel = () => {
                         </div>
                     </div>
 
-                    <div className="glass-panel p-6 border border-border space-y-4">
+                    <div className="glass-panel p-6 border border-border space-y-6">
                         <div className="flex items-center justify-between">
-                            <h4 className="text-lg font-bold text-primary">Resources</h4>
-                            <button
-                                onClick={() => setPublicContent(prev => ({
-                                    ...prev,
-                                    resources: {
-                                        ...prev.resources,
-                                        items: [...(prev.resources?.items || []), { title: '', description: '', url: '' }]
-                                    }
-                                }))}
-                                className="text-xs font-bold text-cyan-400 flex items-center gap-2"
-                            >
-                                <Plus size={14} /> Add Resource
-                            </button>
+                            <h4 className="text-lg font-bold text-primary">Sections & Videos</h4>
+                            {publicUploading && <span className="text-xs text-cyan-400">Uploading...</span>}
                         </div>
-                        <input
-                            className="input-field"
-                            placeholder="Section title"
-                            value={publicContent?.resources?.title || ''}
-                            onChange={(e) => setPublicContent(prev => ({ ...prev, resources: { ...prev.resources, title: e.target.value } }))}
-                        />
-                        <div className="space-y-4">
-                            {(publicContent?.resources?.items || []).map((item, idx) => (
-                                <div key={idx} className="p-4 rounded-2xl border border-white/10 bg-panel/60 space-y-3">
+                        <div className="space-y-6">
+                            {(publicContent?.sections || []).map((section, sectionIndex) => (
+                                <div key={sectionIndex} className="p-4 rounded-2xl border border-white/10 bg-panel/60 space-y-4">
                                     <div className="flex items-center justify-between">
-                                        <p className="text-xs font-bold text-secondary">Resource {idx + 1}</p>
+                                        <p className="text-xs font-bold text-secondary">Section {sectionIndex + 1}</p>
                                         <button
-                                            onClick={() => setPublicContent(prev => ({
-                                                ...prev,
-                                                resources: {
-                                                    ...prev.resources,
-                                                    items: prev.resources.items.filter((_, i) => i !== idx)
-                                                }
-                                            }))}
-                                            className="text-red-400 hover:text-red-300"
+                                            onClick={() => addVideo(sectionIndex)}
+                                            className="text-xs font-bold text-cyan-400 flex items-center gap-2"
                                         >
-                                            <Trash2 size={14} />
+                                            <Plus size={14} /> Add Video
                                         </button>
                                     </div>
                                     <input
                                         className="input-field"
-                                        placeholder="Title"
-                                        value={item.title}
-                                        onChange={(e) => setPublicContent(prev => ({
-                                            ...prev,
-                                            resources: {
-                                                ...prev.resources,
-                                                items: prev.resources.items.map((v, i) => i === idx ? { ...v, title: e.target.value } : v)
-                                            }
-                                        }))}
+                                        placeholder="Section title"
+                                        value={section.title || ''}
+                                        onChange={(e) => updateSection(sectionIndex, { title: e.target.value })}
                                     />
                                     <textarea
                                         rows={2}
                                         className="input-field"
-                                        placeholder="Description"
-                                        value={item.description}
-                                        onChange={(e) => setPublicContent(prev => ({
-                                            ...prev,
-                                            resources: {
-                                                ...prev.resources,
-                                                items: prev.resources.items.map((v, i) => i === idx ? { ...v, description: e.target.value } : v)
-                                            }
-                                        }))}
+                                        placeholder="Section description"
+                                        value={section.description || ''}
+                                        onChange={(e) => updateSection(sectionIndex, { description: e.target.value })}
                                     />
-                                    <input
-                                        className="input-field"
-                                        placeholder="Link"
-                                        value={item.url}
-                                        onChange={(e) => setPublicContent(prev => ({
-                                            ...prev,
-                                            resources: {
-                                                ...prev.resources,
-                                                items: prev.resources.items.map((v, i) => i === idx ? { ...v, url: e.target.value } : v)
-                                            }
-                                        }))}
-                                    />
+
+                                    <div className="space-y-4">
+                                        {(section.videos || []).map((video, videoIndex) => (
+                                            <div key={videoIndex} className="p-4 rounded-2xl border border-white/10 bg-panel/80 space-y-3">
+                                                <div className="flex items-center justify-between">
+                                                    <p className="text-xs font-bold text-secondary">Video {videoIndex + 1}</p>
+                                                    <button
+                                                        onClick={() => removeVideo(sectionIndex, videoIndex)}
+                                                        className="text-red-400 hover:text-red-300"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
+                                                <input
+                                                    className="input-field"
+                                                    placeholder="Title"
+                                                    value={video.title || ''}
+                                                    onChange={(e) => updateVideo(sectionIndex, videoIndex, { title: e.target.value })}
+                                                />
+                                                <textarea
+                                                    rows={2}
+                                                    className="input-field"
+                                                    placeholder="Description"
+                                                    value={video.description || ''}
+                                                    onChange={(e) => updateVideo(sectionIndex, videoIndex, { description: e.target.value })}
+                                                />
+                                                <div className="flex flex-col md:flex-row gap-3">
+                                                    <input
+                                                        className="input-field flex-1"
+                                                        placeholder="YouTube or Drive link"
+                                                        value={video.url || ''}
+                                                        onChange={(e) => updateVideo(sectionIndex, videoIndex, { url: e.target.value })}
+                                                    />
+                                                    <label className="px-4 py-2 rounded-xl bg-white/10 border border-white/10 text-secondary text-xs font-bold cursor-pointer text-center">
+                                                        Upload Video
+                                                        <input
+                                                            type="file"
+                                                            accept="video/*"
+                                                            className="hidden"
+                                                            onChange={async (e) => {
+                                                                const file = e.target.files?.[0];
+                                                                if (!file) return;
+                                                                const link = await uploadPublicAsset(file, 'video');
+                                                                if (link) updateVideo(sectionIndex, videoIndex, { url: link });
+                                                            }}
+                                                        />
+                                                    </label>
+                                                </div>
+
+                                                <div className="space-y-3 pt-2">
+                                                    <div className="flex items-center justify-between">
+                                                        <p className="text-xs font-bold text-secondary">Downloads</p>
+                                                        <button
+                                                            onClick={() => addDownload(sectionIndex, videoIndex)}
+                                                            className="text-xs font-bold text-cyan-400 flex items-center gap-2"
+                                                        >
+                                                            <Plus size={14} /> Add File
+                                                        </button>
+                                                    </div>
+                                                    {(video.downloads || []).length === 0 && (
+                                                        <p className="text-xs text-secondary">No downloads yet.</p>
+                                                    )}
+                                                    {(video.downloads || []).map((download, downloadIndex) => (
+                                                        <div key={downloadIndex} className="flex flex-col md:flex-row gap-3 items-center">
+                                                            <input
+                                                                className="input-field flex-1"
+                                                                placeholder="File title"
+                                                                value={download.title || ''}
+                                                                onChange={(e) => updateDownload(sectionIndex, videoIndex, downloadIndex, { title: e.target.value })}
+                                                            />
+                                                            <input
+                                                                className="input-field flex-1"
+                                                                placeholder="File link"
+                                                                value={download.url || ''}
+                                                                onChange={(e) => updateDownload(sectionIndex, videoIndex, downloadIndex, { url: e.target.value })}
+                                                            />
+                                                            <label className="px-3 py-2 rounded-xl bg-white/10 border border-white/10 text-secondary text-xs font-bold cursor-pointer text-center">
+                                                                Upload File
+                                                                <input
+                                                                    type="file"
+                                                                    className="hidden"
+                                                                    onChange={async (e) => {
+                                                                        const file = e.target.files?.[0];
+                                                                        if (!file) return;
+                                                                        const link = await uploadPublicAsset(file, 'file');
+                                                                        if (link) updateDownload(sectionIndex, videoIndex, downloadIndex, { url: link });
+                                                                    }}
+                                                                />
+                                                            </label>
+                                                            <button
+                                                                onClick={() => removeDownload(sectionIndex, videoIndex, downloadIndex)}
+                                                                className="text-red-400 hover:text-red-300"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             ))}
                         </div>

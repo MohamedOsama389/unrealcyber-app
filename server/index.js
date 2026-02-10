@@ -43,27 +43,38 @@ const extractDriveId = (raw) => {
 
 const DEFAULT_PUBLIC_CONTENT = {
     hero: {
-        title: 'Unreal Cyber Academy',
-        subtitle: 'Cybersecurity learning, labs, and resources. Watch, practice, and build real skills.',
+        title: 'UnrealCyber Vision',
+        subtitle: 'Networking, ethical hacking, and programming. Learn fast, build real skills.',
         ctaText: 'Watch on YouTube',
         ctaLink: 'https://www.youtube.com/'
     },
-    about: {
-        title: 'About the Academy',
-        body: 'Hands-on cybersecurity learning with practical labs, short tutorials, and real-world walkthroughs.'
-    },
-    featured: {
-        title: 'Featured Videos',
-        items: [
-            { title: 'Intro to Networking', description: 'Quick fundamentals to get started.', url: '' }
-        ]
-    },
-    resources: {
-        title: 'Files & Tools',
-        items: [
-            { title: 'Starter Toolkit', description: 'Download the essentials.', url: '' }
-        ]
-    },
+    pillars: [
+        { title: 'Networking', description: 'Routing, switching, protocols, and real labs.' },
+        { title: 'Ethical Hacking', description: 'Hands-on offensive security and defense.' },
+        { title: 'Programming', description: 'Automation, scripts, and tools that scale.' }
+    ],
+    sections: [
+        {
+            key: 'networking',
+            title: 'Networking',
+            description: 'Core networking foundations and lab walkthroughs.',
+            videos: [
+                { title: 'Intro to Networking', description: 'Quick fundamentals to get started.', url: '', downloads: [] }
+            ]
+        },
+        {
+            key: 'ethical-hacking',
+            title: 'Ethical Hacking',
+            description: 'Red-team mindset, tooling, and practical exploits.',
+            videos: []
+        },
+        {
+            key: 'programming',
+            title: 'Programming',
+            description: 'Build scripts, automation, and security tooling.',
+            videos: []
+        }
+    ],
     socials: {
         youtube: '',
         telegram: '',
@@ -684,10 +695,15 @@ app.put('/api/admin/public', authenticateToken, (req, res) => {
 
         if (botInstance?.broadcastPublicUpdate) {
             const normalize = (item) => `${item?.title || ''}|${item?.url || ''}`;
-            const prevVideos = new Set((previous.featured?.items || []).map(normalize));
-            const prevResources = new Set((previous.resources?.items || []).map(normalize));
-            const newVideos = (next.featured?.items || []).filter(i => !prevVideos.has(normalize(i)));
-            const newResources = (next.resources?.items || []).filter(i => !prevResources.has(normalize(i)));
+            const flattenVideos = (sections = []) =>
+                sections.flatMap(section => (section?.videos || []).map(v => ({ ...v, section: section?.title })));
+            const flattenDownloads = (sections = []) =>
+                sections.flatMap(section => (section?.videos || []).flatMap(v => v?.downloads || []));
+
+            const prevVideos = new Set(flattenVideos(previous.sections || []).map(normalize));
+            const prevResources = new Set(flattenDownloads(previous.sections || []).map(normalize));
+            const newVideos = flattenVideos(next.sections || []).filter(i => !prevVideos.has(normalize(i)));
+            const newResources = flattenDownloads(next.sections || []).filter(i => !prevResources.has(normalize(i)));
 
             botInstance.broadcastPublicUpdate({
                 title: next?.hero?.title || 'Unreal Cyber Academy',
@@ -699,6 +715,19 @@ app.put('/api/admin/public', authenticateToken, (req, res) => {
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: "Failed to save public content" });
+    }
+});
+
+app.post('/api/admin/public/upload', authenticateToken, upload.single('file'), async (req, res) => {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: "Unauthorized" });
+    try {
+        const kind = (req.body.kind || 'file').toLowerCase();
+        const targetFolder = kind === 'video' ? driveService.VIDEOS_FOLDER_ID : driveService.FILES_FOLDER_ID;
+        const driveFile = await driveService.uploadFile(req.file, targetFolder, { makePublic: true });
+        res.json({ success: true, link: driveFile.webViewLink, id: driveFile.id });
+    } catch (err) {
+        console.error("[Public Upload] Failed:", err.message);
+        res.status(500).json({ error: "Upload failed" });
     }
 });
 

@@ -354,7 +354,7 @@ const Videos = () => {
                                         <h3 className="font-bold text-primary text-lg mb-2 truncate" title={vid.title}>{vid.title}</h3>
                                         <div className="flex space-x-2">
                                             <a
-                                                href={`/api/videos/download/${vid.id}`}
+                                            href={`/api/videos/download/${vid.id}${localStorage.getItem('token') ? `?token=${encodeURIComponent(localStorage.getItem('token'))}` : ''}`}
                                                 className="flex-1 text-center py-2 bg-panel border border-border hover:bg-white/10 dark:hover:bg-slate-700 rounded-lg text-sm font-medium transition-colors text-primary"
                                             >
                                                 Download

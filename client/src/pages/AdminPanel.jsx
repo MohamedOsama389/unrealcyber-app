@@ -94,6 +94,7 @@ const AdminPanel = () => {
         try {
             const formData = new FormData();
             formData.append('file', file);
+            formData.append('filename', file.name);
             formData.append('kind', kind);
             const res = await axios.post('/api/admin/public/upload', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }

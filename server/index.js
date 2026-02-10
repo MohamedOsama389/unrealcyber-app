@@ -723,6 +723,9 @@ app.post('/api/admin/public/upload', authenticateToken, upload.single('file'), a
     try {
         const kind = (req.body.kind || 'file').toLowerCase();
         const targetFolder = kind === 'video' ? driveService.VIDEOS_FOLDER_ID : driveService.FILES_FOLDER_ID;
+        if (req.body.filename) {
+            req.file.originalname = req.body.filename;
+        }
         const driveFile = await driveService.uploadFile(req.file, targetFolder, { makePublic: true });
         res.json({ success: true, link: driveFile.webViewLink, id: driveFile.id });
     } catch (err) {
@@ -736,6 +739,7 @@ app.get('/api/public/download/:fileId', async (req, res) => {
         const driveId = extractDriveId(decodeURIComponent(req.params.fileId));
         if (!driveId) return res.sendStatus(400);
         const range = req.headers.range;
+        const meta = await driveService.getFileMeta(driveId, 'name,mimeType,size');
         const response = await driveService.getFileStream(driveId, range);
 
         const headers = response.headers;
@@ -743,7 +747,12 @@ app.get('/api/public/download/:fileId', async (req, res) => {
         const contentType = headers['content-type'];
         if (contentLength) res.setHeader('Content-Length', contentLength);
         if (contentType) res.setHeader('Content-Type', contentType);
-        res.setHeader('Content-Disposition', 'attachment');
+        if (meta?.name) {
+            const safeName = meta.name.replace(/[^a-z0-9._-]+/gi, '_');
+            res.setHeader('Content-Disposition', `attachment; filename="${safeName}"`);
+        } else {
+            res.setHeader('Content-Disposition', 'attachment');
+        }
         response.data.pipe(res);
     } catch (err) {
         console.error("Public download failed:", err.message);

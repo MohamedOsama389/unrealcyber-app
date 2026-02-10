@@ -70,7 +70,7 @@ export const buildVideoSlug = (title, index) => {
 
 export const getDriveId = (url) => {
     if (!url) return '';
-    if (!url.startsWith('http') && /^[\\w-]{10,}$/.test(url)) return url;
+    if (!url.startsWith('http') && /^[\w-]{10,}$/.test(url)) return url;
 
     const isDriveDomain = url.includes('drive.google.com') || url.includes('docs.google.com');
     if (url.startsWith('http') && !isDriveDomain) return '';
@@ -80,14 +80,14 @@ export const getDriveId = (url) => {
         const qp = parsed.searchParams.get('id') || parsed.searchParams.get('file_id') || parsed.searchParams.get('fid');
         if (qp) return qp;
         const pathMatch =
-            parsed.pathname.match(/\\/file\\/d\\/([^/]+)/) ||
-            parsed.pathname.match(/\\/d\\/([^/]+)/) ||
-            parsed.pathname.match(/\\/folders\\/([^/]+)/);
+            parsed.pathname.match(/\/file\/d\/([^/]+)/) ||
+            parsed.pathname.match(/\/d\/([^/]+)/) ||
+            parsed.pathname.match(/\/folders\/([^/]+)/);
         if (pathMatch?.[1]) return pathMatch[1];
     } catch {
         /* ignore */
     }
-    const fallback = isDriveDomain ? url.match(/[-\\w]{15,}/) : null;
+    const fallback = isDriveDomain ? url.match(/[-\w]{15,}/) : null;
     return fallback ? fallback[0] : '';
 };
 

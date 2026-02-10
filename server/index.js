@@ -1220,6 +1220,10 @@ app.get('/api/videos/stream/:id', authFromHeaderOrQuery, async (req, res) => {
         res.setHeader('Content-Disposition', `inline; filename="${fname}"`);
         res.setHeader('Accept-Ranges', 'bytes');
         const desiredStatus = response.status === 200 && range ? 206 : response.status;
+        // If Drive returned a redirect (rare), follow it
+        if (response.headers.location) {
+            return res.redirect(response.headers.location);
+        }
         res.status(desiredStatus);
         response.data.pipe(res);
     } catch (err) {

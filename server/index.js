@@ -760,6 +760,36 @@ app.get('/api/public/download/:fileId', async (req, res) => {
     }
 });
 
+app.get('/api/public/thumbnail/:fileId', async (req, res) => {
+    const sendPlaceholder = () => {
+        res.setHeader('Content-Type', 'image/svg+xml');
+        res.setHeader('Content-Disposition', 'inline');
+        return res.send(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">' +
+            '<rect width="640" height="360" fill="#0f172a"/>' +
+            '<path d="M260 120l140 90-140 90z" fill="#38bdf8"/>' +
+            '</svg>'
+        );
+    };
+
+    try {
+        const driveId = extractDriveId(decodeURIComponent(req.params.fileId));
+        if (!driveId) return res.sendStatus(400);
+        const thumb = await driveService.getThumbnailStream(driveId);
+
+        if (!thumb) {
+            return sendPlaceholder();
+        }
+
+        res.setHeader('Content-Type', thumb.contentType || 'image/jpeg');
+        res.setHeader('Content-Disposition', 'inline');
+        thumb.stream.pipe(res);
+    } catch (err) {
+        console.error("Public thumbnail proxy failed:", err.message);
+        return sendPlaceholder();
+    }
+});
+
 app.get('/api/admin/private-access', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.status(403).json({ error: "Unauthorized" });
     try {
@@ -1304,14 +1334,16 @@ app.get('/api/videos/download/:id', authFromHeaderOrQuery, async (req, res) => {
         const fileId = extractDriveId(video.drive_link);
         if (!fileId) return res.sendStatus(400);
         const range = req.headers.range;
+        const meta = await driveService.getFileMeta(fileId, 'name,mimeType,size');
         const response = await driveService.getFileStream(fileId, range);
 
         const headers = response.headers;
         const contentLength = headers['content-length'];
-        const contentType = headers['content-type'];
+        const contentType = headers['content-type'] || meta?.mimeType;
         if (contentLength) res.setHeader('Content-Length', contentLength);
         if (contentType) res.setHeader('Content-Type', contentType);
-        if (video.title) res.setHeader('Content-Disposition', `attachment; filename="${video.title}"`);
+        const safeName = (meta?.name || video.title || 'video').replace(/[^a-z0-9._-]+/gi, '_');
+        res.setHeader('Content-Disposition', `attachment; filename="${safeName}"`);
         response.data.pipe(res);
     } catch (err) {
         console.error("Video download failed:", err.message);
@@ -1432,16 +1464,16 @@ app.get('/api/files/download/:id', authenticateToken, async (req, res) => {
         const fileId = extractDriveId(file.drive_link);
         if (!fileId) return res.sendStatus(400);
         const range = req.headers.range;
+        const meta = await driveService.getFileMeta(fileId, 'name,mimeType,size');
         const response = await driveService.getFileStream(fileId, range);
 
         const headers = response.headers;
         const contentLength = headers['content-length'];
-        const contentType = headers['content-type'];
+        const contentType = headers['content-type'] || meta?.mimeType;
         if (contentLength) res.setHeader('Content-Length', contentLength);
         if (contentType) res.setHeader('Content-Type', contentType);
-        if (file.title) {
-            res.setHeader('Content-Disposition', `attachment; filename="${file.title}"`);
-        }
+        const safeName = (meta?.name || file.title || 'download').replace(/[^a-z0-9._-]+/gi, '_');
+        res.setHeader('Content-Disposition', `attachment; filename="${safeName}"`);
         response.data.pipe(res);
     } catch (err) {
         console.error("File download failed:", err.message);

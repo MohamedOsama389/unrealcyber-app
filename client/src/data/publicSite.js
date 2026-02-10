@@ -68,14 +68,56 @@ export const buildVideoSlug = (title, index) => {
     return `${base}-${index + 1}`;
 };
 
+export const getDriveId = (url) => {
+    if (!url) return '';
+    if (!url.startsWith('http') && /^[\\w-]{10,}$/.test(url)) return url;
+
+    const isDriveDomain = url.includes('drive.google.com') || url.includes('docs.google.com');
+    if (url.startsWith('http') && !isDriveDomain) return '';
+
+    try {
+        const parsed = new URL(url);
+        const qp = parsed.searchParams.get('id') || parsed.searchParams.get('file_id') || parsed.searchParams.get('fid');
+        if (qp) return qp;
+        const pathMatch =
+            parsed.pathname.match(/\\/file\\/d\\/([^/]+)/) ||
+            parsed.pathname.match(/\\/d\\/([^/]+)/) ||
+            parsed.pathname.match(/\\/folders\\/([^/]+)/);
+        if (pathMatch?.[1]) return pathMatch[1];
+    } catch {
+        /* ignore */
+    }
+    const fallback = isDriveDomain ? url.match(/[-\\w]{15,}/) : null;
+    return fallback ? fallback[0] : '';
+};
+
 export const isDriveLink = (url) => {
-    if (!url) return false;
-    return url.includes('drive.google.com') || /[-\w]{15,}/.test(url);
+    return Boolean(getDriveId(url));
 };
 
 export const toDownloadHref = (url) => {
     if (!url) return '';
-    return isDriveLink(url) ? `/api/public/download/${encodeURIComponent(url)}` : url;
+    const driveId = getDriveId(url);
+    return driveId ? `/api/public/download/${encodeURIComponent(driveId)}` : url;
+};
+
+export const getVideoThumbnailUrl = (url) => {
+    if (!url) return '';
+    try {
+        if (url.includes('youtube.com') || url.includes('youtu.be')) {
+            let videoId = '';
+            if (url.includes('v=')) videoId = url.split('v=')[1].split('&')[0];
+            else if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1].split('?')[0];
+            else if (url.includes('embed/')) videoId = url.split('embed/')[1].split('?')[0];
+            if (videoId) return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+        }
+    } catch {
+        /* ignore */
+    }
+
+    const driveId = getDriveId(url);
+    if (driveId) return `/api/public/thumbnail/${encodeURIComponent(driveId)}`;
+    return '';
 };
 
 export const getVideoEmbedUrl = (url) => {
@@ -90,10 +132,8 @@ export const getVideoEmbedUrl = (url) => {
             return `https://www.youtube.com/embed/${videoId}`;
         }
 
-        const driveMatch = url.match(/(?:file\/d\/|open\?id=|uc\?id=|id=)([a-zA-Z0-9_-]+)/);
-        if (driveMatch) {
-            return `https://drive.google.com/file/d/${driveMatch[1]}/preview`;
-        }
+        const driveId = getDriveId(url);
+        if (driveId) return `https://drive.google.com/file/d/${driveId}/preview`;
 
         return url.replace('/view', '/preview');
     } catch {

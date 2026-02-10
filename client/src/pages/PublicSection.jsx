@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, ArrowUpRight, Play } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { DEFAULT_PUBLIC_CONTENT, normalizePublicContent, buildVideoSlug, getSectionTheme } from '../data/publicSite';
+import { DEFAULT_PUBLIC_CONTENT, normalizePublicContent, buildVideoSlug, getSectionTheme, getVideoThumbnailUrl } from '../data/publicSite';
 
 const PublicSection = () => {
     const { sectionKey } = useParams();
@@ -101,23 +101,37 @@ const PublicSection = () => {
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {section.videos.map((video) => (
-                                <Link
-                                    key={video.slug}
-                                    to={`/vision/${section.key}/${video.slug}`}
-                                    className={`glass-panel p-6 border ${theme.border} hover:border-cyan-400/40 transition-all hover:-translate-y-1 bg-gradient-to-br ${theme.gradient}`}
-                                >
-                                    <div className="aspect-video rounded-2xl bg-slate-900/60 border border-white/5 flex items-center justify-center mb-4">
-                                        <Play className={theme.accent} />
-                                    </div>
-                                    <h3 className="text-lg font-bold">{video.title}</h3>
-                                    <p className="text-secondary text-sm mt-2">{video.description}</p>
-                                    <div className={`mt-4 text-xs font-bold flex items-center gap-2 ${theme.accent}`}>
-                                        Open Session
-                                        <ArrowUpRight size={14} />
-                                    </div>
-                                </Link>
-                            ))}
+                            {section.videos.map((video) => {
+                                const thumb = getVideoThumbnailUrl(video.url);
+                                return (
+                                    <Link
+                                        key={video.slug}
+                                        to={`/vision/${section.key}/${video.slug}`}
+                                        className={`glass-panel p-6 border ${theme.border} hover:border-cyan-400/40 transition-all hover:-translate-y-1 bg-gradient-to-br ${theme.gradient}`}
+                                    >
+                                        <div className="aspect-video rounded-2xl bg-slate-900/60 border border-white/5 flex items-center justify-center mb-4 relative overflow-hidden">
+                                            {thumb && (
+                                                <img
+                                                    src={thumb}
+                                                    alt=""
+                                                    className="absolute inset-0 w-full h-full object-cover"
+                                                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                                    loading="lazy"
+                                                />
+                                            )}
+                                            <div className="relative z-10 w-12 h-12 rounded-full bg-black/40 border border-white/10 flex items-center justify-center">
+                                                <Play className={theme.accent} />
+                                            </div>
+                                        </div>
+                                        <h3 className="text-lg font-bold">{video.title}</h3>
+                                        <p className="text-secondary text-sm mt-2">{video.description}</p>
+                                        <div className={`mt-4 text-xs font-bold flex items-center gap-2 ${theme.accent}`}>
+                                            Open Session
+                                            <ArrowUpRight size={14} />
+                                        </div>
+                                    </Link>
+                                );
+                            })}
                         </div>
                     )}
                 </div>

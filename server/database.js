@@ -115,6 +115,16 @@ db.exec(`
     FOREIGN KEY(website_user_id) REFERENCES users(id)
   );
 
+  CREATE TABLE IF NOT EXISTS telegram_login_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    telegram_id TEXT NOT NULL,
+    user_id INTEGER NOT NULL,
+    email TEXT,
+    status TEXT DEFAULT 'pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(user_id) REFERENCES users(id)
+  );
+
   CREATE TABLE IF NOT EXISTS votes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,

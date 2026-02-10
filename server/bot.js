@@ -110,8 +110,8 @@ function initBot(db) {
     }
 
     bot?.command('login', (ctx) => {
-        sessions[ctx.from.id] = { step: 'username' };
-        ctx.reply("Please enter your website username:");
+        sessions[ctx.from.id] = { step: 'email' };
+        ctx.reply("Send your website email to request access:");
     });
 
     bot?.command('logout', (ctx) => {
@@ -145,31 +145,73 @@ function initBot(db) {
 
         const text = ctx.message.text.trim();
 
-        if (session.step === 'username') {
-            const user = db.prepare('SELECT * FROM users WHERE LOWER(username) = LOWER(?)').get(text);
-            if (!user) return ctx.reply("User not found. Try /login again.");
-            session.username = user.username;
-            session.step = 'password';
-            ctx.reply("Enter your password:");
-        }
-        else if (session.step === 'password') {
-            const user = db.prepare('SELECT * FROM users WHERE LOWER(username) = LOWER(?)').get(session.username);
-            const valid = bcrypt.compareSync(text, user.password);
+        if (session.step === 'email') {
+            const user = db.prepare('SELECT * FROM users WHERE LOWER(username) = LOWER(?)').get(text.toLowerCase());
+            if (!user) {
+                delete sessions[ctx.from.id];
+                return ctx.reply("User not found. Make sure you send the same email you use on the site. Use /login to try again.");
+            }
 
-            if (valid) {
+            // Auto-approve admins
+            if (user.role === 'admin') {
+                db.prepare('INSERT OR IGNORE INTO telegram_users (telegram_id, username, first_name) VALUES (?, ?, ?)').run(String(ctx.from.id), ctx.from.username || null, ctx.from.first_name || null);
                 db.prepare('UPDATE telegram_users SET website_user_id = ? WHERE telegram_id = ?').run(user.id, String(ctx.from.id));
-                // Auto-subscribe to all subjects
-                SUBJECTS.forEach(sub => {
-                    db.prepare('INSERT OR IGNORE INTO telegram_subscriptions (telegram_id, subject) VALUES (?, ?)').run(String(ctx.from.id), sub);
-                });
+                ctx.reply(`✅ Linked as ${user.username}.`);
+                delete sessions[ctx.from.id];
+                return;
+            }
 
-                ctx.reply(`✅ Linked as *${user.username}*!\n\nYou're all set! I'll notify you here instantly whenever a new mission is assigned. 🛡️`, { parse_mode: 'Markdown' });
+            const pending = db.prepare(`SELECT id FROM telegram_login_requests WHERE telegram_id = ? AND status = 'pending' ORDER BY created_at DESC LIMIT 1`).get(String(ctx.from.id));
+            if (pending) {
                 delete sessions[ctx.from.id];
+                return ctx.reply("You already have a pending request. Please wait for admin approval.");
+            }
+
+            const result = db.prepare(`INSERT INTO telegram_login_requests (telegram_id, user_id, email, status) VALUES (?, ?, ?, 'pending')`).run(String(ctx.from.id), user.id, user.username);
+            ctx.reply("Request sent to admin. You'll be notified when approved.");
+            delete sessions[ctx.from.id];
+
+            if (bot && process.env.TELEGRAM_ADMIN_CHAT_ID) {
+                bot.telegram.sendMessage(process.env.TELEGRAM_ADMIN_CHAT_ID,
+                    `🔐 Telegram login request\nUser: ${user.username}\nName: ${ctx.from.first_name || ''}\nHandle: @${ctx.from.username || 'n/a'}`,
+                    {
+                        reply_markup: {
+                            inline_keyboard: [[
+                                { text: 'Approve', callback_data: `approve_${result.lastInsertRowid}` },
+                                { text: 'Deny', callback_data: `deny_${result.lastInsertRowid}` }
+                            ]]
+                        }
+                    }
+                ).catch(e => console.error("Failed to notify admin:", e.message));
             } else {
-                delete sessions[ctx.from.id];
-                ctx.reply("❌ Invalid password. Use /login to try again.");
+                console.warn("TELEGRAM_ADMIN_CHAT_ID not set; cannot send approval request.");
             }
         }
+    });
+
+    bot?.action(/approve_(.+)/, (ctx) => {
+        const reqId = ctx.match[1];
+        const req = db.prepare('SELECT * FROM telegram_login_requests WHERE id = ?').get(reqId);
+        if (!req || req.status !== 'pending') return ctx.answerCbQuery("Request not pending.");
+        const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user_id);
+        if (!user) return ctx.answerCbQuery("User not found.");
+
+        db.prepare('UPDATE telegram_login_requests SET status = ? WHERE id = ?').run('approved', reqId);
+        db.prepare('INSERT OR IGNORE INTO telegram_users (telegram_id, username, first_name) VALUES (?, ?, ?)').run(req.telegram_id, null, null);
+        db.prepare('UPDATE telegram_users SET website_user_id = ? WHERE telegram_id = ?').run(user.id, req.telegram_id);
+
+        bot.telegram.sendMessage(req.telegram_id, `✅ Approved! You're linked as ${user.username}.`).catch(() => {});
+        ctx.editMessageText(`Approved ${user.username}.`);
+    });
+
+    bot?.action(/deny_(.+)/, (ctx) => {
+        const reqId = ctx.match[1];
+        const req = db.prepare('SELECT * FROM telegram_login_requests WHERE id = ?').get(reqId);
+        if (!req || req.status !== 'pending') return ctx.answerCbQuery("Request not pending.");
+
+        db.prepare('UPDATE telegram_login_requests SET status = ? WHERE id = ?').run('denied', reqId);
+        bot.telegram.sendMessage(req.telegram_id, `❌ Your login request was denied. Contact admin if this is unexpected.`).catch(() => {});
+        ctx.editMessageText(`Denied request ${reqId}.`);
     });
 
     // --- CALLBACKS ---

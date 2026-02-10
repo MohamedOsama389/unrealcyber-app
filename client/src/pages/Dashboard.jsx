@@ -218,18 +218,6 @@ const Dashboard = () => {
         }
     };
 
-    const getVideoEmbedUrl = (link) => {
-        if (!link) return '';
-        const ytMatch = link.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/(?:watch\?v=)?(.+)/);
-        if (ytMatch) {
-            const id = ytMatch[1].split('&')[0];
-            return `https://www.youtube.com/embed/${id}`;
-        }
-        return link.replace('/view', '/preview');
-    };
-
-    if (!user) return null;
-
     if (!user) return null;
 
     const handleJoinParty = () => {

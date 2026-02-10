@@ -19,20 +19,13 @@ const Videos = () => {
     const [resources, setResources] = useState([]);
     const [resInput, setResInput] = useState({ title: '', url: '' });
     const [uploadFile, setUploadFile] = useState(null);
-    const [qualityInputs, setQualityInputs] = useState([
-        { label: '1080p', url: '' },
-        { label: '720p', url: '' },
-        { label: '480p', url: '' }
-    ]);
-    const [qualitySelections, setQualitySelections] = useState({});
     const [newFolderName, setNewFolderName] = useState('');
     const [showFolderForm, setShowFolderForm] = useState(false);
 
-    const buildVideoUrl = (id, qualityLabel, kind) => {
+    const buildVideoUrl = (id, kind) => {
         const params = new URLSearchParams();
         const token = localStorage.getItem('token');
         if (token) params.set('token', token);
-        if (qualityLabel) params.set('quality', qualityLabel);
         const qs = params.toString();
         return `/api/videos/${kind}/${id}${qs ? `?${qs}` : ''}`;
     };
@@ -51,13 +44,16 @@ const Videos = () => {
             return `https://www.youtube.com/embed/${id}`;
         }
 
-        // Handle Google Drive
+        // Handle Google Drive preview window
+        const driveMatch = link.match(/(?:file\/d\/|open\?id=|uc\?id=|id=)([a-zA-Z0-9_-]+)/);
+        if (driveMatch) {
+            return `https://drive.google.com/file/d/${driveMatch[1]}/preview`;
+        }
+
         return link.replace('/view', '/preview');
     };
 
-    const updateQualityInput = (idx, field, value) => {
-        setQualityInputs(prev => prev.map((q, i) => (i === idx ? { ...q, [field]: value } : q)));
-    };
+    // Quality links UI removed for now.
 
     const fetchContent = async (folderId) => {
         setLoading(true);
@@ -137,27 +133,20 @@ const Videos = () => {
     const handleAddVideo = async (e) => {
         e.preventDefault();
         try {
-            const quality_links = qualityInputs.filter(q => q.label && q.url);
             const formData = new FormData();
             if (uploadFile) {
                 formData.append('file', uploadFile);
                 formData.append('title', newVideo.title);
                 formData.append('folder_id', currentFolderId || '');
                 formData.append('resources', JSON.stringify(resources));
-                formData.append('quality_links', JSON.stringify(quality_links));
                 await axios.post('/api/videos/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
             } else {
-                await axios.post('/api/videos', { ...newVideo, folder_id: currentFolderId, resources, quality_links });
+                await axios.post('/api/videos', { ...newVideo, folder_id: currentFolderId, resources });
             }
             setMessage('Success!');
             setNewVideo({ title: '', drive_link: '' });
             setResources([]);
             setUploadFile(null);
-            setQualityInputs([
-                { label: '1080p', url: '' },
-                { label: '720p', url: '' },
-                { label: '480p', url: '' }
-            ]);
             fetchContent(currentFolderId);
             setTimeout(() => setMessage(''), 3000);
         } catch (err) {
@@ -295,29 +284,6 @@ const Videos = () => {
                             </div>
                         </div>
 
-                        <div className="bg-panel border border-border p-4 rounded-xl">
-                            <h4 className="text-xs font-bold text-secondary uppercase tracking-widest mb-3">Quality Links (Optional)</h4>
-                            {qualityInputs.map((q, idx) => (
-                                <div key={idx} className="flex gap-2 mb-2">
-                                    <input
-                                        type="text"
-                                        placeholder="Label (e.g. 1080p)"
-                                        className="input-field w-32 text-sm"
-                                        value={q.label}
-                                        onChange={(e) => updateQualityInput(idx, 'label', e.target.value)}
-                                    />
-                                    <input
-                                        type="text"
-                                        placeholder="Drive link for this quality"
-                                        className="input-field flex-1 text-sm"
-                                        value={q.url}
-                                        onChange={(e) => updateQualityInput(idx, 'url', e.target.value)}
-                                    />
-                                </div>
-                            ))}
-                            <p className="text-xs text-secondary">Provide different Drive links for each resolution. The player will show a quality selector.</p>
-                        </div>
-
                         <div className="flex items-center justify-between">
                             <label className="flex items-center space-x-2 cursor-pointer text-secondary hover:text-primary transition-colors">
                                 <input
@@ -385,8 +351,6 @@ const Videos = () => {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {videos.map((vid) => {
-                                const qualities = Array.isArray(vid.quality_links) ? vid.quality_links : [];
-                                const selectedQuality = qualitySelections[vid.id] || qualities[0]?.label;
                                 return (
                                     <motion.div
                                         key={vid.id}
@@ -395,31 +359,29 @@ const Videos = () => {
                                         className="glass-panel overflow-hidden group hover:border-cyan-500/50 transition-colors"
                                     >
                                         <div className="aspect-video bg-slate-900 relative">
-                                            <video
-                                                src={buildVideoUrl(vid.id, selectedQuality, 'stream')}
-                                                className="w-full h-full object-contain"
-                                                controls
-                                                preload="metadata"
-                                            />
+                                            {vid.drive_link ? (
+                                                <iframe
+                                                    src={getVideoEmbedUrl(vid.drive_link)}
+                                                    className="w-full h-full"
+                                                    allow="autoplay; encrypted-media"
+                                                    allowFullScreen
+                                                    title={vid.title}
+                                                />
+                                            ) : (
+                                                <video
+                                                    src={buildVideoUrl(vid.id, 'stream')}
+                                                    className="w-full h-full object-contain"
+                                                    controls
+                                                    preload="metadata"
+                                                />
+                                            )}
                                         </div>
                                         <div className="p-4">
                                             <h3 className="font-bold text-primary text-lg mb-2 truncate" title={vid.title}>{vid.title}</h3>
-                                            {qualities.length > 0 && (
-                                                <div className="mb-2">
-                                                    <select
-                                                        value={selectedQuality || ''}
-                                                        onChange={(e) => setQualitySelections(prev => ({ ...prev, [vid.id]: e.target.value }))}
-                                                        className="input-field w-full text-sm"
-                                                    >
-                                                        {qualities.map((q) => (
-                                                            <option key={q.label} value={q.label}>{q.label}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                            )}
+                                            
                                             <div className="flex space-x-2">
                                                 <a
-                                                    href={buildVideoUrl(vid.id, selectedQuality, 'download')}
+                                                    href={buildVideoUrl(vid.id, 'download')}
                                                     className="flex-1 text-center py-2 bg-panel border border-border hover:bg-white/10 dark:hover:bg-slate-700 rounded-lg text-sm font-medium transition-colors text-primary"
                                                 >
                                                     Download

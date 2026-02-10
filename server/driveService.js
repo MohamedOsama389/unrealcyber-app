@@ -145,7 +145,21 @@ const init = async () => {
 // Initial trigger if not running as a module (Optional but keep it safe)
 // if (require.main === module) init();
 
-const uploadFile = async (fileObject, parentId) => {
+const setFilePublic = async (fileId) => {
+    try {
+        if (!drive) throw new Error("Google Drive Service not initialized");
+        await drive.permissions.create({
+            fileId,
+            requestBody: { role: 'reader', type: 'anyone' }
+        });
+        return true;
+    } catch (err) {
+        console.warn("[DriveService] Failed to set public permission:", err.message);
+        return false;
+    }
+};
+
+const uploadFile = async (fileObject, parentId, options = {}) => {
     try {
         if (!drive) throw new Error("Google Drive Service not initialized");
         const bufferStream = new stream.PassThrough();
@@ -166,6 +180,10 @@ const uploadFile = async (fileObject, parentId) => {
             media: media,
             fields: 'id, webViewLink',
         });
+
+        if (options.makePublic && res?.data?.id) {
+            await setFilePublic(res.data.id);
+        }
 
         return res.data;
     } catch (err) {
@@ -817,6 +835,7 @@ const ensureLabsFolder = async () => {
 module.exports = {
     init,
     uploadFile,
+    setFilePublic,
     listFiles,
     listFolders,
     findFolder,

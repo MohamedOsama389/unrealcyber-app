@@ -58,7 +58,6 @@ db.exec(`
     drive_link TEXT NOT NULL,
     folder_id TEXT,
     resources TEXT,
-    quality_links TEXT,
     is_featured BOOLEAN DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );
@@ -211,7 +210,6 @@ ensureColumn('labs', 'video_link', 'TEXT');
 ensureColumn('labs', 'extra_files', 'TEXT'); // JSON array of supporting files { id, name, webViewLink }
 ensureColumn('videos', 'folder_id', 'TEXT');
 ensureColumn('videos', 'resources', 'TEXT');
-ensureColumn('videos', 'quality_links', 'TEXT');
 ensureColumn('files', 'folder_id', 'TEXT');
 
 // Seed Admin using PREPARED STATEMENTS to avoid syntax errors with special chars

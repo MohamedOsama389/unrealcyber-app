@@ -41,6 +41,23 @@ const Dashboard = () => {
     const [partyActive, setPartyActive] = useState(false);
     const [partyHidden, setPartyHidden] = useState(false);
 
+    const getVideoEmbedUrl = (link) => {
+        if (!link) return '';
+
+        const ytMatch = link.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/(?:watch\?v=)?(.+)/);
+        if (ytMatch) {
+            const id = ytMatch[1].split('&')[0];
+            return `https://www.youtube.com/embed/${id}`;
+        }
+
+        const driveMatch = link.match(/(?:file\/d\/|open\?id=|uc\?id=|id=)([a-zA-Z0-9_-]+)/);
+        if (driveMatch) {
+            return `https://drive.google.com/file/d/${driveMatch[1]}/preview`;
+        }
+
+        return link.replace('/view', '/preview');
+    };
+
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -470,12 +487,22 @@ const Dashboard = () => {
                     </div>
                     <div className="flex flex-col md:flex-row">
                         <div className="w-full md:w-2/3 aspect-video bg-black/20">
-                            <video
-                                src={`/api/videos/stream/${featuredVideo.id}`}
-                                className="w-full h-full object-contain"
-                                controls
-                                preload="metadata"
-                            />
+                            {featuredVideo.drive_link ? (
+                                <iframe
+                                    src={getVideoEmbedUrl(featuredVideo.drive_link)}
+                                    className="w-full h-full"
+                                    allow="autoplay; encrypted-media"
+                                    allowFullScreen
+                                    title={featuredVideo.title}
+                                />
+                            ) : (
+                                <video
+                                    src={`/api/videos/stream/${featuredVideo.id}`}
+                                    className="w-full h-full object-contain"
+                                    controls
+                                    preload="metadata"
+                                />
+                            )}
                         </div>
                         <div className="p-6 flex flex-col justify-center">
                             <h2 className="text-2xl font-bold text-primary mb-2">{featuredVideo.title}</h2>

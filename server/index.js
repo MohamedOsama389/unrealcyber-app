@@ -1532,7 +1532,15 @@ io.on('connection', (socket) => {
 });
 
 // --- Labs API ---
-app.get('/api/labs/download/:fileId', authenticateToken, async (req, res) => {
+const authFromHeaderOrQuery = (req, res, next) => {
+    const queryToken = req.query.token;
+    if (queryToken && !req.headers.authorization) {
+        req.headers.authorization = `Bearer ${queryToken}`;
+    }
+    return authenticateToken(req, res, next);
+};
+
+app.get('/api/labs/download/:fileId', authFromHeaderOrQuery, async (req, res) => {
     try {
         const { fileId } = req.params;
         const range = req.headers.range;
@@ -1556,7 +1564,7 @@ app.get('/api/labs/download/:fileId', authenticateToken, async (req, res) => {
     }
 });
 
-app.get('/api/labs/download/by-id/:labId', authenticateToken, async (req, res) => {
+app.get('/api/labs/download/by-id/:labId', authFromHeaderOrQuery, async (req, res) => {
     try {
         const lab = db.prepare('SELECT file_id FROM labs WHERE id = ?').get(req.params.labId);
         if (!lab || !lab.file_id) return res.sendStatus(404);

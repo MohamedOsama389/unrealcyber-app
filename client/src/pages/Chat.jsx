@@ -71,9 +71,6 @@ const Chat = () => {
                     {messages.map((msg, idx) => {
                         const isMe = msg.username === user.username;
                         const displayName = msg.display_name || msg.username;
-                        const nameWithEmail = msg.display_name
-                            ? `${msg.display_name} (${msg.username})`
-                            : msg.username;
                         return (
                             <div
                                 key={idx}
@@ -101,7 +98,7 @@ const Chat = () => {
                                         )}
                                     </div>
                                     <span className={`text-xs font-bold ${isMe ? 'text-cyan-400' : 'text-purple-400'}`}>
-                                        {nameWithEmail}
+                                        {displayName}
                                     </span>
                                     <span className="text-[10px] text-slate-500">
                                         {format(new Date(msg.timestamp), 'h:mm a')}

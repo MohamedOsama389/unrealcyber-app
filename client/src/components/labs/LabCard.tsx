@@ -64,7 +64,10 @@ const LabCard = ({ lab, isAdmin, onEdit, onDelete }: LabCardProps) => {
     const thumbnailUrl = thumbnailId
         ? `${apiBase}/api/labs/thumbnail/${thumbnailId}`
         : lab.thumbnail_link;
-    const downloadUrl = `${apiBase}/api/labs/download/by-id/${lab.id}`;
+    const token = localStorage.getItem('token');
+    const downloadUrl = token
+        ? `${apiBase}/api/labs/download/by-id/${lab.id}?token=${encodeURIComponent(token)}`
+        : `${apiBase}/api/labs/download/by-id/${lab.id}`;
     const videoUrl = lab.video_link || lab.drive_link;
     const isDriveVideo = Boolean(videoUrl && (videoUrl.includes('drive.google.com') || /[-\w]{15,}/.test(videoUrl)) && !videoUrl.includes('youtube') && !videoUrl.includes('youtu.be'));
     const videoHref = isDriveVideo ? `${apiBase}/api/labs/video/${lab.id}` : videoUrl;

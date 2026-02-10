@@ -1204,7 +1204,7 @@ app.get('/api/videos/stream/:id', authFromHeaderOrQuery, async (req, res) => {
         try {
             meta = await driveService.getFileMeta(fileId, 'name,mimeType');
         } catch { /* ignore */ }
-        const range = req.headers.range;
+        const range = req.headers.range || 'bytes=0-';
         const response = await driveService.getFileStream(fileId, range);
 
         const headers = response.headers;

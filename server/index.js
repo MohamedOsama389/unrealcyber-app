@@ -1544,6 +1544,11 @@ app.get('/api/labs/download/:fileId', authFromHeaderOrQuery, async (req, res) =>
     try {
         const { fileId } = req.params;
         const range = req.headers.range;
+        let metaName = null;
+        try {
+            const meta = await driveService.getFileMeta(fileId, 'name,mimeType');
+            metaName = meta?.name;
+        } catch (e) { /* ignore meta fail */ }
         const response = await driveService.getFileStream(fileId, range);
 
         // Forward headers
@@ -1557,7 +1562,9 @@ app.get('/api/labs/download/:fileId', authFromHeaderOrQuery, async (req, res) =>
         if (contentDisposition) {
             res.setHeader('Content-Disposition', contentDisposition);
         } else {
-            res.setHeader('Content-Disposition', `attachment; filename="${fileId}.bin"`);
+            const ext = contentType?.includes('zip') ? '.zip' : contentType?.includes('pdf') ? '.pdf' : '';
+            const fallback = (metaName || fileId) + (ext && !metaName?.includes('.') ? ext : '');
+            res.setHeader('Content-Disposition', `attachment; filename="${fallback}"`);
         }
 
         // Pipe the stream
@@ -1573,6 +1580,11 @@ app.get('/api/labs/download/by-id/:labId', authFromHeaderOrQuery, async (req, re
         const lab = db.prepare('SELECT title, file_id FROM labs WHERE id = ?').get(req.params.labId);
         if (!lab || !lab.file_id) return res.sendStatus(404);
         const range = req.headers.range;
+        let metaName = null;
+        try {
+            const meta = await driveService.getFileMeta(lab.file_id, 'name,mimeType');
+            metaName = meta?.name;
+        } catch (e) { /* ignore */ }
         const response = await driveService.getFileStream(lab.file_id, range);
 
         const headers = response.headers;
@@ -1585,8 +1597,9 @@ app.get('/api/labs/download/by-id/:labId', authFromHeaderOrQuery, async (req, re
         if (contentDisposition) {
             res.setHeader('Content-Disposition', contentDisposition);
         } else {
-            const safeName = (lab.title || 'lab').replace(/[^a-z0-9._-]+/gi, '_');
-            const ext = contentType?.includes('zip') ? '.zip' : contentType?.includes('pdf') ? '.pdf' : '';
+            const base = metaName || lab.title || 'lab';
+            const ext = metaName && metaName.includes('.') ? '' : (contentType?.includes('zip') ? '.zip' : contentType?.includes('pdf') ? '.pdf' : '');
+            const safeName = base.replace(/[^a-z0-9._-]+/gi, '_');
             res.setHeader('Content-Disposition', `attachment; filename="${safeName}${ext}"`);
         }
 

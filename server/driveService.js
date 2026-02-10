@@ -522,6 +522,12 @@ const getFileStream = async (fileId, range = null) => {
     }
 };
 
+const getFileMeta = async (fileId, fields = 'name, mimeType') => {
+    if (!drive) throw new Error("Google Drive Service not initialized");
+    const res = await drive.files.get({ fileId, fields });
+    return res.data;
+};
+
 /**
  * Upload database as SQL dump to Google Drive
  */
@@ -826,6 +832,7 @@ module.exports = {
     getLabsFromDrive,
     ensureLabsFolder, // Export new function
     getFileStream, // Export new function
+    getFileMeta,
     TASKS_FOLDER_ID,
     VIDEOS_FOLDER_ID,
     FILES_FOLDER_ID,

@@ -1185,7 +1185,7 @@ app.delete('/api/videos/:id', authenticateToken, (req, res) => {
     res.json({ success: true });
 });
 
-app.get('/api/videos/stream/:id', authenticateToken, async (req, res) => {
+app.get('/api/videos/stream/:id', authFromHeaderOrQuery, async (req, res) => {
     try {
         const video = db.prepare('SELECT drive_link, title FROM videos WHERE id = ?').get(req.params.id);
         if (!video?.drive_link) return res.sendStatus(404);
@@ -1212,7 +1212,7 @@ app.get('/api/videos/stream/:id', authenticateToken, async (req, res) => {
     }
 });
 
-app.get('/api/videos/download/:id', authenticateToken, async (req, res) => {
+app.get('/api/videos/download/:id', authFromHeaderOrQuery, async (req, res) => {
     try {
         const video = db.prepare('SELECT drive_link, title FROM videos WHERE id = ?').get(req.params.id);
         if (!video?.drive_link) return res.sendStatus(404);

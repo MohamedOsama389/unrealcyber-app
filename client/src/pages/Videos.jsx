@@ -344,7 +344,7 @@ const Videos = () => {
                                 >
                                     <div className="aspect-video bg-slate-900 relative">
                                         <video
-                                            src={`/api/videos/stream/${vid.id}`}
+                                            src={`/api/videos/stream/${vid.id}${localStorage.getItem('token') ? `?token=${encodeURIComponent(localStorage.getItem('token'))}` : ''}`}
                                             className="w-full h-full object-contain"
                                             controls
                                             preload="metadata"

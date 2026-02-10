@@ -179,6 +179,15 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
+// Allow auth token via query (?token=) as well as Authorization header
+const authFromHeaderOrQuery = (req, res, next) => {
+    const queryToken = req.query.token;
+    if (queryToken && !req.headers.authorization) {
+        req.headers.authorization = `Bearer ${queryToken}`;
+    }
+    return authenticateToken(req, res, next);
+};
+
 app.get('/api/health', async (req, res) => {
     const driveStatus = await driveService.getLiveStatus();
     res.json({
@@ -1532,13 +1541,6 @@ io.on('connection', (socket) => {
 });
 
 // --- Labs API ---
-const authFromHeaderOrQuery = (req, res, next) => {
-    const queryToken = req.query.token;
-    if (queryToken && !req.headers.authorization) {
-        req.headers.authorization = `Bearer ${queryToken}`;
-    }
-    return authenticateToken(req, res, next);
-};
 
 app.get('/api/labs/download/:fileId', authFromHeaderOrQuery, async (req, res) => {
     try {

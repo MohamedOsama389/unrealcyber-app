@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { LanguageProvider, useLanguage } from './context/LanguageContext';
@@ -29,7 +29,8 @@ import clsx from 'clsx';
 function AppContent() {
   const { user } = useAuth();
   const { language } = useLanguage();
-  const path = window.location.pathname;
+  const location = useLocation();
+  const path = location.pathname;
   const isPrivateRoute = path.startsWith('/private');
   const isAuthPage = ['/private/login', '/private/signup'].includes(path);
   const showPrivateShell = isPrivateRoute && !isAuthPage;

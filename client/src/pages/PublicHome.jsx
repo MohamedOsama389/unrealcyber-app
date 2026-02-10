@@ -250,11 +250,8 @@ const PublicHome = () => {
                     <section key={section.key} id={section.key} className="max-w-6xl mx-auto px-6 py-12">
                         <div className="flex items-center justify-between mb-6">
                             <div>
-                                <h2 className="text-2xl font-bold flex items-center gap-3">
+                                <h2 className="text-2xl font-bold">
                                     {section.title}
-                                    <Link to={`/vision/${section.key}`} className="text-xs font-bold text-cyan-400 hover:text-cyan-300">
-                                        View all
-                                    </Link>
                                 </h2>
                                 {section.description && (
                                     <p className="text-secondary text-sm mt-2">{section.description}</p>

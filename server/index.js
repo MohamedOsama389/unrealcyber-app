@@ -1200,10 +1200,31 @@ app.get('/api/videos/stream/:id', authFromHeaderOrQuery, async (req, res) => {
         if (!video?.drive_link) return res.sendStatus(404);
         const fileId = extractDriveId(video.drive_link);
         if (!fileId) return res.sendStatus(400);
-        // Easiest path: redirect to Drive with access token so browser streams directly.
-        const accessToken = await driveService.getAccessToken();
-        const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&access_token=${accessToken}`;
-        res.redirect(url);
+        let meta;
+        try {
+            meta = await driveService.getFileMeta(fileId, 'name,mimeType');
+        } catch { /* ignore */ }
+        const range = req.headers.range || undefined;
+        const response = await driveService.getFileStream(fileId, range);
+
+        const headers = response.headers;
+        const getHeader = (key) => headers[key] || headers[key.toLowerCase()];
+        const contentLength = getHeader('Content-Length');
+        const headerType = getHeader('Content-Type');
+        const metaType = meta?.mimeType;
+        const contentType = (metaType && metaType.startsWith('video/'))
+            ? metaType
+            : (headerType && headerType.startsWith('video/')) ? headerType : 'video/mp4';
+        const contentRange = getHeader('Content-Range');
+
+        if (contentLength) res.setHeader('Content-Length', contentLength);
+        res.setHeader('Content-Type', contentType);
+        if (contentRange) res.setHeader('Content-Range', contentRange);
+        const fname = (meta?.name || video.title || 'video').replace(/[^a-z0-9._-]+/gi, '_');
+        res.setHeader('Content-Disposition', `inline; filename="${fname}"`);
+        res.setHeader('Accept-Ranges', 'bytes');
+        res.status(response.status);
+        response.data.pipe(res);
     } catch (err) {
         console.error("Video stream failed:", err.message);
         res.status(500).send("Failed to stream video.");

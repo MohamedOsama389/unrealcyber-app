@@ -507,7 +507,7 @@ const getFileStream = async (fileId, range = null) => {
     try {
         if (!drive) throw new Error("Google Drive Service not initialized");
 
-        const params = { fileId, alt: 'media' };
+        const params = { fileId, alt: 'media', supportsAllDrives: true, acknowledgeAbuse: true };
         const options = { responseType: 'stream' };
 
         if (range) {
@@ -524,7 +524,7 @@ const getFileStream = async (fileId, range = null) => {
 
 const getFileMeta = async (fileId, fields = 'name, mimeType') => {
     if (!drive) throw new Error("Google Drive Service not initialized");
-    const res = await drive.files.get({ fileId, fields });
+    const res = await drive.files.get({ fileId, fields, supportsAllDrives: true });
     return res.data;
 };
 

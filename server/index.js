@@ -1554,7 +1554,11 @@ app.get('/api/labs/download/:fileId', authFromHeaderOrQuery, async (req, res) =>
 
         if (contentLength) res.setHeader('Content-Length', contentLength);
         if (contentType) res.setHeader('Content-Type', contentType);
-        if (contentDisposition) res.setHeader('Content-Disposition', contentDisposition);
+        if (contentDisposition) {
+            res.setHeader('Content-Disposition', contentDisposition);
+        } else {
+            res.setHeader('Content-Disposition', `attachment; filename="${fileId}.bin"`);
+        }
 
         // Pipe the stream
         response.data.pipe(res);
@@ -1566,7 +1570,7 @@ app.get('/api/labs/download/:fileId', authFromHeaderOrQuery, async (req, res) =>
 
 app.get('/api/labs/download/by-id/:labId', authFromHeaderOrQuery, async (req, res) => {
     try {
-        const lab = db.prepare('SELECT file_id FROM labs WHERE id = ?').get(req.params.labId);
+        const lab = db.prepare('SELECT title, file_id FROM labs WHERE id = ?').get(req.params.labId);
         if (!lab || !lab.file_id) return res.sendStatus(404);
         const range = req.headers.range;
         const response = await driveService.getFileStream(lab.file_id, range);
@@ -1578,7 +1582,13 @@ app.get('/api/labs/download/by-id/:labId', authFromHeaderOrQuery, async (req, re
 
         if (contentLength) res.setHeader('Content-Length', contentLength);
         if (contentType) res.setHeader('Content-Type', contentType);
-        if (contentDisposition) res.setHeader('Content-Disposition', contentDisposition);
+        if (contentDisposition) {
+            res.setHeader('Content-Disposition', contentDisposition);
+        } else {
+            const safeName = (lab.title || 'lab').replace(/[^a-z0-9._-]+/gi, '_');
+            const ext = contentType?.includes('zip') ? '.zip' : contentType?.includes('pdf') ? '.pdf' : '';
+            res.setHeader('Content-Disposition', `attachment; filename="${safeName}${ext}"`);
+        }
 
         response.data.pipe(res);
     } catch (err) {

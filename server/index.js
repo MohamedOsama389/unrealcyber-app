@@ -1122,13 +1122,17 @@ app.get('/api/videos', authenticateToken, async (req, res) => {
 
     const videos = db.prepare(query).all(folderId);
 
-    // Parse resources JSON
+    // Parse resources + quality links JSON
     const videosWithResources = videos.map(v => {
+        let resources = [];
+        let quality_links = [];
         try {
-            return { ...v, resources: v.resources ? JSON.parse(v.resources) : [] };
-        } catch (e) {
-            return { ...v, resources: [] };
-        }
+            resources = v.resources ? JSON.parse(v.resources) : [];
+        } catch (e) { }
+        try {
+            quality_links = v.quality_links ? JSON.parse(v.quality_links) : [];
+        } catch (e) { }
+        return { ...v, resources, quality_links };
     });
 
     res.json(videosWithResources);
@@ -1137,8 +1141,14 @@ app.get('/api/videos', authenticateToken, async (req, res) => {
 
 app.post('/api/videos', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
-    const { title, drive_link, folder_id, resources } = req.body;
-    db.prepare('INSERT INTO videos (title, drive_link, folder_id, resources) VALUES (?, ?, ?, ?)').run(title, drive_link, folder_id || null, JSON.stringify(resources || []));
+    const { title, drive_link, folder_id, resources, quality_links } = req.body;
+    db.prepare('INSERT INTO videos (title, drive_link, folder_id, resources, quality_links) VALUES (?, ?, ?, ?, ?)').run(
+        title,
+        drive_link,
+        folder_id || null,
+        JSON.stringify(resources || []),
+        JSON.stringify(quality_links || [])
+    );
     driveService.backupDatabase();
     res.json({ success: true });
 });
@@ -1146,7 +1156,7 @@ app.post('/api/videos', authenticateToken, (req, res) => {
 app.post('/api/videos/upload', authenticateToken, upload.single('file'), async (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
     try {
-        const { title, folder_id, resources } = req.body;
+        const { title, folder_id, resources, quality_links } = req.body;
         const targetFolder = folder_id || driveService.VIDEOS_FOLDER_ID;
         const driveFile = await driveService.uploadFile(req.file, targetFolder, title);
 
@@ -1154,8 +1164,18 @@ app.post('/api/videos/upload', authenticateToken, upload.single('file'), async (
         try {
             parsedResources = JSON.parse(resources || '[]');
         } catch (e) { }
+        let parsedQualities = [];
+        try {
+            parsedQualities = JSON.parse(quality_links || '[]');
+        } catch (e) { }
 
-        db.prepare('INSERT INTO videos (title, drive_link, folder_id, resources) VALUES (?, ?, ?, ?)').run(title || req.file.originalname, driveFile.webViewLink, targetFolder, JSON.stringify(parsedResources));
+        db.prepare('INSERT INTO videos (title, drive_link, folder_id, resources, quality_links) VALUES (?, ?, ?, ?, ?)').run(
+            title || req.file.originalname,
+            driveFile.webViewLink,
+            targetFolder,
+            JSON.stringify(parsedResources),
+            JSON.stringify(parsedQualities)
+        );
         driveService.backupDatabase();
         res.json({ success: true, link: driveFile.webViewLink });
     } catch (err) {
@@ -1196,9 +1216,17 @@ app.delete('/api/videos/:id', authenticateToken, (req, res) => {
 
 app.get('/api/videos/stream/:id', authFromHeaderOrQuery, async (req, res) => {
     try {
-        const video = db.prepare('SELECT drive_link, title FROM videos WHERE id = ?').get(req.params.id);
+        const video = db.prepare('SELECT drive_link, title, quality_links FROM videos WHERE id = ?').get(req.params.id);
         if (!video?.drive_link) return res.sendStatus(404);
-        const fileId = extractDriveId(video.drive_link);
+        let selectedLink = video.drive_link;
+        if (req.query.quality && video.quality_links) {
+            try {
+                const qualities = JSON.parse(video.quality_links) || [];
+                const match = qualities.find(q => q.label === req.query.quality);
+                if (match?.url) selectedLink = match.url;
+            } catch { /* ignore */ }
+        }
+        const fileId = extractDriveId(selectedLink);
         if (!fileId) return res.sendStatus(400);
         let meta;
         try {
@@ -1244,9 +1272,17 @@ app.get('/api/videos/stream/:id', authFromHeaderOrQuery, async (req, res) => {
 
 app.get('/api/videos/download/:id', authFromHeaderOrQuery, async (req, res) => {
     try {
-        const video = db.prepare('SELECT drive_link, title FROM videos WHERE id = ?').get(req.params.id);
+        const video = db.prepare('SELECT drive_link, title, quality_links FROM videos WHERE id = ?').get(req.params.id);
         if (!video?.drive_link) return res.sendStatus(404);
-        const fileId = extractDriveId(video.drive_link);
+        let selectedLink = video.drive_link;
+        if (req.query.quality && video.quality_links) {
+            try {
+                const qualities = JSON.parse(video.quality_links) || [];
+                const match = qualities.find(q => q.label === req.query.quality);
+                if (match?.url) selectedLink = match.url;
+            } catch { /* ignore */ }
+        }
+        const fileId = extractDriveId(selectedLink);
         if (!fileId) return res.sendStatus(400);
         const range = req.headers.range;
         const response = await driveService.getFileStream(fileId, range);

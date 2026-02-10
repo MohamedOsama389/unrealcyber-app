@@ -19,8 +19,23 @@ const Videos = () => {
     const [resources, setResources] = useState([]);
     const [resInput, setResInput] = useState({ title: '', url: '' });
     const [uploadFile, setUploadFile] = useState(null);
+    const [qualityInputs, setQualityInputs] = useState([
+        { label: '1080p', url: '' },
+        { label: '720p', url: '' },
+        { label: '480p', url: '' }
+    ]);
+    const [qualitySelections, setQualitySelections] = useState({});
     const [newFolderName, setNewFolderName] = useState('');
     const [showFolderForm, setShowFolderForm] = useState(false);
+
+    const buildVideoUrl = (id, qualityLabel, kind) => {
+        const params = new URLSearchParams();
+        const token = localStorage.getItem('token');
+        if (token) params.set('token', token);
+        if (qualityLabel) params.set('quality', qualityLabel);
+        const qs = params.toString();
+        return `/api/videos/${kind}/${id}${qs ? `?${qs}` : ''}`;
+    };
 
     useEffect(() => {
         fetchContent(currentFolderId);
@@ -38,6 +53,10 @@ const Videos = () => {
 
         // Handle Google Drive
         return link.replace('/view', '/preview');
+    };
+
+    const updateQualityInput = (idx, field, value) => {
+        setQualityInputs(prev => prev.map((q, i) => (i === idx ? { ...q, [field]: value } : q)));
     };
 
     const fetchContent = async (folderId) => {
@@ -118,20 +137,27 @@ const Videos = () => {
     const handleAddVideo = async (e) => {
         e.preventDefault();
         try {
+            const quality_links = qualityInputs.filter(q => q.label && q.url);
             const formData = new FormData();
             if (uploadFile) {
                 formData.append('file', uploadFile);
                 formData.append('title', newVideo.title);
                 formData.append('folder_id', currentFolderId || '');
                 formData.append('resources', JSON.stringify(resources));
+                formData.append('quality_links', JSON.stringify(quality_links));
                 await axios.post('/api/videos/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
             } else {
-                await axios.post('/api/videos', { ...newVideo, folder_id: currentFolderId, resources });
+                await axios.post('/api/videos', { ...newVideo, folder_id: currentFolderId, resources, quality_links });
             }
             setMessage('Success!');
             setNewVideo({ title: '', drive_link: '' });
             setResources([]);
             setUploadFile(null);
+            setQualityInputs([
+                { label: '1080p', url: '' },
+                { label: '720p', url: '' },
+                { label: '480p', url: '' }
+            ]);
             fetchContent(currentFolderId);
             setTimeout(() => setMessage(''), 3000);
         } catch (err) {
@@ -269,6 +295,29 @@ const Videos = () => {
                             </div>
                         </div>
 
+                        <div className="bg-panel border border-border p-4 rounded-xl">
+                            <h4 className="text-xs font-bold text-secondary uppercase tracking-widest mb-3">Quality Links (Optional)</h4>
+                            {qualityInputs.map((q, idx) => (
+                                <div key={idx} className="flex gap-2 mb-2">
+                                    <input
+                                        type="text"
+                                        placeholder="Label (e.g. 1080p)"
+                                        className="input-field w-32 text-sm"
+                                        value={q.label}
+                                        onChange={(e) => updateQualityInput(idx, 'label', e.target.value)}
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="Drive link for this quality"
+                                        className="input-field flex-1 text-sm"
+                                        value={q.url}
+                                        onChange={(e) => updateQualityInput(idx, 'url', e.target.value)}
+                                    />
+                                </div>
+                            ))}
+                            <p className="text-xs text-secondary">Provide different Drive links for each resolution. The player will show a quality selector.</p>
+                        </div>
+
                         <div className="flex items-center justify-between">
                             <label className="flex items-center space-x-2 cursor-pointer text-secondary hover:text-primary transition-colors">
                                 <input
@@ -335,72 +384,89 @@ const Videos = () => {
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {videos.map((vid) => (
-                                <motion.div
-                                    key={vid.id}
-                                    initial={{ opacity: 0, scale: 0.9 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    className="glass-panel overflow-hidden group hover:border-cyan-500/50 transition-colors"
-                                >
-                                    <div className="aspect-video bg-slate-900 relative">
-                                        <video
-                                            src={`/api/videos/stream/${vid.id}${localStorage.getItem('token') ? `?token=${encodeURIComponent(localStorage.getItem('token'))}` : ''}`}
-                                            className="w-full h-full object-contain"
-                                            controls
-                                            preload="metadata"
-                                        />
-                                    </div>
-                                    <div className="p-4">
-                                        <h3 className="font-bold text-primary text-lg mb-2 truncate" title={vid.title}>{vid.title}</h3>
-                                        <div className="flex space-x-2">
-                                            <a
-                                            href={`/api/videos/download/${vid.id}${localStorage.getItem('token') ? `?token=${encodeURIComponent(localStorage.getItem('token'))}` : ''}`}
-                                                className="flex-1 text-center py-2 bg-panel border border-border hover:bg-white/10 dark:hover:bg-slate-700 rounded-lg text-sm font-medium transition-colors text-primary"
-                                            >
-                                                Download
-                                            </a>
+                            {videos.map((vid) => {
+                                const qualities = Array.isArray(vid.quality_links) ? vid.quality_links : [];
+                                const selectedQuality = qualitySelections[vid.id] || qualities[0]?.label;
+                                return (
+                                    <motion.div
+                                        key={vid.id}
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className="glass-panel overflow-hidden group hover:border-cyan-500/50 transition-colors"
+                                    >
+                                        <div className="aspect-video bg-slate-900 relative">
+                                            <video
+                                                src={buildVideoUrl(vid.id, selectedQuality, 'stream')}
+                                                className="w-full h-full object-contain"
+                                                controls
+                                                preload="metadata"
+                                            />
+                                        </div>
+                                        <div className="p-4">
+                                            <h3 className="font-bold text-primary text-lg mb-2 truncate" title={vid.title}>{vid.title}</h3>
+                                            {qualities.length > 0 && (
+                                                <div className="mb-2">
+                                                    <select
+                                                        value={selectedQuality || ''}
+                                                        onChange={(e) => setQualitySelections(prev => ({ ...prev, [vid.id]: e.target.value }))}
+                                                        className="input-field w-full text-sm"
+                                                    >
+                                                        {qualities.map((q) => (
+                                                            <option key={q.label} value={q.label}>{q.label}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            )}
+                                            <div className="flex space-x-2">
+                                                <a
+                                                    href={buildVideoUrl(vid.id, selectedQuality, 'download')}
+                                                    className="flex-1 text-center py-2 bg-panel border border-border hover:bg-white/10 dark:hover:bg-slate-700 rounded-lg text-sm font-medium transition-colors text-primary"
+                                                >
+                                                    Download
+                                                </a>
+                                                {user.role === 'admin' && (
+                                                    <button
+                                                        onClick={() => handleDelete(vid.id)}
+                                                        className="px-3 bg-panel border border-border text-red-500 hover:bg-red-500/20 rounded-lg transition-colors"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                )}
+                                            </div>
                                             {user.role === 'admin' && (
                                                 <button
-                                                    onClick={() => handleDelete(vid.id)}
-                                                    className="px-3 bg-panel border border-border text-red-500 hover:bg-red-500/20 rounded-lg transition-colors"
+                                                    onClick={() => handleFeature(vid.id)}
+                                                    className={`mt-2 w-full flex items-center justify-center py-2 rounded-lg text-sm font-bold transition-all ${vid.is_featured ? 'bg-yellow-500 text-black border-yellow-600' : 'bg-panel border border-border hover:bg-yellow-500/20 text-yellow-500'}`}
                                                 >
-                                                    <Trash2 size={16} />
+                                                    < Star size={16} className={`mr-2 ${vid.is_featured ? 'fill-black' : ''}`} />
+                                                    {vid.is_featured ? 'Featured' : 'Feature on Dashboard'}
                                                 </button>
                                             )}
-                                        </div>
-                                        {user.role === 'admin' && (
-                                            <button
-                                                onClick={() => handleFeature(vid.id)}
-                                                className={`mt-2 w-full flex items-center justify-center py-2 rounded-lg text-sm font-bold transition-all ${vid.is_featured ? 'bg-yellow-500 text-black border-yellow-600' : 'bg-panel border border-border hover:bg-yellow-500/20 text-yellow-500'}`}
-                                            >
-                                                < Star size={16} className={`mr-2 ${vid.is_featured ? 'fill-black' : ''}`} />
-                                                {vid.is_featured ? 'Featured' : 'Feature on Dashboard'}
-                                            </button>
-                                        )}
 
-                                        {vid.resources && vid.resources.length > 0 && (
-                                            <div className="mt-4 pt-3 border-t border-border">
-                                                <p className="text-[10px] text-secondary font-bold uppercase tracking-widest mb-2 flex items-center">
-                                                    <Folder size={10} className="mr-1" /> Resources
-                                                </p>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {vid.resources.map((res, idx) => (
-                                                        <a
-                                                            key={idx}
-                                                            href={res.url}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="text-xs px-2 py-1 bg-cyan-900/30 text-cyan-400 border border-cyan-500/30 rounded hover:bg-cyan-500/20 transition-colors"
-                                                        >
-                                                            {res.title}
-                                                        </a>
-                                                    ))}
+                                            {vid.resources && vid.resources.length > 0 && (
+                                                <div className="mt-4 pt-3 border-t border-border">
+                                                    <p className="text-[10px] text-secondary font-bold uppercase tracking-widest mb-2 flex items-center">
+                                                        <Folder size={10} className="mr-1" /> Resources
+                                                    </p>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {vid.resources.map((res, idx) => (
+                                                            <a
+                                                                key={idx}
+                                                                href={res.url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="text-xs px-2 py-1 bg-cyan-900/30 text-cyan-400 border border-cyan-500/30 rounded hover:bg-cyan-500/20 transition-colors"
+                                                            >
+                                                                {res.title}
+                                                            </a>
+                                                        ))}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </motion.div>
-                            ))}
+                                            )}
+                                        </div>
+                                    </motion.div>
+                                );
+                            })}
                         </div>
                     )}
                 </>

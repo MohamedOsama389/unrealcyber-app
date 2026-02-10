@@ -130,15 +130,25 @@ const PublicHome = () => {
                                 </div>
                             </div>
                         )}
+                        {user && (user.role === 'admin' || user.private_access) && (
+                            <Link
+                                to="/private/dashboard"
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 border border-white/10 text-xs font-bold text-secondary hover:text-primary hover:border-cyan-400/40 transition-colors"
+                            >
+                                Private Website
+                                <ArrowUpRight size={14} />
+                            </Link>
+                        )}
                     </div>
                 </div>
             </header>
 
             <main>
                 <section id="vision" className="max-w-6xl mx-auto px-6 py-16 md:py-24">
-                    <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900/90 via-slate-950/90 to-slate-950/90 px-6 py-10 md:px-12">
-                        <div className="absolute -top-32 right-0 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl" />
-                        <div className="absolute bottom-0 left-20 h-56 w-56 rounded-full bg-emerald-500/10 blur-3xl" />
+                    <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-950/95 via-slate-900/90 to-slate-950/95 px-6 py-10 md:px-12">
+                        <div className="absolute -top-32 right-0 h-72 w-72 rounded-full bg-cyan-500/15 blur-3xl" />
+                        <div className="absolute bottom-0 left-20 h-56 w-56 rounded-full bg-emerald-500/15 blur-3xl" />
+                        <div className="absolute top-10 left-1/2 h-48 w-48 rounded-full bg-amber-500/10 blur-3xl" />
                         <div className="space-y-6 relative z-10">
                         <p className="text-xs uppercase tracking-[0.4em] text-cyan-400">UnrealCyber Vision</p>
                         <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">
@@ -180,7 +190,7 @@ const PublicHome = () => {
                                 <Link
                                     key={`${pillar.title}-${idx}`}
                                     to={section ? `/vision/${section.key}` : '#'}
-                                    className={`group glass-panel p-6 border ${theme.border} ${theme.glow} hover:-translate-y-1 transition-all`}
+                                    className={`group glass-panel p-6 border ${theme.border} ${theme.glow} hover:-translate-y-1 transition-all bg-gradient-to-br ${theme.gradient}`}
                                 >
                                     <div className={`inline-flex items-center px-3 py-1 text-[10px] uppercase tracking-[0.3em] rounded-full border ${theme.chip}`}>
                                         Track {idx + 1}
@@ -216,20 +226,22 @@ const PublicHome = () => {
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            {latestVideos.map((video, idx) => (
+                            {latestVideos.map((video, idx) => {
+                                const theme = getSectionTheme(video.sectionKey);
+                                return (
                                 <Link
                                     key={`${video.title}-${idx}`}
                                     to={`/vision/${video.sectionKey}/${video.slug}`}
-                                    className="text-left glass-panel p-5 border-white/10 hover:border-cyan-400/40 transition-all hover:-translate-y-1"
+                                    className={`text-left glass-panel p-5 border ${theme.border} hover:border-cyan-400/40 transition-all hover:-translate-y-1 bg-gradient-to-br ${theme.gradient}`}
                                 >
                                     <div className="aspect-video rounded-xl bg-slate-900/60 border border-white/5 flex items-center justify-center mb-4">
-                                        <Play className="text-cyan-400" />
+                                        <Play className={theme.accent} />
                                     </div>
                                     <p className="text-xs uppercase tracking-[0.3em] text-secondary">{video.sectionTitle}</p>
                                     <h3 className="text-lg font-bold mt-2">{video.title}</h3>
                                     <p className="text-sm text-secondary mt-2">{video.description}</p>
                                 </Link>
-                            ))}
+                            )})}
                         </div>
                     )}
                 </section>
@@ -249,15 +261,7 @@ const PublicHome = () => {
                                 )}
                             </div>
                         </div>
-                        {section.videos.length === 0 ? (
-                            <Link
-                                to={`/vision/${section.key}`}
-                                className={`glass-panel p-6 border ${getSectionTheme(section.key).border} text-secondary text-sm hover:border-cyan-400/40 transition-all hover:-translate-y-1`}
-                            >
-                                <p className="font-bold text-primary">Explore {section.title}</p>
-                                <p className="mt-2">No videos yet. Enter the track to start building it.</p>
-                            </Link>
-                        ) : (
+                        {section.videos.length === 0 ? null : (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {section.videos.map((video) => {
                                     const theme = getSectionTheme(section.key);
@@ -265,7 +269,7 @@ const PublicHome = () => {
                                     <Link
                                         key={video.slug}
                                         to={`/vision/${section.key}/${video.slug}`}
-                                        className={`text-left glass-panel p-6 border ${theme.border} hover:border-cyan-400/40 transition-all hover:-translate-y-1`}
+                                        className={`text-left glass-panel p-6 border ${theme.border} hover:border-cyan-400/40 transition-all hover:-translate-y-1 bg-gradient-to-br ${theme.gradient}`}
                                     >
                                         <div className="aspect-video rounded-2xl bg-slate-900/60 border border-white/5 flex items-center justify-center mb-4">
                                             <Play className={theme.accent} />

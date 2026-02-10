@@ -2,12 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, ArrowUpRight, Play } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import { DEFAULT_PUBLIC_CONTENT, normalizePublicContent, buildVideoSlug, getSectionTheme } from '../data/publicSite';
 
 const PublicSection = () => {
     const { sectionKey } = useParams();
     const [content, setContent] = useState(DEFAULT_PUBLIC_CONTENT);
     const [loading, setLoading] = useState(true);
+    const { user } = useAuth();
 
     useEffect(() => {
         const load = async () => {
@@ -60,7 +62,18 @@ const PublicSection = () => {
                     <Link to="/" className="inline-flex items-center gap-2 text-xs text-secondary hover:text-primary">
                         <ArrowLeft size={14} /> Back to Home
                     </Link>
-                    <Link to="/" className="text-xs uppercase tracking-[0.3em] text-secondary">UnrealCyber Vision</Link>
+                    <div className="flex items-center gap-3">
+                        {user && (user.role === 'admin' || user.private_access) && (
+                            <Link
+                                to="/private/dashboard"
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 border border-white/10 text-xs font-bold text-secondary hover:text-primary hover:border-cyan-400/40 transition-colors"
+                            >
+                                Private Website
+                                <ArrowUpRight size={14} />
+                            </Link>
+                        )}
+                        <Link to="/" className="text-xs uppercase tracking-[0.3em] text-secondary">UnrealCyber Vision</Link>
+                    </div>
                 </div>
             </header>
 
@@ -92,7 +105,7 @@ const PublicSection = () => {
                                 <Link
                                     key={video.slug}
                                     to={`/vision/${section.key}/${video.slug}`}
-                                    className={`glass-panel p-6 border ${theme.border} hover:border-cyan-400/40 transition-all hover:-translate-y-1`}
+                                    className={`glass-panel p-6 border ${theme.border} hover:border-cyan-400/40 transition-all hover:-translate-y-1 bg-gradient-to-br ${theme.gradient}`}
                                 >
                                     <div className="aspect-video rounded-2xl bg-slate-900/60 border border-white/5 flex items-center justify-center mb-4">
                                         <Play className={theme.accent} />

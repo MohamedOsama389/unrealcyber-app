@@ -205,6 +205,9 @@ app.post('/api/auth/login', (req, res) => {
     const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
 
     if (user && bcrypt.compareSync(password, user.password)) {
+        if (req.body.requireAdmin && user.role !== 'admin' && !user.private_access) {
+            return res.status(403).json({ error: "Not authorized for private access." });
+        }
         // --- STREAK LOGIC ---
         const today = new Date().toISOString().split('T')[0];
         const lastDate = user.last_activity_date;
@@ -230,7 +233,7 @@ app.post('/api/auth/login', (req, res) => {
         // For now, let's keep it in login to ensure student progress is backed up
         driveService.backupDatabase();
 
-        const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, SECRET_KEY);
+        const token = jwt.sign({ id: user.id, username: user.username, role: user.role, private_access: user.private_access || 0 }, SECRET_KEY);
         res.json({
             token,
             role: user.role,
@@ -240,12 +243,13 @@ app.post('/api/auth/login', (req, res) => {
             avatar_url: user.avatar_url,
             avatar_id: user.avatar_id,
             avatar_version: user.avatar_version,
-            streak_count: newStreak
+            streak_count: newStreak,
+            private_access: user.private_access || 0
         });
     }
 });
 
-// Google OAuth (Admin-only)
+// Google OAuth (Admin + private access)
 app.post('/api/auth/google', async (req, res) => {
     try {
         const { credential } = req.body;
@@ -265,7 +269,9 @@ app.post('/api/auth/google', async (req, res) => {
 
         const allowlist = getPrivateAllowlist();
         const normalizedEmail = payload.email.toLowerCase();
-        const isAllowed = allowlist.includes(normalizedEmail);
+        const adminEmails = (process.env.GOOGLE_ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+        const isAllowlisted = allowlist.includes(normalizedEmail);
+        const isAdminEmail = adminEmails.includes(normalizedEmail);
 
         let user = db.prepare('SELECT * FROM users WHERE username = ?').get(payload.email);
         if (!user) {
@@ -274,13 +280,13 @@ app.post('/api/auth/google', async (req, res) => {
             const result = db.prepare('INSERT INTO users (username, password, role, display_name, avatar_url) VALUES (?, ?, ?, ?, ?)').run(
                 payload.email,
                 hash,
-                isAllowed ? 'admin' : 'student',
+                isAdminEmail ? 'admin' : 'student',
                 payload.name || payload.given_name || payload.email,
                 payload.picture || null
             );
             user = db.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid);
         } else {
-            const desiredRole = isAllowed ? 'admin' : 'student';
+            const desiredRole = isAdminEmail ? 'admin' : user.role;
             if (user.role !== desiredRole) {
                 db.prepare('UPDATE users SET role = ? WHERE id = ?').run(desiredRole, user.id);
                 user = { ...user, role: desiredRole };
@@ -295,7 +301,18 @@ app.post('/api/auth/google', async (req, res) => {
             }
         }
 
-        const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, SECRET_KEY);
+        // Update private access flag
+        const shouldHavePrivate = isAllowlisted || isAdminEmail;
+        if (user.private_access !== (shouldHavePrivate ? 1 : 0)) {
+            db.prepare('UPDATE users SET private_access = ? WHERE id = ?').run(shouldHavePrivate ? 1 : 0, user.id);
+            user = { ...user, private_access: shouldHavePrivate ? 1 : 0 };
+        }
+
+        if (!isAdminEmail && !shouldHavePrivate && req.body.requireAdmin) {
+            return res.status(403).json({ error: "Not authorized for private access." });
+        }
+
+        const token = jwt.sign({ id: user.id, username: user.username, role: user.role, private_access: user.private_access || 0 }, SECRET_KEY);
         res.json({
             token,
             role: user.role,
@@ -303,7 +320,8 @@ app.post('/api/auth/google', async (req, res) => {
             display_name: user.display_name,
             avatar_url: user.avatar_url,
             avatar_id: user.avatar_id,
-            avatar_version: user.avatar_version
+            avatar_version: user.avatar_version,
+            private_access: user.private_access || 0
         });
     } catch (err) {
         console.error("[Auth] Google login failed:", err.message);
@@ -313,7 +331,7 @@ app.post('/api/auth/google', async (req, res) => {
 
 // --- PROFILE ---
 app.get('/api/profile/me', authenticateToken, (req, res) => {
-    const user = db.prepare('SELECT id, username, role, display_name, avatar_url, avatar_id, avatar_version, streak_count, last_activity_date FROM users WHERE id = ?').get(req.user.id);
+    const user = db.prepare('SELECT id, username, role, private_access, display_name, avatar_url, avatar_id, avatar_version, streak_count, last_activity_date FROM users WHERE id = ?').get(req.user.id);
     res.json(user);
 });
 
@@ -1398,7 +1416,7 @@ app.delete('/api/vms/:id', authenticateToken, (req, res) => {
 // --- USERS ---
 app.get('/api/users', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
-    const users = db.prepare('SELECT id, username, role, avatar_id, created_at FROM users').all();
+    const users = db.prepare('SELECT id, username, role, private_access, avatar_id, avatar_version, display_name, created_at FROM users').all();
     res.json(users);
 });
 
@@ -1419,6 +1437,14 @@ app.post('/api/users/promote', authenticateToken, (req, res) => {
     const { id, role } = req.body;
     db.prepare('UPDATE users SET role = ? WHERE id = ?').run(role, id);
     res.json({ success: true });
+});
+
+app.put('/api/users/:id/private-access', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    const { id } = req.params;
+    const { enabled } = req.body;
+    db.prepare('UPDATE users SET private_access = ? WHERE id = ?').run(enabled ? 1 : 0, id);
+    res.json({ success: true, private_access: enabled ? 1 : 0 });
 });
 
 app.put('/api/users/:id/password', authenticateToken, (req, res) => {

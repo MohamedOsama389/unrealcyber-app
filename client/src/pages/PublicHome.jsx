@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
-import { ArrowUpRight, Play, ShieldCheck, Send } from 'lucide-react';
+import { ArrowUpRight, Play, ShieldCheck, Send, MessageCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const DEFAULT_PUBLIC_CONTENT = {
@@ -353,16 +353,22 @@ const PublicHome = () => {
 
             <footer className="border-t border-white/5 mt-12">
                 <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col md:flex-row gap-6 items-start md:items-center justify-between text-sm text-secondary">
-                    <p>Unreal Cyber Academy — Public Portal</p>
-                    <div className="flex items-center gap-4">
+                    <p>Unreal Cyber Academy</p>
+                    <div className="flex items-center gap-4 text-primary">
                         {content.socials?.youtube && (
-                            <a href={content.socials.youtube} target="_blank" rel="noreferrer" className="hover:text-primary">YouTube</a>
+                            <a href={content.socials.youtube} target="_blank" rel="noreferrer" className="hover:text-cyan-300 flex items-center gap-2">
+                                <Play size={16} />
+                            </a>
                         )}
                         {content.socials?.telegram && (
-                            <a href={content.socials.telegram} target="_blank" rel="noreferrer" className="hover:text-primary">Telegram</a>
+                            <a href={content.socials.telegram} target="_blank" rel="noreferrer" className="hover:text-cyan-300 flex items-center gap-2">
+                                <Send size={16} />
+                            </a>
                         )}
                         {content.socials?.discord && (
-                            <a href={content.socials.discord} target="_blank" rel="noreferrer" className="hover:text-primary">Discord</a>
+                            <a href={content.socials.discord} target="_blank" rel="noreferrer" className="hover:text-cyan-300 flex items-center gap-2">
+                                <MessageCircle size={16} />
+                            </a>
                         )}
                     </div>
                 </div>

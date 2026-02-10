@@ -223,6 +223,15 @@ const AdminPanel = () => {
         }
     };
 
+    const togglePrivateAccess = async (id, current) => {
+        try {
+            await axios.put(`/api/users/${id}/private-access`, { enabled: !current });
+            fetchUsers();
+        } catch (err) {
+            alert('Failed to update private access');
+        }
+    };
+
     const fetchSiteSettings = async () => {
         try {
             const res = await axios.get('/api/settings');
@@ -594,10 +603,15 @@ const AdminPanel = () => {
                                                     <span className="font-bold text-primary">{u.username}</span>
                                                 </div>
                                             </td>
-                                            <td className="p-4">
+                                            <td className="p-4 space-x-2">
                                                 <span className={`px-2 py-1 rounded text-xs font-bold ${u.role === 'admin' ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-green-500/20 text-green-300 border border-green-500/30'}`}>
                                                     {u.role.toUpperCase()}
                                                 </span>
+                                                {u.private_access ? (
+                                                    <span className="px-2 py-1 rounded text-xs font-bold bg-cyan-500/20 text-cyan-200 border border-cyan-500/30">
+                                                        PRIVATE
+                                                    </span>
+                                                ) : null}
                                             </td>
                                             <td className="p-4 text-secondary text-sm">
                                                 {new Date(u.created_at).toLocaleDateString()}
@@ -609,6 +623,12 @@ const AdminPanel = () => {
                                                     disabled={u.username === 'Lloyed'} // Protect main admin
                                                 >
                                                     {u.role === 'admin' ? 'Demote' : 'Promote'}
+                                                </button>
+                                                <button
+                                                    onClick={() => togglePrivateAccess(u.id, u.private_access)}
+                                                    className="text-xs font-bold px-3 py-1 bg-panel border border-border hover:bg-white/10 dark:hover:bg-slate-700 rounded text-cyan-300 transition-colors"
+                                                >
+                                                    {u.private_access ? 'Revoke Private' : 'Allow Private'}
                                                 </button>
                                                 <button
                                                     onClick={() => handleResetPassword(u.id, u.username)}
@@ -1379,7 +1399,7 @@ const AdminPanel = () => {
                             )}
                         </div>
                         <p className="text-xs text-secondary">
-                            Only emails in this list will receive admin access in the private app via Google login.
+                            Emails in this list are allowed to sign in to the private site (not automatically admins).
                         </p>
                     </div>
                 </div>

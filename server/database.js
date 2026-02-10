@@ -14,6 +14,7 @@ db.exec(`
     username TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
     role TEXT CHECK(role IN ('admin', 'student')) DEFAULT 'student',
+    private_access INTEGER DEFAULT 0,
     display_name TEXT,
     avatar_url TEXT,
     avatar_id TEXT,
@@ -179,6 +180,7 @@ ensureColumn('users', 'streak_count', 'INTEGER DEFAULT 0');
 ensureColumn('users', 'last_activity_date', 'TEXT');
 ensureColumn('users', 'display_name', 'TEXT');
 ensureColumn('users', 'avatar_url', 'TEXT');
+ensureColumn('users', 'private_access', 'INTEGER DEFAULT 0');
 
 ensureColumn('tasks', 'notes', 'TEXT');
 

@@ -10,7 +10,11 @@ const ProtectedRoute = ({ allowedRoles }) => {
         return <Navigate to="/private/login" replace />;
     }
 
-    if (allowedRoles && !allowedRoles.map(r => r.toLowerCase()).includes(user.role?.toLowerCase())) {
+    const allowed = allowedRoles
+        ? allowedRoles.map(r => r.toLowerCase())
+        : null;
+
+    if (allowed && !allowed.includes(user.role?.toLowerCase()) && !(allowed.includes('admin') && user.private_access)) {
         return <Navigate to="/" replace />;
     }
 

@@ -202,7 +202,7 @@ app.post('/api/auth/register', (req, res) => {
 
 app.post('/api/auth/login', (req, res) => {
     const { username, password } = req.body;
-    const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+    const user = db.prepare('SELECT * FROM users WHERE LOWER(username) = LOWER(?)').get(username);
 
     if (user && bcrypt.compareSync(password, user.password)) {
         if (req.body.requireAdmin && user.role !== 'admin' && !user.private_access) {
@@ -301,9 +301,10 @@ app.post('/api/auth/google', async (req, res) => {
             }
         }
 
-        // Update private access flag
-        const shouldHavePrivate = isAllowlisted || isAdminEmail;
-        if (user.private_access !== (shouldHavePrivate ? 1 : 0)) {
+        // Update private access flag (preserve manual grants)
+        const storedPrivate = user.private_access ? 1 : 0;
+        const shouldHavePrivate = storedPrivate || isAllowlisted || isAdminEmail;
+        if (storedPrivate !== shouldHavePrivate) {
             db.prepare('UPDATE users SET private_access = ? WHERE id = ?').run(shouldHavePrivate ? 1 : 0, user.id);
             user = { ...user, private_access: shouldHavePrivate ? 1 : 0 };
         }

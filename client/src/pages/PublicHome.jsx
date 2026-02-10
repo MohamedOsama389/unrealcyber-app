@@ -216,7 +216,7 @@ const PublicHome = () => {
                                                 Signed in as <span className="text-primary font-semibold">{user.display_name || user.username}</span>
                                             </div>
                                         </div>
-                                        {user.role === 'admin' && (
+                                        {(user.role === 'admin' || user.private_access) && (
                                             <a
                                                 href="/private/dashboard"
                                                 className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-white/10 border border-white/10 text-secondary hover:text-primary hover:border-cyan-400/40 transition-colors text-xs font-bold"

@@ -148,12 +148,12 @@ function initBot(db) {
         if (session.step === 'username') {
             const user = db.prepare('SELECT * FROM users WHERE LOWER(username) = LOWER(?)').get(text);
             if (!user) return ctx.reply("User not found. Try /login again.");
-            session.username = text;
+            session.username = user.username;
             session.step = 'password';
             ctx.reply("Enter your password:");
         }
         else if (session.step === 'password') {
-            const user = db.prepare('SELECT * FROM users WHERE username = ?').get(session.username);
+            const user = db.prepare('SELECT * FROM users WHERE LOWER(username) = LOWER(?)').get(session.username);
             const valid = bcrypt.compareSync(text, user.password);
 
             if (valid) {

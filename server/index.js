@@ -571,7 +571,7 @@ app.get('/api/tasks/resource/:id', authenticateToken, async (req, res) => {
         if (!task?.drive_link) return res.sendStatus(404);
         const fileId = extractDriveId(task.drive_link);
         if (!fileId) return res.sendStatus(400);
-        const range = req.headers.range;
+        const range = req.headers.range || 'bytes=0-';
         const response = await driveService.getFileStream(fileId, range);
 
         const headers = response.headers;
@@ -1219,7 +1219,7 @@ app.get('/api/videos/stream/:id', authFromHeaderOrQuery, async (req, res) => {
         const fname = (meta?.name || video.title || 'video').replace(/[^a-z0-9._-]+/gi, '_');
         res.setHeader('Content-Disposition', `inline; filename="${fname}"`);
         res.setHeader('Accept-Ranges', 'bytes');
-        const desiredStatus = range && response.status === 200 ? 206 : response.status;
+        const desiredStatus = response.status === 200 && range ? 206 : response.status;
         res.status(desiredStatus);
         response.data.pipe(res);
     } catch (err) {

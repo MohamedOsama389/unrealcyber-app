@@ -1210,16 +1210,17 @@ app.get('/api/videos/stream/:id', authFromHeaderOrQuery, async (req, res) => {
         const headers = response.headers;
         const getHeader = (key) => headers[key] || headers[key.toLowerCase()];
         const contentLength = getHeader('Content-Length');
-        const contentType = meta?.mimeType || getHeader('Content-Type');
+        const contentType = meta?.mimeType || getHeader('Content-Type') || 'video/mp4';
         const contentRange = getHeader('Content-Range');
 
         if (contentLength) res.setHeader('Content-Length', contentLength);
-        res.setHeader('Content-Type', contentType || 'video/mp4');
+        res.setHeader('Content-Type', contentType);
         if (contentRange) res.setHeader('Content-Range', contentRange);
         const fname = (meta?.name || video.title || 'video').replace(/[^a-z0-9._-]+/gi, '_');
         res.setHeader('Content-Disposition', `inline; filename="${fname}"`);
         res.setHeader('Accept-Ranges', 'bytes');
-        res.status(response.status);
+        const desiredStatus = range && response.status === 200 ? 206 : response.status;
+        res.status(desiredStatus);
         response.data.pipe(res);
     } catch (err) {
         console.error("Video stream failed:", err.message);

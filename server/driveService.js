@@ -528,6 +528,12 @@ const getFileMeta = async (fileId, fields = 'name, mimeType') => {
     return res.data;
 };
 
+const getAccessToken = async () => {
+    if (!oauth2Client) throw new Error("OAuth client not initialized");
+    const token = await oauth2Client.getAccessToken();
+    return token?.token || token;
+};
+
 /**
  * Upload database as SQL dump to Google Drive
  */
@@ -833,6 +839,7 @@ module.exports = {
     ensureLabsFolder, // Export new function
     getFileStream, // Export new function
     getFileMeta,
+    getAccessToken,
     TASKS_FOLDER_ID,
     VIDEOS_FOLDER_ID,
     FILES_FOLDER_ID,

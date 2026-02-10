@@ -1202,20 +1202,31 @@ app.get('/api/videos/stream/:id', authFromHeaderOrQuery, async (req, res) => {
         if (!fileId) return res.sendStatus(400);
         let meta;
         try {
-            meta = await driveService.getFileMeta(fileId, 'name,mimeType');
+            meta = await driveService.getFileMeta(fileId, 'name,mimeType,size');
         } catch { /* ignore */ }
         const range = req.headers.range || undefined;
         const response = await driveService.getFileStream(fileId, range);
 
         const headers = response.headers;
         const getHeader = (key) => headers[key] || headers[key.toLowerCase()];
-        const contentLength = getHeader('Content-Length');
+        let contentLength = getHeader('Content-Length');
         const headerType = getHeader('Content-Type');
         const metaType = meta?.mimeType;
         const contentType = (metaType && metaType.startsWith('video/'))
             ? metaType
             : (headerType && headerType.startsWith('video/')) ? headerType : 'video/mp4';
-        const contentRange = getHeader('Content-Range');
+        let contentRange = getHeader('Content-Range');
+
+        // If Drive didn't include range headers, synthesize them from size
+        if (range && !contentRange && meta?.size) {
+            const match = range.match(/bytes=(\d+)-(\d+)?/);
+            if (match) {
+                const start = parseInt(match[1], 10);
+                const end = match[2] ? parseInt(match[2], 10) : Number(meta.size) - 1;
+                contentRange = `bytes ${start}-${end}/${meta.size}`;
+                contentLength = (end - start + 1).toString();
+            }
+        }
 
         if (contentLength) res.setHeader('Content-Length', contentLength);
         res.setHeader('Content-Type', contentType);
@@ -1223,7 +1234,7 @@ app.get('/api/videos/stream/:id', authFromHeaderOrQuery, async (req, res) => {
         const fname = (meta?.name || video.title || 'video').replace(/[^a-z0-9._-]+/gi, '_');
         res.setHeader('Content-Disposition', `inline; filename="${fname}"`);
         res.setHeader('Accept-Ranges', 'bytes');
-        res.status(response.status);
+        res.status(range ? 206 : response.status);
         response.data.pipe(res);
     } catch (err) {
         console.error("Video stream failed:", err.message);

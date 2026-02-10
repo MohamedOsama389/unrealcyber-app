@@ -76,9 +76,11 @@ const PublicHome = () => {
         }))
     }));
 
-    const latestVideos = sections.flatMap(section =>
+    // Latest video = most recently added (last in the flattened list)
+    const flatVideos = sections.flatMap(section =>
         section.videos.map(video => ({ ...video, sectionTitle: section.title, sectionKey: section.key }))
-    ).slice(0, 6);
+    );
+    const latestVideos = flatVideos.length ? [flatVideos[flatVideos.length - 1]] : [];
 
     return (
         <div className="min-h-screen bg-app text-primary">
@@ -225,7 +227,7 @@ const PublicHome = () => {
                             Add videos under each section to show them here.
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {latestVideos.map((video, idx) => {
                                 const theme = getSectionTheme(video.sectionKey);
                                 const thumb = getVideoThumbnailUrl(video.url);
@@ -257,56 +259,6 @@ const PublicHome = () => {
                         </div>
                     )}
                 </section>
-
-                {sections.map((section) => (
-                    <section key={section.key} id={section.key} className="max-w-6xl mx-auto px-6 py-12">
-                        <div className="flex items-center justify-between mb-6">
-                            <div>
-                                <h2 className="text-2xl font-bold">
-                                    {section.title}
-                                </h2>
-                                {section.description && (
-                                    <p className="text-secondary text-sm mt-2">{section.description}</p>
-                                )}
-                            </div>
-                        </div>
-                        {section.videos.length === 0 ? null : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {section.videos.map((video) => {
-                                    const theme = getSectionTheme(section.key);
-                                    const thumb = getVideoThumbnailUrl(video.url);
-                                    return (
-                                    <Link
-                                        key={video.slug}
-                                        to={`/vision/${section.key}/${video.slug}`}
-                                        className={`text-left glass-panel p-6 border ${theme.border} hover:border-cyan-400/40 transition-all hover:-translate-y-1 bg-gradient-to-br ${theme.gradient}`}
-                                    >
-                                        <div className="aspect-video rounded-2xl bg-slate-900/60 border border-white/5 flex items-center justify-center mb-4 relative overflow-hidden">
-                                            {thumb && (
-                                                <img
-                                                    src={thumb}
-                                                    alt=""
-                                                    className="absolute inset-0 w-full h-full object-cover"
-                                                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                                                    loading="lazy"
-                                                />
-                                            )}
-                                            <div className="relative z-10 w-12 h-12 rounded-full bg-black/40 border border-white/10 flex items-center justify-center">
-                                                <Play className={theme.accent} />
-                                            </div>
-                                        </div>
-                                        <h3 className="text-lg font-bold">{video.title}</h3>
-                                        <p className="text-secondary text-sm mt-2">{video.description}</p>
-                                        <div className={`mt-4 text-xs font-bold flex items-center gap-2 ${theme.accent}`}>
-                                            Open Session
-                                            <ArrowUpRight size={14} />
-                                        </div>
-                                    </Link>
-                                )})}
-                            </div>
-                        )}
-                    </section>
-                ))}
             </main>
 
             <footer className="border-t border-white/5 mt-12">

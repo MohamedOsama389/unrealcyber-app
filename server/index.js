@@ -1200,18 +1200,24 @@ app.get('/api/videos/stream/:id', authFromHeaderOrQuery, async (req, res) => {
         if (!video?.drive_link) return res.sendStatus(404);
         const fileId = extractDriveId(video.drive_link);
         if (!fileId) return res.sendStatus(400);
+        let meta;
+        try {
+            meta = await driveService.getFileMeta(fileId, 'name,mimeType');
+        } catch { /* ignore */ }
         const range = req.headers.range;
         const response = await driveService.getFileStream(fileId, range);
 
         const headers = response.headers;
         const getHeader = (key) => headers[key] || headers[key.toLowerCase()];
         const contentLength = getHeader('Content-Length');
-        const contentType = getHeader('Content-Type');
+        const contentType = meta?.mimeType || getHeader('Content-Type');
         const contentRange = getHeader('Content-Range');
 
         if (contentLength) res.setHeader('Content-Length', contentLength);
         res.setHeader('Content-Type', contentType || 'video/mp4');
         if (contentRange) res.setHeader('Content-Range', contentRange);
+        const fname = (meta?.name || video.title || 'video').replace(/[^a-z0-9._-]+/gi, '_');
+        res.setHeader('Content-Disposition', `inline; filename="${fname}"`);
         res.setHeader('Accept-Ranges', 'bytes');
         res.status(response.status);
         response.data.pipe(res);

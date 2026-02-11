@@ -63,7 +63,7 @@ const PublicHome = () => {
             <div className="fixed inset-0 z-0 bg-[#02040a]">
                 <Canvas camera={{ position: [0, 0, 15], fov: 35 }} dpr={[1, 2]}>
                     <color attach="background" args={['#02040a']} />
-                    <fog attach="fog" args={['#02040a', 15, 30]} />
+                    <fog attach="fog" args={['#02040a', 20, 40]} />
                     <ambientLight intensity={0.5} />
                     <pointLight position={[10, 10, 10]} intensity={1} color="#00e5ff" />
                     <ParticleMorph scrollProgress={scrollProgress} />
@@ -173,7 +173,7 @@ const PublicHome = () => {
             </footer>
 
             {/* Global Scroll Indicator */}
-            <div className="fixed bottom-12 left-1/2 -ml-[0.5px] z-20 pointer-events-none transition-opacity duration-1000" style={{ opacity: scrollProgress > 0.95 ? 0 : 0.6 }}>
+            <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-20 pointer-events-none transition-opacity duration-1000" style={{ opacity: scrollProgress > 0.95 ? 0 : 0.6 }}>
                 <div className="flex flex-col items-center gap-6">
                     <div className="w-[1px] h-24 bg-gradient-to-b from-transparent via-cyan-500/50 to-transparent" />
                     <span className="text-[8px] uppercase tracking-[0.6em] text-cyan-400/80 animate-pulse font-black">Scroll to Assemble</span>

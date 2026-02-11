@@ -112,23 +112,34 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
         // 0% scattered, 50% assembled, 100% scattered/morphing
         const assemblyFactor = Math.sin(progressInSection * Math.PI);
 
+        // Lerp between current and target
+        // We use a slightly faster lerp for the initial scatter drift
+        const lerpFactor = assemblyFactor < 0.1 ? 0.02 : 0.08;
+
         for (let i = 0; i < particleCount; i++) {
             const i3 = i * 3;
 
-            // Lerp between random (scattered) and target object
-            // Add a small noise/sine offset for organic feel
-            const noise = Math.sin(t * 1.5 + i) * 0.05;
+            // Influence of target shape vs random scatter
+            const targetX = targetBuffer[i3];
+            const targetY = targetBuffer[i3 + 1];
+            const targetZ = targetBuffer[i3 + 2];
 
-            positions[i3] += (targetBuffer[i3] - positions[i3]) * 0.05 * assemblyFactor + noise;
-            positions[i3 + 1] += (targetBuffer[i3 + 1] - positions[i3 + 1]) * 0.05 * assemblyFactor + noise;
-            positions[i3 + 2] += (targetBuffer[i3 + 2] - positions[i3 + 2]) * 0.05 * assemblyFactor + noise;
+            const scatterX = targets.random[i3];
+            const scatterY = targets.random[i3 + 1];
+            const scatterZ = targets.random[i3 + 2];
 
-            // When assembly factor is low, slowly drift back to scattered positions
-            if (assemblyFactor < 0.1) {
-                positions[i3] += (targets.random[i3] - positions[i3]) * 0.01;
-                positions[i3 + 1] += (targets.random[i3 + 1] - positions[i3 + 1]) * 0.01;
-                positions[i3 + 2] += (targets.random[i3 + 2] - positions[i3 + 2]) * 0.01;
-            }
+            // Mix based on assembly factor
+            const goalX = THREE.MathUtils.lerp(scatterX, targetX, assemblyFactor);
+            const goalY = THREE.MathUtils.lerp(scatterY, targetY, assemblyFactor);
+            const goalZ = THREE.MathUtils.lerp(scatterZ, targetZ, assemblyFactor);
+
+            positions[i3] += (goalX - positions[i3]) * lerpFactor;
+            positions[i3 + 1] += (goalY - positions[i3 + 1]) * lerpFactor;
+            positions[i3 + 2] += (goalZ - positions[i3 + 2]) * lerpFactor;
+
+            // Add sine jiggle
+            positions[i3] += Math.sin(t + i) * 0.01;
+            positions[i3 + 1] += Math.cos(t + i) * 0.01;
         }
 
         pointsRef.current.geometry.attributes.position.needsUpdate = true;
@@ -143,15 +154,15 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
                 <bufferAttribute
                     attach="attributes-position"
                     count={particleCount}
-                    array={new Float32Array(particleCount * 3)}
+                    array={targets.random}
                     itemSize={3}
                 />
             </bufferGeometry>
             <pointMaterial
-                size={0.06}
+                size={0.12}
                 color="#00e5ff"
                 transparent
-                opacity={0.8}
+                opacity={0.6}
                 sizeAttenuation={true}
                 depthWrite={false}
                 blending={THREE.AdditiveBlending}

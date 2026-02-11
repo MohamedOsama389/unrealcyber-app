@@ -24,7 +24,7 @@ const ScrollSections = ({ onProgress }) => {
         <div ref={containerRef} className="relative z-10">
             {/* PART 1: Networking */}
             <section id="networking" className="h-[150vh] flex flex-col items-center justify-center px-6">
-                <div className="max-w-4xl text-center space-y-6 bg-slate-950/40 backdrop-blur-sm p-12 rounded-3xl border border-white/5 shadow-2xl">
+                <div className="max-w-4xl text-center space-y-6 bg-slate-900/60 backdrop-blur-md p-12 rounded-3xl border border-white/10 shadow-2xl opacity-100 flex flex-col items-center justify-center space-y-8">
                     <h2 className="text-5xl md:text-7xl font-extrabold text-cyan-400 uppercase tracking-tighter">
                         Networking
                     </h2>
@@ -41,7 +41,7 @@ const ScrollSections = ({ onProgress }) => {
 
             {/* PART 2: Ethical Hacking */}
             <section id="hacking" className="h-[150vh] flex flex-col items-center justify-center px-6">
-                <div className="max-w-4xl text-center space-y-6 bg-slate-950/40 backdrop-blur-sm p-12 rounded-3xl border border-white/5 shadow-2xl">
+                <div className="max-w-4xl text-center space-y-6 bg-slate-900/60 backdrop-blur-md p-12 rounded-3xl border border-white/10 shadow-2xl opacity-100 flex flex-col items-center justify-center space-y-8">
                     <h2 className="text-5xl md:text-7xl font-extrabold text-purple-400 uppercase tracking-tighter">
                         Ethical Hacking
                     </h2>
@@ -58,7 +58,7 @@ const ScrollSections = ({ onProgress }) => {
 
             {/* PART 3: Programming */}
             <section id="programming" className="h-[150vh] flex flex-col items-center justify-center px-6">
-                <div className="max-w-4xl text-center space-y-6 bg-slate-950/40 backdrop-blur-sm p-12 rounded-3xl border border-white/5 shadow-2xl">
+                <div className="max-w-4xl text-center space-y-6 bg-slate-900/60 backdrop-blur-md p-12 rounded-3xl border border-white/10 shadow-2xl opacity-100 flex flex-col items-center justify-center space-y-8">
                     <h2 className="text-5xl md:text-7xl font-extrabold text-blue-400 uppercase tracking-tighter">
                         Programming
                     </h2>

@@ -185,30 +185,42 @@ const PublicHome = () => {
 
                     {/* Right Column: Latest Video Card */}
                     <div className="relative w-full lg:pt-14 xl:pt-16">
-                        {featured?.featuredVideo ? (
-                            <div className="group relative glass-panel p-2 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-cyan-500/10 transform hover:-rotate-1 transition-transform duration-500 max-w-[40rem] lg:ml-auto">
-                                <div className="absolute top-6 left-6 z-10 bg-cyan-500 text-black text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-xl">
-                                    Latest Session
-                                </div>
-                                <div className="aspect-video rounded-[2rem] overflow-hidden bg-slate-900 border border-white/5 relative">
-                                    <img
-                                        src={`/api/public/thumbnail/${featured.featuredVideo.drive_link ? extractDriveId(featured.featuredVideo.drive_link) : featured.featuredVideo.id}`}
-                                        className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700"
-                                        alt=""
-                                    />
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="w-20 h-20 rounded-full bg-cyan-500 text-black flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
-                                            <Play size={28} fill="currentColor" />
+                        {(publicContent?.hero?.heroVideoLink || featured?.featuredVideo) ? (
+                            <div className="space-y-6 lg:ml-auto max-w-[40rem]">
+                                <div className="group relative glass-panel p-2 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-cyan-500/10 transform hover:-rotate-1 transition-transform duration-500">
+                                    <div className="absolute top-6 left-6 z-10 bg-cyan-500 text-black text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-xl">
+                                        Latest Session
+                                    </div>
+                                    <a
+                                        href={publicContent?.hero?.heroVideoLink || (featured?.featuredVideo?.drive_link ? featured.featuredVideo.drive_link : '#')}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="block aspect-video rounded-[2rem] overflow-hidden bg-slate-900 border border-white/5 relative"
+                                    >
+                                        <img
+                                            src={publicContent?.hero?.heroVideoLink
+                                                ? getVideoThumbnailUrl(publicContent.hero.heroVideoLink)
+                                                : `/api/public/thumbnail/${featured.featuredVideo.drive_link ? extractDriveId(featured.featuredVideo.drive_link) : featured.featuredVideo.id}`
+                                            }
+                                            className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700"
+                                            alt=""
+                                        />
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            <div className="w-20 h-20 rounded-full bg-cyan-500 text-black flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
+                                                <Play size={28} fill="currentColor" />
+                                            </div>
                                         </div>
-                                    </div>
+                                    </a>
                                 </div>
-                                <div className="p-8 space-y-3">
-                                    <h3 className="text-3xl font-bold text-white leading-tight">{featured.featuredVideo.title}</h3>
-                                    <div className="flex items-center gap-4 text-xs font-bold text-secondary uppercase tracking-widest opacity-50">
-                                        <span>Video Session</span>
-                                        <div className="w-1 h-1 rounded-full bg-white/20" />
-                                        <span>New Update</span>
-                                    </div>
+
+                                {/* User requested "Latest Video" text under the card */}
+                                <div className="text-center md:text-left px-6">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-cyan-400">LATEST VIDEO</p>
+                                    <h3 className="text-xl font-bold text-white mt-1 line-clamp-1">
+                                        {publicContent?.hero?.heroVideoLink
+                                            ? "Featured Content"
+                                            : featured.featuredVideo.title}
+                                    </h3>
                                 </div>
                             </div>
                         ) : (
@@ -303,35 +315,53 @@ const PublicHome = () => {
                         </p>
 
                         {/* Join Buttons */}
-                        <div className="flex flex-wrap gap-3 justify-center md:justify-start pt-2">
+                        <div className="flex flex-wrap gap-2 justify-center md:justify-start pt-2">
                             {publicContent?.socials?.youtube && (
-                                <a
-                                    href={publicContent.socials.youtube}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-500/10 border border-red-500/30 text-[10px] font-black text-red-400 hover:bg-red-500/20 hover:border-red-400/50 transition-all uppercase tracking-[0.2em]"
-                                >
-                                    ▶ Join YouTube
+                                <a href={publicContent.socials.youtube} target="_blank" rel="noopener noreferrer"
+                                    className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500/20 transition-all" title="YouTube">
+                                    <Youtube size={16} />
                                 </a>
                             )}
                             {publicContent?.socials?.telegram && (
-                                <a
-                                    href={publicContent.socials.telegram}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-500/10 border border-blue-500/30 text-[10px] font-black text-blue-400 hover:bg-blue-500/20 hover:border-blue-400/50 transition-all uppercase tracking-[0.2em]"
-                                >
-                                    ✈ Join Telegram
+                                <a href={publicContent.socials.telegram} target="_blank" rel="noopener noreferrer"
+                                    className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 transition-all" title="Telegram">
+                                    <Send size={16} />
                                 </a>
                             )}
                             {publicContent?.socials?.discord && (
-                                <a
-                                    href={publicContent.socials.discord}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-[10px] font-black text-indigo-400 hover:bg-indigo-500/20 hover:border-indigo-400/50 transition-all uppercase tracking-[0.2em]"
-                                >
-                                    💬 Join Discord
+                                <a href={publicContent.socials.discord} target="_blank" rel="noopener noreferrer"
+                                    className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 transition-all" title="Discord">
+                                    <MessageSquare size={16} />
+                                </a>
+                            )}
+                            {publicContent?.socials?.instagram && (
+                                <a href={publicContent.socials.instagram} target="_blank" rel="noopener noreferrer"
+                                    className="p-3 rounded-xl bg-pink-500/10 border border-pink-500/20 text-pink-400 hover:bg-pink-500/20 transition-all" title="Instagram">
+                                    <Instagram size={16} />
+                                </a>
+                            )}
+                            {publicContent?.socials?.tiktok && (
+                                <a href={publicContent.socials.tiktok} target="_blank" rel="noopener noreferrer"
+                                    className="p-3 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all" title="TikTok">
+                                    <Music size={16} />
+                                </a>
+                            )}
+                            {publicContent?.socials?.facebook && (
+                                <a href={publicContent.socials.facebook} target="_blank" rel="noopener noreferrer"
+                                    className="p-3 rounded-xl bg-blue-600/10 border border-blue-600/20 text-blue-600 hover:bg-blue-600/20 transition-all" title="Facebook">
+                                    <Facebook size={16} />
+                                </a>
+                            )}
+                            {publicContent?.socials?.twitter && (
+                                <a href={publicContent.socials.twitter} target="_blank" rel="noopener noreferrer"
+                                    className="p-3 rounded-xl bg-blue-400/10 border border-blue-400/20 text-blue-400 hover:bg-blue-400/20 transition-all" title="X (Twitter)">
+                                    <Twitter size={16} />
+                                </a>
+                            )}
+                            {publicContent?.socials?.linkedin && (
+                                <a href={publicContent.socials.linkedin} target="_blank" rel="noopener noreferrer"
+                                    className="p-3 rounded-xl bg-blue-700/10 border border-blue-700/20 text-blue-700 hover:bg-blue-700/20 transition-all" title="LinkedIn">
+                                    <Linkedin size={16} />
                                 </a>
                             )}
                         </div>

@@ -1231,6 +1231,15 @@ const AdminPanel = () => {
                                     onChange={(e) => setPublicContent(prev => ({ ...prev, hero: { ...prev.hero, ctaLink: e.target.value } }))}
                                 />
                             </div>
+                            <div className="space-y-3">
+                                <label className="text-xs font-bold uppercase text-secondary">Hero Video Link (Direct URL)</label>
+                                <input
+                                    className="input-field"
+                                    placeholder="https://youtube.com/watch?v=..."
+                                    value={publicContent?.hero?.heroVideoLink || ''}
+                                    onChange={(e) => setPublicContent(prev => ({ ...prev, hero: { ...prev.hero, heroVideoLink: e.target.value } }))}
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -1274,6 +1283,66 @@ const AdminPanel = () => {
                                     onChange={(e) => setPublicContent(prev => ({
                                         ...prev,
                                         socials: { ...(prev.socials || {}), discord: e.target.value }
+                                    }))}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold uppercase text-pink-400">Instagram</label>
+                                <input
+                                    className="input-field"
+                                    placeholder="https://instagram.com/..."
+                                    value={publicContent?.socials?.instagram || ''}
+                                    onChange={(e) => setPublicContent(prev => ({
+                                        ...prev,
+                                        socials: { ...(prev.socials || {}), instagram: e.target.value }
+                                    }))}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold uppercase text-white">TikTok</label>
+                                <input
+                                    className="input-field"
+                                    placeholder="https://tiktok.com/@..."
+                                    value={publicContent?.socials?.tiktok || ''}
+                                    onChange={(e) => setPublicContent(prev => ({
+                                        ...prev,
+                                        socials: { ...(prev.socials || {}), tiktok: e.target.value }
+                                    }))}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold uppercase text-blue-600">Facebook</label>
+                                <input
+                                    className="input-field"
+                                    placeholder="https://facebook.com/..."
+                                    value={publicContent?.socials?.facebook || ''}
+                                    onChange={(e) => setPublicContent(prev => ({
+                                        ...prev,
+                                        socials: { ...(prev.socials || {}), facebook: e.target.value }
+                                    }))}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold uppercase text-blue-400">X (Twitter)</label>
+                                <input
+                                    className="input-field"
+                                    placeholder="https://x.com/..."
+                                    value={publicContent?.socials?.twitter || ''}
+                                    onChange={(e) => setPublicContent(prev => ({
+                                        ...prev,
+                                        socials: { ...(prev.socials || {}), twitter: e.target.value }
+                                    }))}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold uppercase text-blue-700">LinkedIn</label>
+                                <input
+                                    className="input-field"
+                                    placeholder="https://linkedin.com/in/..."
+                                    value={publicContent?.socials?.linkedin || ''}
+                                    onChange={(e) => setPublicContent(prev => ({
+                                        ...prev,
+                                        socials: { ...(prev.socials || {}), linkedin: e.target.value }
                                     }))}
                                 />
                             </div>

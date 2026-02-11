@@ -3,7 +3,8 @@ export const DEFAULT_PUBLIC_CONTENT = {
         title: 'UnrealCyber Vision',
         subtitle: 'Networking, ethical hacking, and programming. Learn fast, build real skills.',
         ctaText: 'Watch on YouTube',
-        ctaLink: 'https://www.youtube.com/'
+        ctaLink: 'https://www.youtube.com/',
+        heroVideoLink: ''
     },
     pillars: [
         { title: 'Networking', description: 'Routing, switching, protocols, and real labs.' },
@@ -35,7 +36,12 @@ export const DEFAULT_PUBLIC_CONTENT = {
     socials: {
         youtube: '',
         telegram: '',
-        discord: ''
+        discord: '',
+        instagram: '',
+        tiktok: '',
+        facebook: '',
+        twitter: '',
+        linkedin: ''
     }
 };
 

@@ -261,22 +261,23 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
         let target, color;
         let progress = 0;
 
-        if (scrollProgress < 0.33) {
+        if (scrollProgress < 0.45) {
             target = targets.net;
-            progress = scrollProgress / 0.33;
+            progress = scrollProgress / 0.45;
             color = colors.networking;
-        } else if (scrollProgress < 0.66) {
+        } else if (scrollProgress < 0.75) {
             target = targets.hack;
-            progress = (scrollProgress - 0.33) / 0.33;
+            progress = (scrollProgress - 0.45) / 0.30;
             color = colors.hacking;
         } else {
             target = targets.prog;
-            progress = (scrollProgress - 0.66) / 0.34;
+            progress = (scrollProgress - 0.75) / 0.25;
             color = colors.programming;
         }
 
         // Assembly factor: 1.0 at the center of each section, 0 at edges
-        const assembly = Math.pow(Math.sin(progress * Math.PI), 0.6);
+        // Increased sharp exponent for a "tighter" assembly feel in the middle
+        const assembly = Math.pow(Math.sin(progress * Math.PI), 0.5);
 
         // Ambient blend for hero (top) and footer (bottom)
         const topFade = THREE.MathUtils.clamp((0.12 - scrollProgress) / 0.12, 0, 1);
@@ -291,7 +292,7 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
         // Stronger attraction = faster assembly. Scale with assembly factor.
         const dt = Math.min(delta, 0.05);
         const baseSpeed = dt * 2.5;
-        const shapeSpeed = baseSpeed * (0.7 + assembly * 2.0);
+        const shapeSpeed = baseSpeed * (0.8 + assembly * 3.5);
         const ambSpeed = baseSpeed * 0.35;
         const speed = THREE.MathUtils.lerp(shapeSpeed, ambSpeed, ambientBlend);
 

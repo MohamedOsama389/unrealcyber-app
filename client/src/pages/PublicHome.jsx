@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { ArrowUpRight, Play, ShieldCheck, Send, MessageCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { DEFAULT_PUBLIC_CONTENT, normalizePublicContent, buildVideoSlug, getSectionTheme, getVideoThumbnailUrl } from '../data/publicSite';
-import Hero3D from '../components/Hero3D';
+import HeroCyberVisual from '../components/HeroCyberVisual';
 
 const PublicHome = () => {
     const [content, setContent] = useState(DEFAULT_PUBLIC_CONTENT);
@@ -192,9 +192,9 @@ const PublicHome = () => {
                         <div className="relative">
                             <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-cyan-500/10 via-slate-900/80 to-purple-600/10 blur-3xl" />
                             <div className="relative glass-panel border border-white/5 rounded-3xl p-4">
-                                <div className="absolute top-4 right-4 text-xs text-secondary uppercase tracking-[0.3em]">Secure Core</div>
+                                <div className="absolute top-4 right-4 text-xs text-secondary uppercase tracking-[0.3em]">Secure Visual</div>
                                 <div className="mt-6 rounded-3xl overflow-hidden border border-white/5 bg-slate-950/60">
-                                    <Hero3D />
+                                    <HeroCyberVisual />
                                 </div>
                             </div>
                         </div>
@@ -208,7 +208,18 @@ const PublicHome = () => {
                                 <Link
                                     key={`${pillar.title}-${idx}`}
                                     to={section ? `/vision/${section.key}` : '#'}
-                                    className={`group glass-panel p-6 border ${theme.border} ${theme.glow} hover:-translate-y-1 transition-all bg-gradient-to-br ${theme.gradient}`}
+                                    className={`group glass-panel p-6 border ${theme.border} ${theme.glow} hover:-translate-y-1 transition-all bg-gradient-to-br ${theme.gradient} transform-gpu focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60`}
+                                    style={{ transition: 'transform 240ms ease, box-shadow 240ms ease' }}
+                                    onMouseMove={(e) => {
+                                        const card = e.currentTarget;
+                                        const rect = card.getBoundingClientRect();
+                                        const x = (e.clientX - rect.left) / rect.width - 0.5;
+                                        const y = (e.clientY - rect.top) / rect.height - 0.5;
+                                        card.style.transform = `translateY(-6px) rotateX(${y * -4}deg) rotateY(${x * 6}deg)`;
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.transform = 'translateY(0px) rotateX(0deg) rotateY(0deg)';
+                                    }}
                                 >
                                     <div className={`inline-flex items-center px-3 py-1 text-[10px] uppercase tracking-[0.3em] rounded-full border ${theme.chip}`}>
                                         Track {idx + 1}
@@ -251,7 +262,16 @@ const PublicHome = () => {
                                 <Link
                                     key={`${video.title}-${idx}`}
                                     to={`/vision/${video.sectionKey}/${video.slug}`}
-                                    className={`text-left glass-panel p-5 border ${theme.border} hover:border-cyan-400/40 transition-all hover:-translate-y-1 bg-gradient-to-br ${theme.gradient}`}
+                                    className={`group text-left glass-panel p-5 border ${theme.border} hover:border-cyan-400/40 transition-all bg-gradient-to-br ${theme.gradient} transform-gpu focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60`}
+                                    style={{ transition: 'transform 220ms ease, box-shadow 220ms ease' }}
+                                    onMouseMove={(e) => {
+                                        const card = e.currentTarget;
+                                        const rect = card.getBoundingClientRect();
+                                        const x = (e.clientX - rect.left) / rect.width - 0.5;
+                                        const y = (e.clientY - rect.top) / rect.height - 0.5;
+                                        card.style.transform = `translateY(-8px) rotateX(${y * -3}deg) rotateY(${x * 4}deg)`;
+                                    }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0) rotateX(0deg) rotateY(0deg)'; }}
                                 >
                                     <div className="aspect-video rounded-xl bg-slate-900/60 border border-white/5 flex items-center justify-center mb-4 relative overflow-hidden">
                                         {thumb && (
@@ -263,7 +283,7 @@ const PublicHome = () => {
                                                 loading="lazy"
                                             />
                                         )}
-                                        <div className="relative z-10 w-10 h-10 rounded-full bg-black/40 border border-white/10 flex items-center justify-center">
+                                        <div className="relative z-10 w-12 h-12 rounded-full bg-black/50 border border-white/15 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                             <Play className={theme.accent} />
                                         </div>
                                     </div>

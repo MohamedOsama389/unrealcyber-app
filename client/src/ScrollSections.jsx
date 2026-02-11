@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { motion } from 'framer-motion';
-import { Play, ArrowRight, ExternalLink, Award } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Play, ExternalLink, Award } from 'lucide-react';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -59,11 +59,19 @@ const ScrollSections = ({ onProgress, sections }) => {
         } catch { return raw; }
     };
 
+    const getAdaptiveTitleClass = (title = '') => {
+        const length = title.trim().length;
+        if (length >= 18) return 'text-3xl md:text-5xl';
+        if (length >= 10) return 'text-4xl md:text-6xl';
+        return 'text-4xl md:text-7xl';
+    };
+
     return (
         <div ref={containerRef} className="relative z-10">
             {displaySections.map((section, idx) => {
                 const popularCourse = section.videos && section.videos.length > 0 ? section.videos[0] : null;
                 const thumbId = popularCourse ? extractDriveId(popularCourse.url) : null;
+                const sectionPath = `/vision/${encodeURIComponent(section.key || `section-${idx}`)}`;
 
                 return (
                     <section
@@ -73,17 +81,10 @@ const ScrollSections = ({ onProgress, sections }) => {
                     >
                         <div className="max-w-7xl mx-auto w-full flex flex-col-reverse lg:grid lg:grid-cols-2 gap-10 lg:gap-20 items-center">
                             {/* Left: Content Card */}
-                            <motion.div
-                                initial={{ opacity: 0, y: 50 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 0.8 }}
-                                className="group relative w-full"
-                            >
-                                <a
-                                    href={popularCourse?.url || '#'}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
+                            <div className="group relative w-full">
+                                <Link
+                                    to={sectionPath}
+                                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                                     className="block bg-slate-950/60 backdrop-blur-3xl p-8 md:p-14 rounded-[2.5rem] md:rounded-[3rem] border border-white/10 shadow-2xl space-y-8 transform transition-all duration-500 hover:bg-slate-900/80 hover:border-cyan-500/30 group-hover:scale-[1.01] active:scale-[0.99] overflow-hidden"
                                 >
                                     <div className="space-y-4">
@@ -91,7 +92,7 @@ const ScrollSections = ({ onProgress, sections }) => {
                                             <Award size={12} className="mr-1" />
                                             Most Popular Course
                                         </div>
-                                        <h2 className="text-4xl md:text-7xl font-black text-white uppercase tracking-tighter leading-[0.95] break-words">
+                                        <h2 className={`${getAdaptiveTitleClass(section.title)} font-black text-white uppercase tracking-tighter leading-[0.95] break-normal md:whitespace-nowrap`}>
                                             {section.title}
                                         </h2>
                                         <p className="text-base md:text-lg text-secondary/80 leading-relaxed font-medium line-clamp-4">
@@ -135,8 +136,8 @@ const ScrollSections = ({ onProgress, sections }) => {
                                             </span>
                                         ))}
                                     </div>
-                                </a>
-                            </motion.div>
+                                </Link>
+                            </div>
 
                             {/* Right: Spacer for 3D model (On mobile, this should be the focal point above the card) */}
                             <div className="w-full h-[60vh] lg:h-full min-h-[300px] lg:min-h-[500px]" />

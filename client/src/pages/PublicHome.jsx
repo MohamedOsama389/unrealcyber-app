@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ShieldCheck, ArrowUpRight, Play, Activity } from 'lucide-react';
+import { ShieldCheck, ArrowUpRight, Play, Activity, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Canvas } from '@react-three/fiber';
 import axios from 'axios';
@@ -17,11 +17,11 @@ const PublicHome = () => {
     const [scrollProgress, setScrollProgress] = useState(0);
     const { user, loginWithGoogle, logout } = useAuth();
     const googleBtnRef = useRef(null);
+    const footerRef = useRef(null);
     const [googleReady, setGoogleReady] = useState(false);
 
     const [publicContent, setPublicContent] = useState(null);
     const [featured, setFeatured] = useState(null);
-    const [latestMission, setLatestMission] = useState(null);
 
     const extractDriveId = (raw) => {
         if (!raw) return null;
@@ -36,14 +36,12 @@ const PublicHome = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [pubRes, featRes, missRes] = await Promise.all([
+                const [pubRes, featRes] = await Promise.all([
                     axios.get('/api/public'),
-                    axios.get('/api/dashboard/featured'),
-                    axios.get('/api/missions/latest')
+                    axios.get('/api/dashboard/featured')
                 ]);
                 setPublicContent(pubRes.data);
                 setFeatured(featRes.data);
-                setLatestMission(missRes.data);
             } catch (err) {
                 console.error('[PublicHome] Failed to fetch layout data:', err);
             }
@@ -90,6 +88,13 @@ const PublicHome = () => {
         };
     }, [loginWithGoogle, user]);
 
+    const scrollToAbout = (event) => {
+        event.preventDefault();
+        if (!footerRef.current) return;
+        const top = footerRef.current.getBoundingClientRect().top + window.scrollY - 88;
+        window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    };
+
     return (
         <div className="min-h-screen bg-[#02040a] text-primary selection:bg-cyan-500/30 overflow-x-hidden">
             {/* Fixed 3D Particle Background */}
@@ -115,7 +120,7 @@ const PublicHome = () => {
                     {/* Left Column: Academy Branding */}
                     <div className="space-y-10">
                         <div className="space-y-6">
-                            <h1 className="text-6xl md:text-8xl font-black tracking-tighter uppercase leading-[0.85] text-white">
+                            <h1 className="text-[clamp(2.85rem,9vw,7rem)] font-black tracking-tighter uppercase leading-[0.85] text-white">
                                 Unreal<span className="text-cyan-500 underline decoration-cyan-500/20 underline-offset-8">Cyber</span><br />
                                 Academy
                             </h1>
@@ -200,7 +205,7 @@ const PublicHome = () => {
 
                     <div className="flex items-center gap-6">
                         <nav className="hidden lg:flex items-center gap-8 text-[10px] uppercase tracking-[0.4em] text-secondary font-bold">
-                            <a href="#networking" className="hover:text-cyan-400 transition-colors">About</a>
+                            <button type="button" onClick={scrollToAbout} className="hover:text-cyan-400 transition-colors">About</button>
                             <a href="#networking" className="hover:text-cyan-400 transition-colors">Network</a>
                             <a href="#hacking" className="hover:text-purple-400 transition-colors">Ethical Hacking</a>
                             <a href="#programming" className="hover:text-blue-400 transition-colors">Programming</a>
@@ -227,7 +232,12 @@ const PublicHome = () => {
                                             </div>
                                         )}
                                     </div>
-                                    <button onClick={logout} className="text-[9px] font-black text-red-400/80 hover:text-red-400 uppercase tracking-[0.2em] transition-colors">Sign Out</button>
+                                    <button onClick={logout} className="inline-flex items-center gap-2 text-[9px] font-black text-red-400/80 hover:text-red-400 uppercase tracking-[0.2em] transition-colors">
+                                        <span className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-red-400/40 bg-red-400/10">
+                                            <LogOut size={10} />
+                                        </span>
+                                        <span>Sign Out</span>
+                                    </button>
                                 </div>
                             )}
 
@@ -250,7 +260,7 @@ const PublicHome = () => {
             </main>
 
             {/* Footer */}
-            <footer className="relative z-10 border-t border-white/5 bg-[#02040a]/90 backdrop-blur-2xl">
+            <footer id="about-section" ref={footerRef} className="relative z-10 border-t border-white/5 bg-[#02040a]/90 backdrop-blur-2xl">
                 <div className="max-w-7xl mx-auto px-6 py-16 flex flex-col md:flex-row justify-between items-center gap-12 text-center md:text-left">
                     <div className="space-y-4">
                         <div className="flex items-center justify-center md:justify-start gap-4">

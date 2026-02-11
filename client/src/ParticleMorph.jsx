@@ -28,55 +28,78 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
             const i3 = i * 3;
 
             // --- Random (Scatter) ---
-            random[i3] = (Math.random() - 0.5) * 20;
-            random[i3 + 1] = (Math.random() - 0.5) * 20;
-            random[i3 + 2] = (Math.random() - 0.5) * 20;
+            random[i3] = (Math.random() - 0.5) * 30;
+            random[i3 + 1] = (Math.random() - 0.5) * 30;
+            random[i3 + 2] = (Math.random() - 0.5) * 30;
 
-            // --- Shape 1: Router (Networking) ---
-            // Two stacked boxes
-            if (i < particleCount * 0.6) {
-                networking[i3] = (Math.random() - 0.5) * 4;
-                networking[i3 + 1] = (Math.random() - 0.5) * 0.8;
-                networking[i3 + 2] = (Math.random() - 0.5) * 3;
+            // --- Shape 1: Detailed Router (Networking) ---
+            if (i < particleCount * 0.4) {
+                // Main Chassis
+                networking[i3] = (Math.random() - 0.5) * 6;
+                networking[i3 + 1] = (Math.random() - 0.5) * 2;
+                networking[i3 + 2] = (Math.random() - 0.5) * 4;
+            } else if (i < particleCount * 0.5) {
+                // Left Antenna
+                networking[i3] = -2.5;
+                networking[i3 + 1] = Math.random() * 4;
+                networking[i3 + 2] = 0;
+            } else if (i < particleCount * 0.6) {
+                // Right Antenna
+                networking[i3] = 2.5;
+                networking[i3 + 1] = Math.random() * 4;
+                networking[i3 + 2] = 0;
             } else {
-                networking[i3] = (Math.random() - 0.5) * 4;
-                networking[i3 + 1] = (Math.random() - 0.5) * 0.8 + 1;
-                networking[i3 + 2] = (Math.random() - 0.5) * 3;
+                // Ethernet Ports (scattered dots on front)
+                networking[i3] = (Math.round(Math.random() * 5) - 2.5) * 1;
+                networking[i3 + 1] = (Math.random() - 0.5) * 0.5;
+                networking[i3 + 2] = 2.1;
             }
 
-            // --- Shape 2: Shield/Lock (Hacking) ---
-            // Simple Shield Silhouette
+            // --- Shape 2: Shield + Lock (Hacking) ---
             const u = Math.random();
             const v = Math.random();
-            if (i < particleCount * 0.8) {
-                // Shield body
-                hacking[i3] = (u - 0.5) * 4 * (1 - v * 0.5);
-                hacking[i3 + 1] = (v - 0.5) * 5;
+            const angle = u * Math.PI * 2;
+
+            if (i < particleCount * 0.6) {
+                // Shield Body
+                const x = (u - 0.5) * 6;
+                const curve = 1 - Math.pow(Math.abs(x) / 3, 2);
+                hacking[i3] = x;
+                hacking[i3 + 1] = (v - 0.5) * 7 + (curve * 1.5);
                 hacking[i3 + 2] = (Math.random() - 0.5) * 0.5;
+            } else if (i < particleCount * 0.8) {
+                // Lock Body (Circle)
+                const r = 1.2 * Math.sqrt(v);
+                hacking[i3] = Math.cos(angle) * r;
+                hacking[i3 + 1] = Math.sin(angle) * r;
+                hacking[i3 + 2] = 1;
             } else {
-                // Shield handle/top
-                hacking[i3] = Math.cos(u * Math.PI) * 1.5;
-                hacking[i3 + 1] = Math.sin(u * Math.PI) * 1 + 2.5;
-                hacking[i3 + 2] = (Math.random() - 0.5) * 0.5;
+                // Lock Shackle (Arch)
+                const r = 1.2;
+                const archAngle = u * Math.PI;
+                hacking[i3] = Math.cos(archAngle) * r;
+                hacking[i3 + 1] = Math.sin(archAngle) * r + 1.2;
+                hacking[i3 + 2] = 1;
             }
 
-            // --- Shape 3: Laptop + {} (Programming) ---
-            if (i < particleCount * 0.5) {
-                // Laptop base
-                programming[i3] = (Math.random() - 0.5) * 6;
-                programming[i3 + 1] = -1.5;
-                programming[i3 + 2] = (Math.random() - 0.5) * 4;
-            } else if (i < particleCount * 0.9) {
+            // --- Shape 3: Laptop (Programming) ---
+            if (i < particleCount * 0.4) {
+                // Keyboard Base
+                programming[i3] = (Math.random() - 0.5) * 8;
+                programming[i3 + 1] = -2;
+                programming[i3 + 2] = (Math.random() - 0.5) * 6;
+            } else if (i < particleCount * 0.8) {
                 // Screen
-                programming[i3] = (Math.random() - 0.5) * 6;
-                programming[i3 + 1] = (Math.random() - 0.5) * 4 + 1;
-                programming[i3 + 2] = -2;
+                programming[i3] = (Math.random() - 0.5) * 8;
+                const vert = (Math.random() - 0.5) * 6;
+                programming[i3 + 1] = vert + 1;
+                programming[i3 + 2] = -3;
             } else {
-                // {} Braces
-                const side = Math.random() > 0.5 ? 4 : -4;
-                programming[i3] = side + (Math.random() - 0.5) * 1;
-                programming[i3 + 1] = (Math.random() - 0.5) * 4;
-                programming[i3 + 2] = 0;
+                // floating </> symbols
+                const side = Math.random() > 0.5 ? 1 : -1;
+                programming[i3] = side * (2 + Math.random() * 2);
+                programming[i3 + 1] = (Math.random() - 0.5) * 3 + 1;
+                programming[i3 + 2] = 2;
             }
         }
 
@@ -103,19 +126,20 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
             progressInSection = ((scrollProgress - 0.66) / 0.34);
         }
 
-        // Intensity of assembly: peek at 50% of each section
-        // Use a power of sin to make the assembly "linger" longer at the peak
         const assemblyFactor = Math.pow(Math.sin(progressInSection * Math.PI), 0.5);
+
+        // Responsive Offset: Center on mobile, shift right on desktop
+        const isMobile = window.innerWidth < 1024;
+        const xOffset = isMobile ? 0 : 2.5;
+        const yOffset = isMobile ? 4 : 0; // Lift up on mobile to be above the card
 
         for (let i = 0; i < particleCount; i++) {
             const i3 = i * 3;
-
-            // Influence of target shape vs random scatter
             const noise = Math.sin(t * 1.5 + i) * 0.05;
 
-            // Move towards target
-            positions[i3] += (targetBuffer[i3] - positions[i3]) * 0.05 * assemblyFactor + noise;
-            positions[i3 + 1] += (targetBuffer[i3 + 1] - positions[i3 + 1]) * 0.05 * assemblyFactor + noise;
+            // Move towards target (with responsive offsets)
+            positions[i3] += (targetBuffer[i3] + xOffset - positions[i3]) * 0.05 * assemblyFactor + noise;
+            positions[i3 + 1] += (targetBuffer[i3 + 1] + yOffset - positions[i3 + 1]) * 0.05 * assemblyFactor + noise;
             positions[i3 + 2] += (targetBuffer[i3 + 2] - positions[i3 + 2]) * 0.05 * assemblyFactor + noise;
 
             // If not assembled, move slightly towards random (scattering effect)

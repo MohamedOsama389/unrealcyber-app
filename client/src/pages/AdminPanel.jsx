@@ -147,6 +147,20 @@ const AdminPanel = () => {
         });
     };
 
+    const reorderVideo = (sectionIndex, videoIndex, direction) => {
+        setPublicContent(prev => {
+            const sections = [...(prev.sections || DEFAULT_PUBLIC_CONTENT.sections)];
+            const section = sections[sectionIndex] || {};
+            const videos = [...(section.videos || [])];
+            if (direction === 'top') {
+                const [item] = videos.splice(videoIndex, 1);
+                videos.unshift(item);
+            }
+            sections[sectionIndex] = { ...section, videos };
+            return { ...prev, sections };
+        });
+    };
+
     const addDownload = (sectionIndex, videoIndex) => {
         setPublicContent(prev => {
             const sections = [...(prev.sections || DEFAULT_PUBLIC_CONTENT.sections)];
@@ -1286,12 +1300,25 @@ const AdminPanel = () => {
                                             <div key={videoIndex} className="p-4 rounded-2xl border border-white/10 bg-panel/80 space-y-3">
                                                 <div className="flex items-center justify-between">
                                                     <p className="text-xs font-bold text-secondary">Video {videoIndex + 1}</p>
-                                                    <button
-                                                        onClick={() => removeVideo(sectionIndex, videoIndex)}
-                                                        className="text-red-400 hover:text-red-300"
-                                                    >
-                                                        <Trash2 size={14} />
-                                                    </button>
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            onClick={() => reorderVideo(sectionIndex, videoIndex, 'top')}
+                                                            title="Make Popular (Move to Top)"
+                                                            className={clsx(
+                                                                "flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-black uppercase transition-all",
+                                                                videoIndex === 0 ? "bg-yellow-500 text-white" : "bg-white/5 text-secondary hover:bg-yellow-500/20 hover:text-yellow-400"
+                                                            )}
+                                                        >
+                                                            <Star size={10} fill={videoIndex === 0 ? "currentColor" : "none"} />
+                                                            {videoIndex === 0 ? 'Most Popular' : 'Make Popular'}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => removeVideo(sectionIndex, videoIndex)}
+                                                            className="text-red-400 hover:text-red-300"
+                                                        >
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    </div>
                                                 </div>
                                                 <input
                                                     className="input-field"

@@ -127,9 +127,9 @@ const PublicHome = () => {
                         {/* Navigation Blocks */}
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             {[
-                                { id: 'networking', label: 'Networking', color: 'cyan', icon: '📡' },
-                                { id: 'hacking', label: 'Hacking', color: 'purple', icon: '🛡️' },
-                                { id: 'code', label: 'Code', color: 'blue', icon: '💻' }
+                                { id: 'networking', label: 'Network', color: 'cyan', icon: '📡' },
+                                { id: 'hacking', label: 'Ethical Hacking', color: 'purple', icon: '🛡️' },
+                                { id: 'programming', label: 'Programming', color: 'blue', icon: '💻' }
                             ].map((block) => (
                                 <a
                                     key={block.id}
@@ -137,8 +137,8 @@ const PublicHome = () => {
                                     className={`p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-${block.color}-500/50 hover:bg-${block.color}-500/5 transition-all group`}
                                 >
                                     <div className="text-2xl mb-3 opacity-50 group-hover:opacity-100 transition-opacity">{block.icon}</div>
-                                    <span className={`text-[10px] font-black uppercase tracking-[0.3em] text-secondary group-hover:text-white`}>
-                                        Explore {block.label}
+                                    <span className={`text-[11px] font-black uppercase tracking-[0.3em] text-secondary group-hover:text-cyan-400 transition-colors`}>
+                                        {block.label}
                                     </span>
                                 </a>
                             ))}
@@ -199,10 +199,11 @@ const PublicHome = () => {
                     </div>
 
                     <div className="flex items-center gap-6">
-                        <nav className="hidden lg:flex items-center gap-10 text-[10px] uppercase tracking-[0.4em] text-secondary font-bold">
-                            <a href="#networking" className="hover:text-cyan-400 transition-colors">01. Networking</a>
-                            <a href="#hacking" className="hover:text-purple-400 transition-colors">02. Hacking</a>
-                            <a href="#programming" className="hover:text-blue-400 transition-colors">03. Code</a>
+                        <nav className="hidden lg:flex items-center gap-8 text-[10px] uppercase tracking-[0.4em] text-secondary font-bold">
+                            <a href="#networking" className="hover:text-cyan-400 transition-colors">About</a>
+                            <a href="#networking" className="hover:text-cyan-400 transition-colors">Network</a>
+                            <a href="#hacking" className="hover:text-purple-400 transition-colors">Ethical Hacking</a>
+                            <a href="#programming" className="hover:text-blue-400 transition-colors">Programming</a>
                         </nav>
 
                         <div className="h-6 w-[1px] bg-white/10 hidden lg:block" />
@@ -261,38 +262,29 @@ const PublicHome = () => {
                         </p>
                     </div>
 
-                    <div className="flex flex-wrap justify-center gap-12 text-[9px] uppercase tracking-[0.3em] font-black text-secondary/60">
-                        <div className="flex flex-col gap-4">
-                            <span className="text-primary/70 mb-2 underline decoration-cyan-500/50 underline-offset-8">Academy</span>
-                            <a href="#" className="hover:text-cyan-400 transition-colors">Curriculum</a>
-                            <a href="#" className="hover:text-cyan-400 transition-colors">Missions</a>
-                            <a href="#" className="hover:text-cyan-400 transition-colors">Lab Access</a>
-                        </div>
-                        <div className="flex flex-col gap-4">
-                            <span className="text-primary/70 mb-2 underline decoration-purple-500/50 underline-offset-8">Resources</span>
-                            <a href="#" className="hover:text-purple-400 transition-colors">Documentation</a>
-                            <a href="#" className="hover:text-purple-400 transition-colors">Community</a>
-                            <a href="#" className="hover:text-purple-400 transition-colors">Support</a>
-                        </div>
+                    <div className="flex flex-wrap justify-center gap-8">
+                        {publicContent?.socialLinks?.filter(link => link.url).map((link, idx) => (
+                            <a
+                                key={idx}
+                                href={link.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-cyan-500/50 hover:bg-cyan-500/5 transition-all group"
+                                title={link.platform}
+                            >
+                                <span className="text-secondary group-hover:text-white uppercase text-[10px] font-black tracking-widest">{link.platform}</span>
+                            </a>
+                        ))}
                     </div>
                 </div>
 
                 <div className="max-w-7xl mx-auto px-6 py-8 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4 text-[8px] uppercase tracking-[0.4em] text-secondary/30 font-bold">
                     <span>&copy; 2026 Unreal Cyber Collective. All Rights Reserved.</span>
                     <div className="flex gap-8">
-                        <a href="#" className="hover:text-primary transition-colors">Privacy Policy</a>
-                        <a href="#" className="hover:text-primary transition-colors">Terms of Service</a>
+                        {/* Policy links removed as per request */}
                     </div>
                 </div>
             </footer>
-
-            {/* Global Scroll Indicator */}
-            <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-20 pointer-events-none transition-opacity duration-1000" style={{ opacity: scrollProgress > 0.95 ? 0 : 0.6 }}>
-                <div className="flex flex-col items-center gap-6">
-                    <div className="w-[1px] h-24 bg-gradient-to-b from-transparent via-cyan-500/50 to-transparent" />
-                    <span className="text-[8px] uppercase tracking-[0.6em] text-cyan-400/80 animate-pulse font-black">Scroll to Assemble</span>
-                </div>
-            </div>
         </div>
     );
 };

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ShieldCheck, ArrowUpRight, Play, Activity, LogOut } from 'lucide-react';
+import { ShieldCheck, ArrowUpRight, Play, Activity, LogOut, Network, Shield, Code2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Canvas } from '@react-three/fiber';
 import axios from 'axios';
@@ -29,7 +29,9 @@ const PublicHome = () => {
         try {
             const url = new URL(raw);
             return url.searchParams.get('id') || url.pathname.match(/\/(?:file\/d|folders|d)\/([^/]+)/)?.[1] || raw;
-        } catch { return raw; }
+        } catch {
+            return raw;
+        }
     };
 
     // Dynamic Data Fetching
@@ -95,6 +97,36 @@ const PublicHome = () => {
         window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
     };
 
+    const heroTiles = [
+        {
+            id: 'networking',
+            label: 'Network',
+            subtitle: 'Routing / Switching',
+            Icon: Network,
+            cardClass: 'border-cyan-400/20 hover:border-cyan-300/45 hover:shadow-[0_14px_30px_rgba(34,211,238,0.14)]',
+            iconClass: 'text-cyan-300 bg-cyan-400/12 border-cyan-300/30',
+            dotClass: 'bg-cyan-300/70'
+        },
+        {
+            id: 'hacking',
+            label: 'Ethical Hacking',
+            subtitle: 'Security / Defense',
+            Icon: Shield,
+            cardClass: 'border-fuchsia-400/20 hover:border-fuchsia-300/45 hover:shadow-[0_14px_30px_rgba(217,70,239,0.14)]',
+            iconClass: 'text-fuchsia-300 bg-fuchsia-400/12 border-fuchsia-300/30',
+            dotClass: 'bg-fuchsia-300/70'
+        },
+        {
+            id: 'programming',
+            label: 'Programming',
+            subtitle: 'Python / JS / TS',
+            Icon: Code2,
+            cardClass: 'border-blue-400/20 hover:border-blue-300/45 hover:shadow-[0_14px_30px_rgba(96,165,250,0.14)]',
+            iconClass: 'text-blue-300 bg-blue-400/12 border-blue-300/30',
+            dotClass: 'bg-blue-300/70'
+        }
+    ];
+
     return (
         <div className="min-h-screen bg-[#02040a] text-primary selection:bg-cyan-500/30 overflow-x-hidden">
             {/* Fixed 3D Particle Background */}
@@ -115,45 +147,46 @@ const PublicHome = () => {
             </div>
 
             {/* HERO SECTION */}
-            <section className="relative z-10 min-h-screen flex flex-col justify-center px-6 pt-32 pb-20">
-                <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+            <section className="relative z-10 min-h-screen flex flex-col justify-center px-6 pt-32 lg:pt-36 pb-20">
+                <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] xl:grid-cols-[1.14fr_0.86fr] gap-10 lg:gap-14 xl:gap-16 items-start">
                     {/* Left Column: Academy Branding */}
-                    <div className="space-y-10">
+                    <div className="space-y-10 relative z-20 lg:pr-4">
                         <div className="space-y-6">
-                            <h1 className="text-[clamp(2.85rem,9vw,7rem)] font-black tracking-tighter uppercase leading-[0.85] text-white">
+                            <h1 className="text-[clamp(2.75rem,8.5vw,6.8rem)] font-black tracking-tighter uppercase leading-[0.85] text-white max-w-[15ch]">
                                 Unreal<span className="text-cyan-500 underline decoration-cyan-500/20 underline-offset-8">Cyber</span><br />
                                 Academy
                             </h1>
                             <p className="text-lg md:text-xl text-secondary/70 max-w-xl font-medium leading-relaxed">
-                                {publicContent?.hero?.subtitle || "Master the digital frontier. Professional training in networking, hacking, and modern engineering."}
+                                {publicContent?.hero?.subtitle || 'Master the digital frontier. Professional training in networking, hacking, and modern engineering.'}
                             </p>
                         </div>
 
                         {/* Navigation Blocks */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            {[
-                                { id: 'networking', label: 'Network', color: 'cyan', icon: '📡' },
-                                { id: 'hacking', label: 'Ethical Hacking', color: 'purple', icon: '🛡️' },
-                                { id: 'programming', label: 'Programming', color: 'blue', icon: '💻' }
-                            ].map((block) => (
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-5 max-w-3xl">
+                            {heroTiles.map((tile) => (
                                 <a
-                                    key={block.id}
-                                    href={`#${block.id}`}
-                                    className={`p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-${block.color}-500/50 hover:bg-${block.color}-500/5 transition-all group`}
+                                    key={tile.id}
+                                    href={`#${tile.id}`}
+                                    className={`group relative overflow-hidden rounded-[1.75rem] border ${tile.cardClass} bg-[radial-gradient(circle_at_18%_-10%,rgba(255,255,255,0.08),transparent_45%),linear-gradient(165deg,rgba(12,21,45,0.92),rgba(5,10,25,0.92))] px-5 py-5 min-h-[138px] transition-all duration-500 hover:-translate-y-1`}
                                 >
-                                    <div className="text-2xl mb-3 opacity-50 group-hover:opacity-100 transition-opacity">{block.icon}</div>
-                                    <span className={`text-[11px] font-black uppercase tracking-[0.3em] text-secondary group-hover:text-cyan-400 transition-colors`}>
-                                        {block.label}
-                                    </span>
+                                    <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[linear-gradient(130deg,transparent_10%,rgba(255,255,255,0.08)_45%,transparent_80%)]" />
+                                    <span className={`absolute right-4 top-4 w-1.5 h-1.5 rounded-full ${tile.dotClass}`} />
+                                    <div className={`relative w-10 h-10 rounded-xl border flex items-center justify-center ${tile.iconClass}`}>
+                                        <tile.Icon size={17} />
+                                    </div>
+                                    <div className="relative mt-8 space-y-1">
+                                        <p className="text-[12px] font-black uppercase tracking-[0.28em] text-white/90">{tile.label}</p>
+                                        <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-secondary/55">{tile.subtitle}</p>
+                                    </div>
                                 </a>
                             ))}
                         </div>
                     </div>
 
                     {/* Right Column: Latest Video Card */}
-                    <div className="relative">
+                    <div className="relative w-full lg:pt-14 xl:pt-16">
                         {featured?.featuredVideo ? (
-                            <div className="group relative glass-panel p-2 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-cyan-500/10 transform hover:-rotate-1 transition-transform duration-500">
+                            <div className="group relative glass-panel p-2 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-cyan-500/10 transform hover:-rotate-1 transition-transform duration-500 max-w-[40rem] lg:ml-auto">
                                 <div className="absolute top-6 left-6 z-10 bg-cyan-500 text-black text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-xl">
                                     Latest Session
                                 </div>
@@ -170,9 +203,7 @@ const PublicHome = () => {
                                     </div>
                                 </div>
                                 <div className="p-8 space-y-3">
-                                    <h3 className="text-3xl font-bold text-white leading-tight">
-                                        {featured.featuredVideo.title}
-                                    </h3>
+                                    <h3 className="text-3xl font-bold text-white leading-tight">{featured.featuredVideo.title}</h3>
                                     <div className="flex items-center gap-4 text-xs font-bold text-secondary uppercase tracking-widest opacity-50">
                                         <span>Video Session</span>
                                         <div className="w-1 h-1 rounded-full bg-white/20" />
@@ -181,7 +212,7 @@ const PublicHome = () => {
                                 </div>
                             </div>
                         ) : (
-                            <div className="glass-panel p-20 rounded-[2.5rem] text-center border-dashed border-2 border-white/5 space-y-6">
+                            <div className="glass-panel p-16 rounded-[2.5rem] text-center border-dashed border-2 border-white/5 space-y-6 max-w-[40rem] lg:ml-auto">
                                 <Activity className="mx-auto text-cyan-500/20 animate-pulse" size={64} />
                                 <p className="text-secondary/40 uppercase tracking-widest text-[10px] font-black">Syncing Unreal Collective Data...</p>
                             </div>
@@ -273,7 +304,7 @@ const PublicHome = () => {
                     </div>
 
                     <div className="flex flex-wrap justify-center gap-8">
-                        {publicContent?.socialLinks?.filter(link => link.url).map((link, idx) => (
+                        {publicContent?.socialLinks?.filter((link) => link.url).map((link, idx) => (
                             <a
                                 key={idx}
                                 href={link.url}

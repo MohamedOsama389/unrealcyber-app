@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Play, ArrowRight, ExternalLink } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Play, ArrowRight, ExternalLink, Award } from 'lucide-react';
 
 gsap.registerPlugin(ScrollTrigger);
 

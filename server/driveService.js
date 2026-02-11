@@ -727,18 +727,39 @@ const getThumbnailStream = async (fileId) => {
         if (!drive) throw new Error("Google Drive Service not initialized");
 
         // Lightweight metadata fetch
-        const meta = await drive.files.get({
+        let fileMeta = await drive.files.get({
             fileId,
-            fields: 'mimeType, thumbnailLink'
+            fields: 'id, name, mimeType, thumbnailLink'
         });
 
-        const mime = meta.data.mimeType || '';
-        const thumbLink = meta.data.thumbnailLink;
+        let mime = fileMeta.data.mimeType || '';
+        let thumbLink = fileMeta.data.thumbnailLink;
+        let targetId = fileId;
 
-        // 1) If file itself is an image, stream it directly
+        // 0) Handle Folder as "Playlist" -> Get first child's thumbnail
+        if (mime === 'application/vnd.google-apps.folder') {
+            console.log(`[DriveService] Detected folder/playlist: ${fileId}. Searching for first child...`);
+            const children = await drive.files.list({
+                q: `'${fileId}' in parents and trashed = false`,
+                fields: 'files(id, mimeType, thumbnailLink)',
+                orderBy: 'name',
+                pageSize: 5 // Check a few to find a valid one
+            });
+
+            if (children.data.files && children.data.files.length > 0) {
+                // Find first video or image, else just first file
+                const bestChild = children.data.files.find(f => f.mimeType.includes('video') || f.mimeType.includes('image')) || children.data.files[0];
+                targetId = bestChild.id;
+                mime = bestChild.mimeType || '';
+                thumbLink = bestChild.thumbnailLink;
+                console.log(`[DriveService] Using child ${targetId} for folder thumbnail.`);
+            }
+        }
+
+        // 1) If target is an image, stream it directly
         if (mime.startsWith('image/')) {
             const resp = await drive.files.get(
-                { fileId, alt: 'media' },
+                { fileId: targetId, alt: 'media' },
                 { responseType: 'stream' }
             );
             return { stream: resp.data, contentType: mime };

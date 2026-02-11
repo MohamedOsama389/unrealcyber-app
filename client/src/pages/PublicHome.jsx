@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ShieldCheck, ArrowUpRight } from 'lucide-react';
+import { ShieldCheck, ArrowUpRight, Play, Activity } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Canvas } from '@react-three/fiber';
+import axios from 'axios';
 import ParticleMorph from '../ParticleMorph';
 import ScrollSections from '../ScrollSections';
 
@@ -13,14 +14,42 @@ import ScrollSections from '../ScrollSections';
  * thematic shapes (Router, Shield, Laptop) as the user scrolls.
  */
 const PublicHome = () => {
-    console.log('[DEBUG] PublicHome Mounting');
     const [scrollProgress, setScrollProgress] = useState(0);
-    useEffect(() => {
-        console.log('[DEBUG] PublicHome Scroll Progress:', scrollProgress);
-    }, [scrollProgress]);
     const { user, loginWithGoogle, logout } = useAuth();
     const googleBtnRef = useRef(null);
     const [googleReady, setGoogleReady] = useState(false);
+
+    const [publicContent, setPublicContent] = useState(null);
+    const [featured, setFeatured] = useState(null);
+    const [latestMission, setLatestMission] = useState(null);
+
+    const extractDriveId = (raw) => {
+        if (!raw) return null;
+        if (!raw.startsWith('http')) return raw;
+        try {
+            const url = new URL(raw);
+            return url.searchParams.get('id') || url.pathname.match(/\/(?:file\/d|folders|d)\/([^/]+)/)?.[1] || raw;
+        } catch { return raw; }
+    };
+
+    // Dynamic Data Fetching
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [pubRes, featRes, missRes] = await Promise.all([
+                    axios.get('/api/public'),
+                    axios.get('/api/dashboard/featured'),
+                    axios.get('/api/missions/latest')
+                ]);
+                setPublicContent(pubRes.data);
+                setFeatured(featRes.data);
+                setLatestMission(missRes.data);
+            } catch (err) {
+                console.error('[PublicHome] Failed to fetch layout data:', err);
+            }
+        };
+        fetchData();
+    }, []);
 
     // Google Auth Initialization
     useEffect(() => {
@@ -63,12 +92,6 @@ const PublicHome = () => {
 
     return (
         <div className="min-h-screen bg-[#02040a] text-primary selection:bg-cyan-500/30 overflow-x-hidden">
-            {/* Debug Banner - High Z-Index, should be visible no matter what */}
-            <div className="fixed top-0 left-0 w-full bg-red-600 text-white text-[10px] py-1 px-4 z-[9999] font-mono flex justify-between">
-                <span>COMPONENT: PublicHome MOUNTED</span>
-                <span>SCROLL: {scrollProgress.toFixed(2)}</span>
-            </div>
-
             {/* Fixed 3D Particle Background */}
             <div className="fixed inset-0 z-0 bg-[#02040a]">
                 <Canvas
@@ -83,8 +106,84 @@ const PublicHome = () => {
                     <pointLight position={[10, 10, 10]} intensity={1} color="#00e5ff" />
                     <ParticleMorph scrollProgress={scrollProgress} />
                 </Canvas>
-                <div className="absolute inset-0 bg-gradient-to-b from-[#02040a]/40 via-transparent to-[#02040a]/60 pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-b from-[#02040a]/40 via-transparent to-[#02040a]/80 pointer-events-none" />
             </div>
+
+            {/* HERO SECTION */}
+            <section className="relative z-10 min-h-screen flex flex-col justify-center px-6 pt-32 pb-20">
+                <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+                    {/* Left Column: Academy Branding */}
+                    <div className="space-y-10">
+                        <div className="space-y-6">
+                            <h1 className="text-6xl md:text-8xl font-black tracking-tighter uppercase leading-[0.85] text-white">
+                                Unreal<span className="text-cyan-500 underline decoration-cyan-500/20 underline-offset-8">Cyber</span><br />
+                                Academy
+                            </h1>
+                            <p className="text-lg md:text-xl text-secondary/70 max-w-xl font-medium leading-relaxed">
+                                {publicContent?.hero?.subtitle || "Master the digital frontier. Professional training in networking, hacking, and modern engineering."}
+                            </p>
+                        </div>
+
+                        {/* Navigation Blocks */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            {[
+                                { id: 'networking', label: 'Networking', color: 'cyan', icon: '📡' },
+                                { id: 'hacking', label: 'Hacking', color: 'purple', icon: '🛡️' },
+                                { id: 'code', label: 'Code', color: 'blue', icon: '💻' }
+                            ].map((block) => (
+                                <a
+                                    key={block.id}
+                                    href={`#${block.id}`}
+                                    className={`p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-${block.color}-500/50 hover:bg-${block.color}-500/5 transition-all group`}
+                                >
+                                    <div className="text-2xl mb-3 opacity-50 group-hover:opacity-100 transition-opacity">{block.icon}</div>
+                                    <span className={`text-[10px] font-black uppercase tracking-[0.3em] text-secondary group-hover:text-white`}>
+                                        Explore {block.label}
+                                    </span>
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Right Column: Latest Video Card */}
+                    <div className="relative">
+                        {featured?.featuredVideo ? (
+                            <div className="group relative glass-panel p-2 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-cyan-500/10 transform hover:-rotate-1 transition-transform duration-500">
+                                <div className="absolute top-6 left-6 z-10 bg-cyan-500 text-black text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-xl">
+                                    Latest Session
+                                </div>
+                                <div className="aspect-video rounded-[2rem] overflow-hidden bg-slate-900 border border-white/5 relative">
+                                    <img
+                                        src={`/api/public/thumbnail/${featured.featuredVideo.drive_link ? extractDriveId(featured.featuredVideo.drive_link) : featured.featuredVideo.id}`}
+                                        className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700"
+                                        alt=""
+                                    />
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <div className="w-20 h-20 rounded-full bg-cyan-500 text-black flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
+                                            <Play size={28} fill="currentColor" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="p-8 space-y-3">
+                                    <h3 className="text-3xl font-bold text-white leading-tight">
+                                        {featured.featuredVideo.title}
+                                    </h3>
+                                    <div className="flex items-center gap-4 text-xs font-bold text-secondary uppercase tracking-widest opacity-50">
+                                        <span>Video Session</span>
+                                        <div className="w-1 h-1 rounded-full bg-white/20" />
+                                        <span>New Update</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="glass-panel p-20 rounded-[2.5rem] text-center border-dashed border-2 border-white/5 space-y-6">
+                                <Activity className="mx-auto text-cyan-500/20 animate-pulse" size={64} />
+                                <p className="text-secondary/40 uppercase tracking-widest text-[10px] font-black">Syncing Unreal Collective Data...</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </section>
 
             {/* Header / Navbar */}
             <header className="fixed top-0 left-0 w-full z-50 border-b border-white/5 bg-slate-950/20 backdrop-blur-md">
@@ -146,7 +245,7 @@ const PublicHome = () => {
 
             {/* Scrollable Content Layers */}
             <main className="relative z-10">
-                <ScrollSections onProgress={setScrollProgress} />
+                <ScrollSections onProgress={setScrollProgress} sections={publicContent?.sections} />
             </main>
 
             {/* Footer */}

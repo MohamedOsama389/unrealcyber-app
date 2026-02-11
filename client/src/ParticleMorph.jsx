@@ -89,17 +89,12 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
         const positions = pointsRef.current.geometry.attributes.position.array;
         const t = state.clock.getElapsedTime();
 
-        // Determine current phase based on scrollProgress (0 to 1)
-        // section 1: 0 - 0.33
-        // section 2: 0.33 - 0.66
-        // section 3: 0.66 - 1.0
-
         let targetBuffer;
         let progressInSection = 0;
 
         if (scrollProgress < 0.33) {
             targetBuffer = targets.networking;
-            progressInSection = (scrollProgress / 0.33); // 0 to 1
+            progressInSection = (scrollProgress / 0.33);
         } else if (scrollProgress < 0.66) {
             targetBuffer = targets.hacking;
             progressInSection = ((scrollProgress - 0.33) / 0.33);
@@ -109,43 +104,31 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
         }
 
         // Intensity of assembly: peek at 50% of each section
-        // 0% scattered, 50% assembled, 100% scattered/morphing
-        const assemblyFactor = Math.sin(progressInSection * Math.PI);
-
-        // Lerp between current and target
-        // We use a slightly faster lerp for the initial scatter drift
-        const lerpFactor = assemblyFactor < 0.1 ? 0.02 : 0.08;
+        // Use a power of sin to make the assembly "linger" longer at the peak
+        const assemblyFactor = Math.pow(Math.sin(progressInSection * Math.PI), 0.5);
 
         for (let i = 0; i < particleCount; i++) {
             const i3 = i * 3;
 
             // Influence of target shape vs random scatter
-            const targetX = targetBuffer[i3];
-            const targetY = targetBuffer[i3 + 1];
-            const targetZ = targetBuffer[i3 + 2];
+            const noise = Math.sin(t * 1.5 + i) * 0.05;
 
-            const scatterX = targets.random[i3];
-            const scatterY = targets.random[i3 + 1];
-            const scatterZ = targets.random[i3 + 2];
+            // Move towards target
+            positions[i3] += (targetBuffer[i3] - positions[i3]) * 0.05 * assemblyFactor + noise;
+            positions[i3 + 1] += (targetBuffer[i3 + 1] - positions[i3 + 1]) * 0.05 * assemblyFactor + noise;
+            positions[i3 + 2] += (targetBuffer[i3 + 2] - positions[i3 + 2]) * 0.05 * assemblyFactor + noise;
 
-            // Mix based on assembly factor
-            const goalX = THREE.MathUtils.lerp(scatterX, targetX, assemblyFactor);
-            const goalY = THREE.MathUtils.lerp(scatterY, targetY, assemblyFactor);
-            const goalZ = THREE.MathUtils.lerp(scatterZ, targetZ, assemblyFactor);
-
-            positions[i3] += (goalX - positions[i3]) * lerpFactor;
-            positions[i3 + 1] += (goalY - positions[i3 + 1]) * lerpFactor;
-            positions[i3 + 2] += (goalZ - positions[i3 + 2]) * lerpFactor;
-
-            // Add sine jiggle
-            positions[i3] += Math.sin(t + i) * 0.01;
-            positions[i3 + 1] += Math.cos(t + i) * 0.01;
+            // If not assembled, move slightly towards random (scattering effect)
+            if (assemblyFactor < 0.2) {
+                positions[i3] += (targets.random[i3] - positions[i3]) * 0.01;
+                positions[i3 + 1] += (targets.random[i3 + 1] - positions[i3 + 1]) * 0.01;
+                positions[i3 + 2] += (targets.random[i3 + 2] - positions[i3 + 2]) * 0.01;
+            }
         }
-
         pointsRef.current.geometry.attributes.position.needsUpdate = true;
 
-        // Tilt the whole system based on mouse or scroll for parallax
-        pointsRef.current.rotation.y = THREE.MathUtils.lerp(pointsRef.current.rotation.y, (scrollProgress - 0.5) * Math.PI, 0.05);
+        // Dynamic rotation based on scroll
+        pointsRef.current.rotation.y = THREE.MathUtils.lerp(pointsRef.current.rotation.y, (scrollProgress - 0.5) * Math.PI * 1.5, 0.05);
     });
 
     return (
@@ -159,10 +142,10 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
                 />
             </bufferGeometry>
             <PointMaterial
-                size={0.12}
+                size={0.18}
                 color="#00e5ff"
                 transparent
-                opacity={0.6}
+                opacity={0.8}
                 sizeAttenuation={true}
                 depthWrite={false}
                 blending={THREE.AdditiveBlending}

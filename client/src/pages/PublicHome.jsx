@@ -4,10 +4,13 @@ import { Link } from 'react-router-dom';
 import { ArrowUpRight, Play, ShieldCheck, Send, MessageCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { DEFAULT_PUBLIC_CONTENT, normalizePublicContent, buildVideoSlug, getSectionTheme, getVideoThumbnailUrl } from '../data/publicSite';
-import HeroCyberVisual from '../components/HeroCyberVisual';
+import GatewayCanvas from '../components/GatewayCanvas';
+import DataCenterScene from '../components/DataCenterScene';
+import InventoryHUD from '../components/InventoryHUD';
 
 const PublicHome = () => {
     const [content, setContent] = useState(DEFAULT_PUBLIC_CONTENT);
+    const [collected, setCollected] = useState([]);
     const [loading, setLoading] = useState(true);
     const { user, loginWithGoogle, logout } = useAuth();
     const googleBtnRef = useRef(null);
@@ -192,9 +195,9 @@ const PublicHome = () => {
                         <div className="relative">
                             <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-cyan-500/10 via-slate-900/80 to-purple-600/10 blur-3xl" />
                             <div className="relative glass-panel border border-white/5 rounded-3xl p-4">
-                                <div className="absolute top-4 right-4 text-xs text-secondary uppercase tracking-[0.3em]">Secure Visual</div>
+                                <div className="absolute top-4 right-4 text-xs text-secondary uppercase tracking-[0.3em]">Network Gateway</div>
                                 <div className="mt-6 rounded-3xl overflow-hidden border border-white/5 bg-slate-950/60">
-                                    <HeroCyberVisual />
+                                    <GatewayCanvas />
                                 </div>
                             </div>
                         </div>
@@ -295,6 +298,28 @@ const PublicHome = () => {
                         </div>
                     )}
                 </section>
+
+                <section className="max-w-6xl mx-auto px-6 py-12" id="journey">
+                    <div className="flex items-center justify-between mb-6">
+                        <div>
+                            <h2 className="text-2xl font-bold text-primary">Interactive Journey · Data Center</h2>
+                            <p className="text-secondary text-sm mt-2">
+                                Click devices to collect them and unlock learning paths.
+                            </p>
+                        </div>
+                        <div className="text-xs text-secondary">
+                            Collected: <span className="text-primary font-bold">{collected.length}</span> / 3
+                        </div>
+                    </div>
+                    <DataCenterScene
+                        onCollect={(item) => {
+                            setCollected((prev) => {
+                                if (prev.find((p) => p.id === item.id)) return prev;
+                                return [...prev, item];
+                            });
+                        }}
+                    />
+                </section>
             </main>
 
             <footer className="border-t border-white/5 mt-12">
@@ -325,6 +350,8 @@ const PublicHome = () => {
                     Loading public content...
                 </div>
             )}
+
+            <InventoryHUD items={collected} />
         </div>
     );
 };

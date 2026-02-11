@@ -236,7 +236,7 @@ const PublicHome = () => {
 
                     <div className="flex items-center gap-6">
                         <nav className="hidden lg:flex items-center gap-8 text-[10px] uppercase tracking-[0.4em] text-secondary font-bold">
-                            <button type="button" onClick={scrollToAbout} className="hover:text-cyan-400 transition-colors">About</button>
+                            <button type="button" onClick={scrollToAbout} className="hover:text-cyan-400 transition-colors">ABOUT</button>
                             <a href="#networking" className="hover:text-cyan-400 transition-colors">Network</a>
                             <a href="#hacking" className="hover:text-purple-400 transition-colors">Ethical Hacking</a>
                             <a href="#programming" className="hover:text-blue-400 transition-colors">Programming</a>
@@ -301,6 +301,40 @@ const PublicHome = () => {
                         <p className="text-secondary text-[10px] max-w-sm leading-relaxed opacity-50 font-medium">
                             The elite training ground for the next generation of cybersecurity experts. Join the collective and master the digital frontier.
                         </p>
+
+                        {/* Join Buttons */}
+                        <div className="flex flex-wrap gap-3 justify-center md:justify-start pt-2">
+                            {publicContent?.socials?.youtube && (
+                                <a
+                                    href={publicContent.socials.youtube}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-500/10 border border-red-500/30 text-[10px] font-black text-red-400 hover:bg-red-500/20 hover:border-red-400/50 transition-all uppercase tracking-[0.2em]"
+                                >
+                                    ▶ Join YouTube
+                                </a>
+                            )}
+                            {publicContent?.socials?.telegram && (
+                                <a
+                                    href={publicContent.socials.telegram}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-500/10 border border-blue-500/30 text-[10px] font-black text-blue-400 hover:bg-blue-500/20 hover:border-blue-400/50 transition-all uppercase tracking-[0.2em]"
+                                >
+                                    ✈ Join Telegram
+                                </a>
+                            )}
+                            {publicContent?.socials?.discord && (
+                                <a
+                                    href={publicContent.socials.discord}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-[10px] font-black text-indigo-400 hover:bg-indigo-500/20 hover:border-indigo-400/50 transition-all uppercase tracking-[0.2em]"
+                                >
+                                    💬 Join Discord
+                                </a>
+                            )}
+                        </div>
                     </div>
 
                     <div className="flex flex-wrap justify-center gap-8">

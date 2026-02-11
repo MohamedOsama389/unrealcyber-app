@@ -1234,6 +1234,52 @@ const AdminPanel = () => {
                         </div>
                     </div>
 
+                    {/* Social Links Editor */}
+                    <div className="glass-panel p-6 border border-border space-y-4">
+                        <h4 className="text-lg font-bold text-primary flex items-center gap-2">
+                            <Globe className="text-blue-400" size={20} /> Social Links
+                        </h4>
+                        <p className="text-xs text-secondary">Set these links to show "Join YouTube", "Join Telegram", and "Join Discord" buttons on the landing page footer.</p>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold uppercase text-red-400">YouTube Channel URL</label>
+                                <input
+                                    className="input-field"
+                                    placeholder="https://youtube.com/@yourchannel"
+                                    value={publicContent?.socials?.youtube || ''}
+                                    onChange={(e) => setPublicContent(prev => ({
+                                        ...prev,
+                                        socials: { ...(prev.socials || {}), youtube: e.target.value }
+                                    }))}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold uppercase text-blue-400">Telegram Group URL</label>
+                                <input
+                                    className="input-field"
+                                    placeholder="https://t.me/yourgroup"
+                                    value={publicContent?.socials?.telegram || ''}
+                                    onChange={(e) => setPublicContent(prev => ({
+                                        ...prev,
+                                        socials: { ...(prev.socials || {}), telegram: e.target.value }
+                                    }))}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold uppercase text-indigo-400">Discord Invite URL</label>
+                                <input
+                                    className="input-field"
+                                    placeholder="https://discord.gg/yourinvite"
+                                    value={publicContent?.socials?.discord || ''}
+                                    onChange={(e) => setPublicContent(prev => ({
+                                        ...prev,
+                                        socials: { ...(prev.socials || {}), discord: e.target.value }
+                                    }))}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="glass-panel p-6 border border-border space-y-4">
                         <h4 className="text-lg font-bold text-primary">Vision Pillars</h4>
                         <div className="space-y-4">

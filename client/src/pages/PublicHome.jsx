@@ -13,7 +13,11 @@ import ScrollSections from '../ScrollSections';
  * thematic shapes (Router, Shield, Laptop) as the user scrolls.
  */
 const PublicHome = () => {
+    console.log('[DEBUG] PublicHome Mounting');
     const [scrollProgress, setScrollProgress] = useState(0);
+    useEffect(() => {
+        console.log('[DEBUG] PublicHome Scroll Progress:', scrollProgress);
+    }, [scrollProgress]);
     const { user, loginWithGoogle, logout } = useAuth();
     const googleBtnRef = useRef(null);
     const [googleReady, setGoogleReady] = useState(false);
@@ -59,9 +63,20 @@ const PublicHome = () => {
 
     return (
         <div className="min-h-screen bg-[#02040a] text-primary selection:bg-cyan-500/30 overflow-x-hidden">
+            {/* Debug Banner - High Z-Index, should be visible no matter what */}
+            <div className="fixed top-0 left-0 w-full bg-red-600 text-white text-[10px] py-1 px-4 z-[9999] font-mono flex justify-between">
+                <span>COMPONENT: PublicHome MOUNTED</span>
+                <span>SCROLL: {scrollProgress.toFixed(2)}</span>
+            </div>
+
             {/* Fixed 3D Particle Background */}
             <div className="fixed inset-0 z-0 bg-[#02040a]">
-                <Canvas camera={{ position: [0, 0, 15], fov: 35 }} dpr={[1, 2]}>
+                <Canvas
+                    camera={{ position: [0, 0, 15], fov: 35 }}
+                    dpr={[1, 2]}
+                    onCreated={() => console.log('[DEBUG] Canvas Created')}
+                    onError={(err) => console.error('[DEBUG] Canvas Error:', err)}
+                >
                     <color attach="background" args={['#02040a']} />
                     <fog attach="fog" args={['#02040a', 20, 40]} />
                     <ambientLight intensity={0.5} />

@@ -158,7 +158,7 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
                     itemSize={3}
                 />
             </bufferGeometry>
-            <pointMaterial
+            <PointMaterial
                 size={0.12}
                 color="#00e5ff"
                 transparent

@@ -150,60 +150,51 @@ const PublicHome = () => {
             </header>
 
             <main>
-                <section id="vision" className="max-w-6xl mx-auto px-6 py-14 md:py-20">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-                        <div className="space-y-6 relative">
-                            <div className="absolute -left-10 -top-16 h-40 w-40 rounded-full bg-cyan-500/15 blur-3xl pointer-events-none" />
-                            <p className="text-xs uppercase tracking-[0.4em] text-cyan-400">UnrealCyber Vision</p>
-                            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-primary">
-                                Master Cybersecurity. Build Real Skills.
-                            </h1>
-                            <p className="text-secondary text-lg leading-relaxed max-w-2xl">
-                                Outcomes-first learning for defenders and builders. Labs, missions, and mentorship designed for the modern SOC.
-                            </p>
-                            <div className="flex flex-wrap gap-3">
-                                <a
-                                    href="#courses"
-                                    className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold shadow-xl shadow-cyan-500/20"
-                                >
-                                    <Play size={16} />
-                                    Start Learning
-                                </a>
-                                <a
-                                    href="#tracks"
-                                    className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl border border-white/10 text-secondary hover:text-primary hover:border-cyan-400/40 transition-colors font-bold"
-                                >
-                                    View Courses
-                                    <ArrowUpRight size={16} />
-                                </a>
-                            </div>
-                            <div className="flex flex-wrap gap-4 pt-2 text-sm text-secondary">
-                                <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/5 bg-white/5">
-                                    <ShieldCheck size={16} className="text-cyan-400" />
-                                    Hands-on labs
-                                </div>
-                                <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/5 bg-white/5">
-                                    <ShieldCheck size={16} className="text-purple-300" />
-                                    Real-world projects
-                                </div>
-                                <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/5 bg-white/5">
-                                    <ShieldCheck size={16} className="text-cyan-200" />
-                                    Career-ready paths
-                                </div>
-                            </div>
-                        </div>
-                        <div className="relative">
-                            <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-cyan-500/10 via-slate-900/80 to-purple-600/10 blur-3xl" />
-                            <div className="relative glass-panel border border-white/5 rounded-3xl p-4">
-                                <div className="absolute top-4 right-4 text-xs text-secondary uppercase tracking-[0.3em]">Network Gateway</div>
-                                <div className="mt-6 rounded-3xl overflow-hidden border border-white/5 bg-slate-950/60">
-                                    <GatewayCanvas />
-                                </div>
-                            </div>
+                <section id="vision" className="min-h-screen flex flex-col justify-center max-w-6xl mx-auto px-6 py-14">
+                    <div className="text-center space-y-8 relative z-10">
+                        <div className="absolute left-1/2 -translate-x-1/2 -top-20 h-64 w-64 rounded-full bg-cyan-500/20 blur-3xl pointer-events-none" />
+                        <p className="text-xs uppercase tracking-[0.4em] text-cyan-400">UnrealCyber Vision</p>
+                        <h1 className="text-6xl md:text-8xl font-extrabold tracking-tighter text-primary">
+                            Master Cybersecurity.
+                            <br />
+                            <span className="bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">
+                                Build Real Skills.
+                            </span>
+                        </h1>
+                        <p className="text-secondary text-xl md:text-2xl leading-relaxed max-w-3xl mx-auto">
+                            Outcomes-first learning for defenders and builders. Labs, missions, and mentorship designed for the modern SOC.
+                        </p>
+                        <div className="flex flex-wrap justify-center gap-4">
+                            <a
+                                href="#tracks"
+                                className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold shadow-2xl shadow-cyan-500/40 hover:scale-105 transition-transform"
+                            >
+                                <Play size={18} />
+                                Explore Tracks
+                            </a>
+                            <a
+                                href="#latest"
+                                className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl border border-white/10 text-secondary hover:text-primary hover:border-cyan-400/40 backdrop-blur-sm transition-all font-bold"
+                            >
+                                View Content
+                                <ArrowUpRight size={18} />
+                            </a>
                         </div>
                     </div>
+                </section>
 
-                    <div id="tracks" className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+                <section id="journey" className="relative w-full h-screen overflow-hidden">
+                    <NetworkScrollExperience
+                        onCollect={(item) => {
+                            setCollected((prev) => {
+                                if (prev.find((p) => p.id === item.id)) return prev;
+                                return [...prev, item];
+                            });
+                        }}
+                    />
+                </section>
+                <section id="tracks" className="max-w-6xl mx-auto px-6 py-12">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
                         {pillars.map((pillar, idx) => {
                             const section = sections[idx];
                             const theme = getSectionTheme(section?.key);
@@ -262,64 +253,45 @@ const PublicHome = () => {
                                 const theme = getSectionTheme(video.sectionKey);
                                 const thumb = getVideoThumbnailUrl(video.url);
                                 return (
-                                <Link
-                                    key={`${video.title}-${idx}`}
-                                    to={`/vision/${video.sectionKey}/${video.slug}`}
-                                    className={`group text-left glass-panel p-5 border ${theme.border} hover:border-cyan-400/40 transition-all bg-gradient-to-br ${theme.gradient} transform-gpu focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60`}
-                                    style={{ transition: 'transform 220ms ease, box-shadow 220ms ease' }}
-                                    onMouseMove={(e) => {
-                                        const card = e.currentTarget;
-                                        const rect = card.getBoundingClientRect();
-                                        const x = (e.clientX - rect.left) / rect.width - 0.5;
-                                        const y = (e.clientY - rect.top) / rect.height - 0.5;
-                                        card.style.transform = `translateY(-8px) rotateX(${y * -3}deg) rotateY(${x * 4}deg)`;
-                                    }}
-                                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0) rotateX(0deg) rotateY(0deg)'; }}
-                                >
-                                    <div className="aspect-video rounded-xl bg-slate-900/60 border border-white/5 flex items-center justify-center mb-4 relative overflow-hidden">
-                                        {thumb && (
-                                            <img
-                                                src={thumb}
-                                                alt=""
-                                                className="absolute inset-0 w-full h-full object-cover"
-                                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                                                loading="lazy"
-                                            />
-                                        )}
-                                        <div className="relative z-10 w-12 h-12 rounded-full bg-black/50 border border-white/15 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <Play className={theme.accent} />
+                                    <Link
+                                        key={`${video.title}-${idx}`}
+                                        to={`/vision/${video.sectionKey}/${video.slug}`}
+                                        className={`group text-left glass-panel p-5 border ${theme.border} hover:border-cyan-400/40 transition-all bg-gradient-to-br ${theme.gradient} transform-gpu focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60`}
+                                        style={{ transition: 'transform 220ms ease, box-shadow 220ms ease' }}
+                                        onMouseMove={(e) => {
+                                            const card = e.currentTarget;
+                                            const rect = card.getBoundingClientRect();
+                                            const x = (e.clientX - rect.left) / rect.width - 0.5;
+                                            const y = (e.clientY - rect.top) / rect.height - 0.5;
+                                            card.style.transform = `translateY(-8px) rotateX(${y * -3}deg) rotateY(${x * 4}deg)`;
+                                        }}
+                                        onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0) rotateX(0deg) rotateY(0deg)'; }}
+                                    >
+                                        <div className="aspect-video rounded-xl bg-slate-900/60 border border-white/5 flex items-center justify-center mb-4 relative overflow-hidden">
+                                            {thumb && (
+                                                <img
+                                                    src={thumb}
+                                                    alt=""
+                                                    className="absolute inset-0 w-full h-full object-cover"
+                                                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                                    loading="lazy"
+                                                />
+                                            )}
+                                            <div className="relative z-10 w-12 h-12 rounded-full bg-black/50 border border-white/15 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Play className={theme.accent} />
+                                            </div>
                                         </div>
-                                    </div>
-                                    <p className="text-xs uppercase tracking-[0.3em] text-secondary">{video.sectionTitle}</p>
-                                    <h3 className="text-lg font-bold mt-2">{video.title}</h3>
-                                    <p className="text-sm text-secondary mt-2">{video.description}</p>
-                                </Link>
-                            )})}
+                                        <p className="text-xs uppercase tracking-[0.3em] text-secondary">{video.sectionTitle}</p>
+                                        <h3 className="text-lg font-bold mt-2">{video.title}</h3>
+                                        <p className="text-sm text-secondary mt-2">{video.description}</p>
+                                    </Link>
+                                )
+                            })}
                         </div>
                     )}
                 </section>
 
-                <section className="max-w-6xl mx-auto px-6 py-12" id="journey">
-                    <div className="flex items-center justify-between mb-6">
-                        <div>
-                            <h2 className="text-2xl font-bold text-primary">Interactive Journey</h2>
-                            <p className="text-secondary text-sm mt-2">
-                                Scroll through the network and collect devices to unlock learning paths.
-                            </p>
-                        </div>
-                        <div className="text-xs text-secondary">
-                            Collected: <span className="text-primary font-bold">{collected.length}</span>
-                        </div>
-                    </div>
-                    <NetworkScrollExperience
-                        onCollect={(item) => {
-                            setCollected((prev) => {
-                                if (prev.find((p) => p.id === item.id)) return prev;
-                                return [...prev, item];
-                            });
-                        }}
-                    />
-                </section>
+                {/* Scroll experience is now integrated into the hero/journey flow */}
             </main>
 
             <footer className="border-t border-white/5 mt-12">
@@ -345,14 +317,16 @@ const PublicHome = () => {
                 </div>
             </footer>
 
-            {loading && (
-                <div className="fixed bottom-4 right-4 text-xs text-secondary bg-panel/80 border border-border rounded-full px-4 py-2">
-                    Loading public content...
-                </div>
-            )}
+            {
+                loading && (
+                    <div className="fixed bottom-4 right-4 text-xs text-secondary bg-panel/80 border border-border rounded-full px-4 py-2">
+                        Loading public content...
+                    </div>
+                )
+            }
 
             <InventoryHUD items={collected} />
-        </div>
+        </div >
     );
 };
 

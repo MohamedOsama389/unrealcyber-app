@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { ArrowUpRight, Play, ShieldCheck, Send, MessageCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { DEFAULT_PUBLIC_CONTENT, normalizePublicContent, buildVideoSlug, getSectionTheme, getVideoThumbnailUrl } from '../data/publicSite';
+import Hero3D from '../components/Hero3D';
 
 const PublicHome = () => {
     const [content, setContent] = useState(DEFAULT_PUBLIC_CONTENT);
@@ -146,45 +147,60 @@ const PublicHome = () => {
             </header>
 
             <main>
-                <section id="vision" className="max-w-6xl mx-auto px-6 py-16 md:py-24">
-                    <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-950/95 via-slate-900/90 to-slate-950/95 px-6 py-10 md:px-12">
-                        <div className="absolute -top-32 right-0 h-72 w-72 rounded-full bg-cyan-500/15 blur-3xl" />
-                        <div className="absolute bottom-0 left-20 h-56 w-56 rounded-full bg-emerald-500/15 blur-3xl" />
-                        <div className="absolute top-10 left-1/2 h-48 w-48 rounded-full bg-amber-500/10 blur-3xl" />
-                        <div className="space-y-6 relative z-10">
-                        <p className="text-xs uppercase tracking-[0.4em] text-cyan-400">UnrealCyber Vision</p>
-                        <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">
-                            {content.hero?.title}
-                        </h1>
-                        <p className="text-secondary text-lg leading-relaxed max-w-2xl">
-                            {content.hero?.subtitle}
-                        </p>
-                        <div className="flex flex-wrap gap-4">
-                            <a
-                                href={content.hero?.ctaLink || 'https://www.youtube.com/'}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold shadow-xl shadow-cyan-500/20"
-                            >
-                                <Play size={16} />
-                                {content.hero?.ctaText || 'Watch on YouTube'}
-                            </a>
-                            {content.socials?.telegram && (
+                <section id="vision" className="max-w-6xl mx-auto px-6 py-14 md:py-20">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+                        <div className="space-y-6 relative">
+                            <div className="absolute -left-10 -top-16 h-40 w-40 rounded-full bg-cyan-500/15 blur-3xl pointer-events-none" />
+                            <p className="text-xs uppercase tracking-[0.4em] text-cyan-400">UnrealCyber Vision</p>
+                            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-primary">
+                                Master Cybersecurity. Build Real Skills.
+                            </h1>
+                            <p className="text-secondary text-lg leading-relaxed max-w-2xl">
+                                Outcomes-first learning for defenders and builders. Labs, missions, and mentorship designed for the modern SOC.
+                            </p>
+                            <div className="flex flex-wrap gap-3">
                                 <a
-                                    href={content.socials.telegram}
-                                    target="_blank"
-                                    rel="noreferrer"
+                                    href="#courses"
+                                    className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold shadow-xl shadow-cyan-500/20"
+                                >
+                                    <Play size={16} />
+                                    Start Learning
+                                </a>
+                                <a
+                                    href="#tracks"
                                     className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl border border-white/10 text-secondary hover:text-primary hover:border-cyan-400/40 transition-colors font-bold"
                                 >
-                                    Join Telegram
+                                    View Courses
                                     <ArrowUpRight size={16} />
                                 </a>
-                            )}
+                            </div>
+                            <div className="flex flex-wrap gap-4 pt-2 text-sm text-secondary">
+                                <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/5 bg-white/5">
+                                    <ShieldCheck size={16} className="text-cyan-400" />
+                                    Hands-on labs
+                                </div>
+                                <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/5 bg-white/5">
+                                    <ShieldCheck size={16} className="text-purple-300" />
+                                    Real-world projects
+                                </div>
+                                <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/5 bg-white/5">
+                                    <ShieldCheck size={16} className="text-cyan-200" />
+                                    Career-ready paths
+                                </div>
+                            </div>
+                        </div>
+                        <div className="relative">
+                            <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-cyan-500/10 via-slate-900/80 to-purple-600/10 blur-3xl" />
+                            <div className="relative glass-panel border border-white/5 rounded-3xl p-4">
+                                <div className="absolute top-4 right-4 text-xs text-secondary uppercase tracking-[0.3em]">Secure Core</div>
+                                <div className="mt-6 rounded-3xl overflow-hidden border border-white/5 bg-slate-950/60">
+                                    <Hero3D />
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+                    <div id="tracks" className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
                         {pillars.map((pillar, idx) => {
                             const section = sections[idx];
                             const theme = getSectionTheme(section?.key);

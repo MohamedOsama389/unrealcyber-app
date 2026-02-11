@@ -5,7 +5,7 @@ import { ArrowUpRight, Play, ShieldCheck, Send, MessageCircle } from 'lucide-rea
 import { useAuth } from '../context/AuthContext';
 import { DEFAULT_PUBLIC_CONTENT, normalizePublicContent, buildVideoSlug, getSectionTheme, getVideoThumbnailUrl } from '../data/publicSite';
 import GatewayCanvas from '../components/GatewayCanvas';
-import DataCenterScene from '../components/DataCenterScene';
+import NetworkScrollExperience from '../components/NetworkScrollExperience';
 import InventoryHUD from '../components/InventoryHUD';
 
 const PublicHome = () => {
@@ -302,16 +302,16 @@ const PublicHome = () => {
                 <section className="max-w-6xl mx-auto px-6 py-12" id="journey">
                     <div className="flex items-center justify-between mb-6">
                         <div>
-                            <h2 className="text-2xl font-bold text-primary">Interactive Journey · Data Center</h2>
+                            <h2 className="text-2xl font-bold text-primary">Interactive Journey</h2>
                             <p className="text-secondary text-sm mt-2">
-                                Click devices to collect them and unlock learning paths.
+                                Scroll through the network and collect devices to unlock learning paths.
                             </p>
                         </div>
                         <div className="text-xs text-secondary">
-                            Collected: <span className="text-primary font-bold">{collected.length}</span> / 3
+                            Collected: <span className="text-primary font-bold">{collected.length}</span>
                         </div>
                     </div>
-                    <DataCenterScene
+                    <NetworkScrollExperience
                         onCollect={(item) => {
                             setCollected((prev) => {
                                 if (prev.find((p) => p.id === item.id)) return prev;

@@ -291,11 +291,11 @@ const ParticleMorph = ({ scrollProgress = 0, sectionCount = 3 }) => {
             const actualW = Math.min(size.width, 1280);
             const xOffPx = 0.25 * actualW + 20;
             xTargetOff = (xOffPx / size.width) * viewport.width;
-            yTargetOff = -0.04 * viewport.height; // Shifted slightly higher than before (closer to center)
+            yTargetOff = 0.03 * viewport.height; // Shifted slightly higher (above center)
         } else {
-            // Mobile: Moved higher to be more prominent above the card
+            // Mobile: Moved slightly higher to be more prominent above the card
             xTargetOff = 0;
-            yTargetOff = 0.15 * viewport.height;
+            yTargetOff = 0.20 * viewport.height;
         }
 
         let target = targets.net;

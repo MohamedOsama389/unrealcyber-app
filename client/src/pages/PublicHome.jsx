@@ -50,9 +50,11 @@ class GlobalErrorBoundary extends Component {
  */
 const PublicHome = () => {
     const [scrollProgress, setScrollProgress] = useState(0);
+    const [sectionsProgress, setSectionsProgress] = useState(-1); // -1 means not in sections area
     const { user, loginWithGoogle, logout } = useAuth();
     const googleBtnRef = useRef(null);
     const footerRef = useRef(null);
+    const sectionsContainerRef = useRef(null);
     const [googleReady, setGoogleReady] = useState(false);
 
     // Initialize with default content to render immediately (prevents blank screen)
@@ -135,8 +137,8 @@ const PublicHome = () => {
     };
 
     useEffect(() => {
-        // Global Scroll Tracking for ParticleMorph
-        const trigger = ScrollTrigger.create({
+        // Global Scroll Tracking for Ambient Waves
+        const globalTrigger = ScrollTrigger.create({
             trigger: document.documentElement,
             start: 0,
             end: "bottom bottom",
@@ -145,11 +147,29 @@ const PublicHome = () => {
             }
         });
 
-        // Ensure refresh on mount
+        // Specific Sections Tracking for Assembly
+        let sectionsTrigger;
+        if (sectionsContainerRef.current) {
+            sectionsTrigger = ScrollTrigger.create({
+                trigger: sectionsContainerRef.current,
+                start: "top bottom", // Start when sections container enters bottom of screen
+                end: "bottom top",    // End when sections container leaves top of screen
+                onUpdate: (self) => {
+                    setSectionsProgress(self.progress);
+                },
+                onToggle: (self) => {
+                    if (!self.isActive) setSectionsProgress(-1);
+                }
+            });
+        }
+
         ScrollTrigger.refresh();
 
-        return () => trigger.kill();
-    }, []);
+        return () => {
+            globalTrigger.kill();
+            if (sectionsTrigger) sectionsTrigger.kill();
+        };
+    }, [publicContent]);
 
     const heroTiles = [
         {
@@ -195,6 +215,7 @@ const PublicHome = () => {
                             <Suspense fallback={null}>
                                 <ParticleMorph
                                     scrollProgress={scrollProgress}
+                                    sectionsProgress={sectionsProgress}
                                     sectionCount={publicContent?.sections?.length || 3}
                                 />
                             </Suspense>
@@ -366,7 +387,7 @@ const PublicHome = () => {
                 </header>
 
                 {/* Scrollable Content Layers */}
-                <main className="relative z-10">
+                <main ref={sectionsContainerRef} className="relative z-10">
                     <ScrollSections sections={publicContent?.sections} />
                 </main>
 

@@ -203,7 +203,7 @@ function Dust({ count = 2000, radius = 7 }) {
 }
 
 // Main Particle Morph System
-const ParticleMorph = ({ scrollProgress = 0, sectionCount = 3 }) => {
+const ParticleMorph = ({ scrollProgress = 0, sectionsProgress = -1, sectionCount = 3 }) => {
     const pointsRef = useRef();
     const materialRef = useRef();
     const [mousePos] = useState(() => new THREE.Vector2());
@@ -256,19 +256,14 @@ const ParticleMorph = ({ scrollProgress = 0, sectionCount = 3 }) => {
 
     const targetColors = useMemo(() => [colors.networking, colors.hacking, colors.programming], [colors]);
 
-    // DYNAMIC SCROLL MAPPING (Page-wide)
+    // DYNAMIC SCROLL MAPPING (Within Sections Container)
     const centers = useMemo(() => {
         const c = [];
-        const hHero = 1.0; // Hero is 100vh
-        const hSec = isMobile ? 1.0 : 1.2; // Each section is 100vh or 120vh
-        const hFooter = 0.5; // Footer is roughly 50vh
-
-        const totalHeight = hHero + (sectionCount * hSec) + hFooter;
+        const R = isMobile ? 1.0 : 1.2; // Section height ratio (120vh = 1.2)
+        const totalDist = (sectionCount * R) + 1; // containerHeight + viewportHeight
 
         for (let i = 0; i < sectionCount; i++) {
-            // center of section i
-            const pos = hHero + (i + 0.5) * hSec;
-            const p = pos / totalHeight;
+            const p = ((i + 0.5) * R + 0.5) / totalDist;
             c.push(THREE.MathUtils.clamp(p, 0, 1));
         }
         return c;
@@ -303,14 +298,17 @@ const ParticleMorph = ({ scrollProgress = 0, sectionCount = 3 }) => {
         let dist = 1.0;
         let activeIdx = -1;
 
-        const range = 0.12; // Tighter range for page-wide tracking
+        const range = 0.22; // Wider range for more tolerant assembly
         let minDist = 1000;
 
-        for (let i = 0; i < centers.length; i++) {
-            const d = Math.abs(scrollProgress - centers[i]);
-            if (d < range && d < minDist) {
-                activeIdx = i;
-                minDist = d;
+        // Only try to assemble if we are within the sections container scroll area
+        if (sectionsProgress !== -1) {
+            for (let i = 0; i < centers.length; i++) {
+                const d = Math.abs(sectionsProgress - centers[i]);
+                if (d < range && d < minDist) {
+                    activeIdx = i;
+                    minDist = d;
+                }
             }
         }
 
@@ -321,17 +319,13 @@ const ParticleMorph = ({ scrollProgress = 0, sectionCount = 3 }) => {
         }
 
         // Swang Factor: 0 = fully assembled, 1 = fully swang/ambient
-        // Plateau: Stay fully assembled if dist < 0.05 (Page-wide units)
-        const assemblyPlateau = 0.05;
+        const assemblyPlateau = 0.08;
         const focusFactor = THREE.MathUtils.clamp((dist - assemblyPlateau) / (range - assemblyPlateau), 0, 1);
-        let ambFactor = THREE.MathUtils.smoothstep(focusFactor, 0.0, 1.0);
-
-        // Remove top/bot fade to ensure models stay assembled even at scroll extremes
-        // (ScrollSections is already offset from the very top/bottom of the page)
+        let ambFactor = activeIdx === -1 ? 1.0 : THREE.MathUtils.smoothstep(focusFactor, 0.0, 1.0);
 
         // Colors
         if (materialRef.current) {
-            materialRef.current.color.lerp(ambFactor > 0.5 ? colors.ambient : targetColor, 0.1);
+            materialRef.current.color.lerp(ambFactor > 0.6 ? colors.ambient : targetColor, 0.1);
         }
 
         // MOVEMENT

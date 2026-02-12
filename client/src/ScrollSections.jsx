@@ -10,6 +10,8 @@ const ScrollSections = ({ onProgress, sections }) => {
     const containerRef = useRef();
 
     useEffect(() => {
+        if (!containerRef.current) return;
+
         const trigger = ScrollTrigger.create({
             trigger: containerRef.current,
             start: 'top top',
@@ -19,8 +21,11 @@ const ScrollSections = ({ onProgress, sections }) => {
             }
         });
 
+        // Refresh ScrollTrigger to ensure correct height calculation
+        ScrollTrigger.refresh();
+
         return () => trigger.kill();
-    }, [onProgress]);
+    }, [onProgress, sections]);
 
     const defaultSections = [
         {

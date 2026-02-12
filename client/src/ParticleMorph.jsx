@@ -322,15 +322,13 @@ const ParticleMorph = ({ scrollProgress = 0, sectionCount = 3 }) => {
         }
 
         // Swang Factor: 0 = fully assembled, 1 = fully swang/ambient
-        // Plateau: Stay fully assembled if dist < 0.05
-        const assemblyPlateau = 0.05;
+        // Plateau: Stay fully assembled if dist < 0.08
+        const assemblyPlateau = 0.08;
         const focusFactor = THREE.MathUtils.clamp((dist - assemblyPlateau) / (range - assemblyPlateau), 0, 1);
         let ambFactor = THREE.MathUtils.smoothstep(focusFactor, 0.0, 1.0);
 
-        // Also fade out at extreme top/bottom
-        const topFade = THREE.MathUtils.clamp((0.02 - scrollProgress) / 0.05, 0, 1);
-        const botFade = THREE.MathUtils.clamp((scrollProgress - 0.98) / 0.05, 0, 1);
-        ambFactor = Math.max(ambFactor, topFade, botFade);
+        // Remove top/bot fade to ensure models stay assembled even at scroll extremes
+        // (ScrollSections is already offset from the very top/bottom of the page)
 
         // Colors
         if (materialRef.current) {

@@ -203,13 +203,14 @@ function Dust({ count = 2000, radius = 7 }) {
 }
 
 // Main Particle Morph System
-const ParticleMorph = ({ scrollProgress = 0 }) => {
+const ParticleMorph = ({ scrollProgress = 0, sectionCount = 3 }) => {
     const pointsRef = useRef();
     const materialRef = useRef();
     const [mousePos] = useState(() => new THREE.Vector2());
 
     // Determine user device for performance
     const isMobile = typeof window !== 'undefined' ? window.innerWidth < 1024 : false;
+
     // High density as requested by user ("shapes look much greater")
     const COUNT = isMobile ? 4000 : 10000;
 
@@ -247,6 +248,8 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
         return { net, hack, prog, rand, swarm };
     }, [COUNT]);
 
+    const targetModels = useMemo(() => [targets.net, targets.hack, targets.prog], [targets]);
+
     const colors = useMemo(() => ({
         networking: new THREE.Color("#00E5FF"),
         hacking: new THREE.Color("#C084FC"),
@@ -254,56 +257,80 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
         ambient: new THREE.Color("#c4a0ff")
     }), []);
 
+    const targetColors = useMemo(() => [colors.networking, colors.hacking, colors.programming], [colors]);
+
+    // DYNAMIC SCROLL MAPPING
+    const centers = useMemo(() => {
+        const c = [];
+        const hSec = isMobile ? 1.0 : 1.2; // Match ScrollSections.jsx heights
+        const hCont = sectionCount * hSec;
+        const d = hCont - 1.0; // Total scrollable distance in vh
+
+        for (let i = 0; i < sectionCount; i++) {
+            // progress when center of section (i+0.5)*hSec is at viewport center (0.5)
+            const p = d > 0 ? ((i + 0.5) * hSec - 0.5) / d : 0.5;
+            c.push(THREE.MathUtils.clamp(p, 0, 1));
+        }
+        return c;
+    }, [sectionCount, isMobile]);
+
     useFrame((state, delta) => {
         if (!pointsRef.current) return;
-        const { mouse, clock } = state;
+        const { mouse, clock, size, viewport } = state;
         const pos = pointsRef.current.geometry.attributes.position.array;
 
-        let target, targetColor, xTargetOff = 0;
+        // DYNAMIC TARGET POSITIONING (Align with ScrollSections.jsx empty divs)
+        let xTargetOff = 0;
+        let yTargetOff = 0;
 
-        // SCROLL MAPPING & SWANG ZONES
-        // Zones: 0.16 (Net), 0.50 (Hack), 0.83 (Prog)
-        // We only assemble if within a "focus" range of the section center.
-        // Otherwise, we default to the "Swang Wave" (ambient).
+        if (!isMobile) {
+            // Right column center logic:
+            // container is max-w-7xl (1280px). If screen > 1280, it's centered.
+            // Gap between columns is gap-20 (80px).
+            // Center of right column is 340px to the right of screen center.
+            const actualW = Math.min(size.width, 1280);
+            const xOffPx = 0.25 * actualW + 20;
+            xTargetOff = (xOffPx / size.width) * viewport.width;
+            yTargetOff = 0; // Vertically centered in the 120vh section = center of viewport
+        } else {
+            // Mobile: Empty div is 60vh at the top of the group.
+            // Center of empty div is roughly 0.2 * viewportHeight above center.
+            xTargetOff = 0;
+            yTargetOff = 0.22 * viewport.height;
+        }
 
-        target = targets.net; // Default to avoid null access, but ambFactor handles visibility
-        targetColor = colors.networking;
+        let target = targets.net;
+        let targetColor = colors.networking;
+        let dist = 1.0;
+        let activeIdx = -1;
 
-        const center1 = 0.17;
-        const center2 = 0.50;
-        const center3 = 0.83;
-        const range = 0.12; // +/- 12% focus range
+        const range = 0.18; // Increased range for better focus
+        let minDist = 1000;
 
-        let dist = 1.0; // Distance from a center
+        for (let i = 0; i < centers.length; i++) {
+            const d = Math.abs(scrollProgress - centers[i]);
+            if (d < range && d < minDist) {
+                activeIdx = i;
+                minDist = d;
+            }
+        }
 
-        if (Math.abs(scrollProgress - center1) < range) {
-            target = targets.net;
-            targetColor = colors.networking;
-            dist = Math.abs(scrollProgress - center1);
-        } else if (Math.abs(scrollProgress - center2) < range) {
-            target = targets.hack;
-            targetColor = colors.hacking;
-            dist = Math.abs(scrollProgress - center2);
-        } else if (Math.abs(scrollProgress - center3) < range) {
-            target = targets.prog;
-            targetColor = colors.programming;
-            dist = Math.abs(scrollProgress - center3);
+        if (activeIdx !== -1) {
+            target = targetModels[activeIdx % targetModels.length];
+            targetColor = targetColors[activeIdx % targetColors.length];
+            dist = minDist;
         }
 
         // Swang Factor: 0 = fully assembled, 1 = fully swang/ambient
-        // We ramp up to 1 as we move away from the center
-        // Normalized distance (0 to 1 over the range)
-        const focusFactor = Math.min(dist / range, 1.0);
-        // Curve it for smoother transition
+        // Plateau: Stay fully assembled if dist < 0.05
+        const assemblyPlateau = 0.05;
+        const focusFactor = THREE.MathUtils.clamp((dist - assemblyPlateau) / (range - assemblyPlateau), 0, 1);
         let ambFactor = THREE.MathUtils.smoothstep(focusFactor, 0.0, 1.0);
 
         // Also fade out at extreme top/bottom
-        const topFade = THREE.MathUtils.clamp((0.05 - scrollProgress) / 0.05, 0, 1);
-        const botFade = THREE.MathUtils.clamp((scrollProgress - 0.95) / 0.05, 0, 1);
+        const topFade = THREE.MathUtils.clamp((0.02 - scrollProgress) / 0.05, 0, 1);
+        const botFade = THREE.MathUtils.clamp((scrollProgress - 0.98) / 0.05, 0, 1);
         ambFactor = Math.max(ambFactor, topFade, botFade);
-
-        // TARGET OFFSET (Moved further right as requested)
-        xTargetOff = isMobile ? 0 : 2.4;
 
         // Colors
         if (materialRef.current) {
@@ -311,22 +338,21 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
         }
 
         // MOVEMENT
-        const yOff = isMobile ? 3.8 : 0;
         const dt = Math.min(delta, 0.05);
         const t = clock.getElapsedTime();
 
         // Relaxed speed for swarm, SNAPPY for assembly
-        const speed = ambFactor > 0.5 ? dt * 3.5 : dt * 8.5;
+        const speed = ambFactor > 0.5 ? dt * 3.5 : dt * 9.5;
 
         for (let i = 0; i < COUNT; i++) {
             const i3 = i * 3;
 
-            // Target Calc (Assemble next to the card)
+            // Target Calc
             const tx = target[i3] + xTargetOff;
-            const ty = target[i3 + 1] + yOff;
+            const ty = target[i3 + 1] + yTargetOff;
             const tz = target[i3 + 2];
 
-            // "Swang" Wave Swarm Motion (High Intensity at extremes)
+            // "Swang" Wave Swarm Motion
             const swarmWaveX = Math.sin(t * 0.6 + targets.swarm[i3] * 0.25) * 2.5;
             const swarmWaveY = Math.cos(t * 0.4 + targets.swarm[i3 + 1] * 0.25) * 2.5;
             const swarmWaveZ = Math.sin(t * 0.3 + i * 0.01) * 3.8;

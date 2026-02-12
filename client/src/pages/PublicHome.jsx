@@ -172,7 +172,10 @@ const PublicHome = () => {
                             <ambientLight intensity={0.5} />
                             <pointLight position={[10, 10, 10]} intensity={1} color="#00e5ff" />
                             <Suspense fallback={null}>
-                                <ParticleMorph scrollProgress={scrollProgress} />
+                                <ParticleMorph
+                                    scrollProgress={scrollProgress}
+                                    sectionCount={publicContent?.sections?.length || 3}
+                                />
                             </Suspense>
                         </Canvas>
                         <div className="absolute inset-0 bg-gradient-to-b from-[#0d1526]/30 via-transparent to-[#0d1526]/70 pointer-events-none" />

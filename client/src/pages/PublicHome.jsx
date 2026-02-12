@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, Component } from 'react';
 import { Link } from 'react-router-dom';
 import { ShieldCheck, ArrowUpRight, Play, Activity, LogOut, Network, Shield, Code2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -7,6 +7,17 @@ import axios from 'axios';
 import ParticleMorph from '../ParticleMorph';
 import ScrollSections from '../ScrollSections';
 import { getVideoThumbnailUrl } from '../data/publicSite';
+
+class CanvasErrorBoundary extends Component {
+    state = { hasError: false };
+    static getDerivedStateFromError() { return { hasError: true }; }
+    render() {
+        if (this.state.hasError) {
+            return <div className="fixed inset-0 z-0 bg-[#02040a]" />;
+        }
+        return this.props.children;
+    }
+}
 
 /**
  * PublicHome
@@ -131,21 +142,18 @@ const PublicHome = () => {
     return (
         <div className="min-h-screen bg-[#02040a] text-primary selection:bg-cyan-500/30 overflow-x-hidden">
             {/* Fixed 3D Particle Background */}
-            <div className="fixed inset-0 z-0 bg-[#02040a]">
-                <Canvas
-                    camera={{ position: [0, 0, 15], fov: 35 }}
-                    dpr={[1, 2]}
-                    onCreated={() => console.log('[DEBUG] Canvas Created')}
-                    onError={(err) => console.error('[DEBUG] Canvas Error:', err)}
-                >
-                    <color attach="background" args={['#02040a']} />
-                    <fog attach="fog" args={['#02040a', 20, 40]} />
-                    <ambientLight intensity={0.5} />
-                    <pointLight position={[10, 10, 10]} intensity={1} color="#00e5ff" />
-                    <ParticleMorph scrollProgress={scrollProgress} />
-                </Canvas>
-                <div className="absolute inset-0 bg-gradient-to-b from-[#02040a]/40 via-transparent to-[#02040a]/80 pointer-events-none" />
-            </div>
+            <CanvasErrorBoundary>
+                <div className="fixed inset-0 z-0 bg-[#02040a]">
+                    <Canvas camera={{ position: [0, 0, 15], fov: 35 }} dpr={[1, 2]}>
+                        <color attach="background" args={['#02040a']} />
+                        <fog attach="fog" args={['#02040a', 20, 40]} />
+                        <ambientLight intensity={0.5} />
+                        <pointLight position={[10, 10, 10]} intensity={1} color="#00e5ff" />
+                        <ParticleMorph scrollProgress={scrollProgress} />
+                    </Canvas>
+                    <div className="absolute inset-0 bg-gradient-to-b from-[#02040a]/40 via-transparent to-[#02040a]/80 pointer-events-none" />
+                </div>
+            </CanvasErrorBoundary>
 
             {/* HERO SECTION */}
             <section className="relative z-10 min-h-screen flex flex-col justify-center px-6 pt-32 lg:pt-36 pb-20">

@@ -6,26 +6,13 @@ import { Play, ExternalLink, Award } from 'lucide-react';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const ScrollSections = ({ onProgress, sections }) => {
+const ScrollSections = ({ sections }) => {
     const containerRef = useRef();
 
     useEffect(() => {
-        if (!containerRef.current) return;
-
-        const trigger = ScrollTrigger.create({
-            trigger: containerRef.current,
-            start: 'top top',
-            end: 'bottom bottom',
-            onUpdate: (self) => {
-                onProgress(self.progress);
-            }
-        });
-
-        // Refresh ScrollTrigger to ensure correct height calculation
+        // Refresh ScrollTrigger to ensure correct height calculation for global tracking
         ScrollTrigger.refresh();
-
-        return () => trigger.kill();
-    }, [onProgress, sections]);
+    }, [sections]);
 
     const defaultSections = [
         {

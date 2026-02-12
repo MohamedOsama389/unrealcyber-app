@@ -256,16 +256,19 @@ const ParticleMorph = ({ scrollProgress = 0, sectionCount = 3 }) => {
 
     const targetColors = useMemo(() => [colors.networking, colors.hacking, colors.programming], [colors]);
 
-    // DYNAMIC SCROLL MAPPING
+    // DYNAMIC SCROLL MAPPING (Page-wide)
     const centers = useMemo(() => {
         const c = [];
-        const hSec = isMobile ? 1.0 : 1.2; // Match ScrollSections.jsx heights
-        const hCont = sectionCount * hSec;
-        const d = hCont - 1.0; // Total scrollable distance in vh
+        const hHero = 1.0; // Hero is 100vh
+        const hSec = isMobile ? 1.0 : 1.2; // Each section is 100vh or 120vh
+        const hFooter = 0.5; // Footer is roughly 50vh
+
+        const totalHeight = hHero + (sectionCount * hSec) + hFooter;
 
         for (let i = 0; i < sectionCount; i++) {
-            // progress when center of section (i+0.5)*hSec is at viewport center (0.5)
-            const p = d > 0 ? ((i + 0.5) * hSec - 0.5) / d : 0.5;
+            // center of section i
+            const pos = hHero + (i + 0.5) * hSec;
+            const p = pos / totalHeight;
             c.push(THREE.MathUtils.clamp(p, 0, 1));
         }
         return c;
@@ -301,7 +304,7 @@ const ParticleMorph = ({ scrollProgress = 0, sectionCount = 3 }) => {
         let dist = 1.0;
         let activeIdx = -1;
 
-        const range = 0.18; // Increased range for better focus
+        const range = 0.12; // Tighter range for page-wide tracking
         let minDist = 1000;
 
         for (let i = 0; i < centers.length; i++) {
@@ -319,8 +322,8 @@ const ParticleMorph = ({ scrollProgress = 0, sectionCount = 3 }) => {
         }
 
         // Swang Factor: 0 = fully assembled, 1 = fully swang/ambient
-        // Plateau: Stay fully assembled if dist < 0.08
-        const assemblyPlateau = 0.08;
+        // Plateau: Stay fully assembled if dist < 0.05 (Page-wide units)
+        const assemblyPlateau = 0.05;
         const focusFactor = THREE.MathUtils.clamp((dist - assemblyPlateau) / (range - assemblyPlateau), 0, 1);
         let ambFactor = THREE.MathUtils.smoothstep(focusFactor, 0.0, 1.0);
 

@@ -130,6 +130,23 @@ const PublicHome = () => {
         window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
     };
 
+    useEffect(() => {
+        // Global Scroll Tracking for ParticleMorph
+        const trigger = ScrollTrigger.create({
+            trigger: document.documentElement,
+            start: 0,
+            end: "bottom bottom",
+            onUpdate: (self) => {
+                setScrollProgress(self.progress);
+            }
+        });
+
+        // Ensure refresh on mount
+        ScrollTrigger.refresh();
+
+        return () => trigger.kill();
+    }, []);
+
     const heroTiles = [
         {
             id: 'networking',
@@ -346,7 +363,7 @@ const PublicHome = () => {
 
                 {/* Scrollable Content Layers */}
                 <main className="relative z-10">
-                    <ScrollSections onProgress={setScrollProgress} sections={publicContent?.sections} />
+                    <ScrollSections sections={publicContent?.sections} />
                 </main>
 
                 {/* Footer */}

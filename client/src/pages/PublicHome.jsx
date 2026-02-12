@@ -1,12 +1,16 @@
 import { useEffect, useRef, useState, Component, Suspense } from 'react';
 import { Link } from 'react-router-dom';
-import { ShieldCheck, ArrowUpRight, Play, Activity, LogOut, Network, Shield, Code2, Send, Twitter, Linkedin } from 'lucide-react';
+import { ShieldCheck, ArrowUpRight, Play, Activity, LogOut, Network, Shield, Code2, Send, Twitter, Linkedin, Youtube, MessageSquare, Instagram, Music, Facebook } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Canvas } from '@react-three/fiber';
 import axios from 'axios';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import ParticleMorph from '../ParticleMorph';
 import ScrollSections from '../ScrollSections';
 import { getVideoThumbnailUrl, DEFAULT_PUBLIC_CONTENT } from '../data/publicSite';
+
+gsap.registerPlugin(ScrollTrigger);
 
 class CanvasErrorBoundary extends Component {
     state = { hasError: false };

@@ -303,7 +303,7 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
         ambFactor = Math.max(ambFactor, topFade, botFade);
 
         // TARGET OFFSET (Moved further right as requested)
-        xTargetOff = isMobile ? 0 : 3.2;
+        xTargetOff = isMobile ? 0 : 1.8;
 
         // Colors
         if (materialRef.current) {

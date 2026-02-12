@@ -2278,6 +2278,14 @@ const startServer = async () => {
         // Initialize Drive Service with DB for token persistence
         driveService.setDB(db);
 
+        // --- PRIVACY FIX: Auto-unfeature Python videos (Private) ---
+        try {
+            const info = db.prepare("UPDATE videos SET is_featured=0 WHERE title LIKE '%python%' OR title LIKE '%Python%'").run();
+            if (info.changes > 0) console.log(`[Security] Un-featured ${info.changes} private Python videos.`);
+        } catch (e) {
+            console.error("[Security] Failed to sanitize videos:", e);
+        }
+
         // Diagnostic Endpoint
         app.get('/api/admin/system-status', authenticateToken, (req, res) => {
             if (req.user.role !== 'admin') return res.status(403).json({ error: "Unauthorized" });

@@ -38,9 +38,8 @@ const rectEdgePoint = (t, width, height) => {
 };
 
 /**
- * ParticleMorph — Elite Edition RESTORED.
- * Procedural silhouettes for high control over scaling and assembly.
- * Increased density (10k-12k particles).
+ * ParticleMorph — Snappy Assembly Edition.
+ * Procedural silhouettes with high-collection physics.
  */
 const ParticleMorph = ({ scrollProgress = 0 }) => {
     const pointsRef = useRef();
@@ -62,6 +61,10 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
         const rand = new Float32Array(COUNT * 3);
         const amb = new Float32Array(COUNT * 3);
 
+        const netS = 1.5;
+        const hackS = 1.5;
+        const progS = 1.6;
+
         for (let i = 0; i < COUNT; i++) {
             const i3 = i * 3;
             const sr = (salt) => seeded(i, salt);
@@ -76,9 +79,8 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
             amb[i3 + 1] = (sr(5) - 0.5) * 20;
             amb[i3 + 2] = (sr(6) - 0.5) * 15;
 
-            // NETWORKING — Stacked Router (Larger Scale)
+            // NETWORKING — Stacked Router
             const netFrac = i / COUNT;
-            const netS = 1.3; // Scaling factor
             if (netFrac < 0.25) {
                 const [x, y, z] = sampleBoxSurface(sr(7), sr(8), sr(9), 5.5 * netS, 1.0 * netS, 3.2 * netS);
                 net[i3] = x;
@@ -109,65 +111,75 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
                 net[i3 + 2] = (onTop ? 1.41 : 1.61) * netS;
             }
 
-            // HACKING — Shield + Lock (Larger)
+            // HACKING — Refined Heraldic Shield + Lock
             const hackFrac = i / COUNT;
-            const hackS = 1.25;
             if (hackFrac < 0.45) {
-                // Shield Outline
-                const theta = sr(22) * Math.PI * 2;
-                const r = 3.2 * hackS + (sr(23) - 0.5) * 0.4;
-                let x = Math.cos(theta) * r;
-                let y = Math.sin(theta) * r * 1.1 + 0.5;
-                if (y < -0.2) {
-                    const d = Math.abs(y + 0.2);
-                    x *= Math.max(0.1, 1 - d * 0.4);
-                    y -= d * 0.5;
+                // HERALDIC SHIELD OUTLINE
+                const t = sr(22);
+                let x, y;
+                if (t < 0.25) { // Top Arch
+                    const a = (t / 0.25) * Math.PI;
+                    x = Math.cos(a) * 3;
+                    y = 1.5 + Math.sin(a) * 0.4;
+                } else if (t < 0.4) { // Right Straight
+                    x = 3;
+                    y = lerp(1.5, -0.8, (t - 0.25) / 0.15);
+                } else if (t < 0.6) { // Bottom Point Right
+                    const v = (t - 0.4) / 0.2;
+                    x = lerp(3, 0, v);
+                    y = lerp(-0.8, -4.2, v);
+                } else if (t < 0.8) { // Bottom Point Left
+                    const v = (t - 0.6) / 0.2;
+                    x = lerp(0, -3, v);
+                    y = lerp(-4.2, -0.8, v);
+                } else { // Left Straight
+                    x = -3;
+                    y = lerp(-0.8, 1.5, (t - 0.8) / 0.2);
                 }
-                hack[i3] = x;
-                hack[i3 + 1] = y;
-                hack[i3 + 2] = (sr(24) - 0.5) * 0.4;
-            } else if (hackFrac < 0.70) {
+                hack[i3] = x * hackS + (sr(23) - 0.5) * 0.1;
+                hack[i3 + 1] = y * hackS + (sr(24) - 0.5) * 0.1;
+                hack[i3 + 2] = (sr(25) - 0.5) * 0.3;
+            } else if (hackFrac < 0.72) {
                 // Lock Body
-                const bw = 2.0 * hackS, bh = 1.5 * hackS;
-                const fill = sr(25) < 0.65;
-                const [ex, ey] = rectEdgePoint(sr(26), bw, bh);
-                hack[i3] = fill ? (sr(27) - 0.5) * bw : ex;
-                hack[i3 + 1] = (fill ? (sr(28) - 0.5) * bh : ey) - (0.3 * hackS);
+                const bw = 1.8 * hackS, bh = 1.3 * hackS;
+                const fill = sr(26) < 0.65;
+                const [ex, ey] = rectEdgePoint(sr(27), bw, bh);
+                hack[i3] = fill ? (sr(28) - 0.5) * bw : ex;
+                hack[i3 + 1] = (fill ? (sr(29) - 0.5) * bh : ey) - (0.5 * hackS);
                 hack[i3 + 2] = 0.2;
             } else {
                 // Arch
-                const a = sr(29) * Math.PI;
-                const ar = 0.9 * hackS + (sr(30) - 0.5) * 0.15;
+                const a = sr(30) * Math.PI;
+                const ar = 0.8 * hackS + (sr(31) - 0.5) * 0.15;
                 hack[i3] = Math.cos(a) * ar;
-                hack[i3 + 1] = 0.6 * hackS + Math.sin(a) * ar;
+                hack[i3 + 1] = 0.2 * hackS + Math.sin(a) * ar;
                 hack[i3 + 2] = 0.2;
             }
 
-            // PROGRAMMING — Laptop (Larger)
+            // PROGRAMMING — Laptop
             const progFrac = i / COUNT;
-            const progS = 1.2;
             if (progFrac < 0.25) {
                 // Base
-                const [x, y, z] = sampleBoxSurface(sr(31), sr(32), sr(33), 7 * progS, 0.4 * progS, 4.5 * progS);
+                const [x, y, z] = sampleBoxSurface(sr(32), sr(33), sr(34), 7 * progS, 0.4 * progS, 4.5 * progS);
                 prog[i3] = x;
                 prog[i3 + 1] = -2.5 * progS + y;
                 prog[i3 + 2] = z + (1.2 * progS);
             } else if (progFrac < 0.60) {
                 // Screen Frame
-                const [ex, ey] = rectEdgePoint(sr(34), 6.5 * progS, 4.5 * progS);
+                const [ex, ey] = rectEdgePoint(sr(35), 6.5 * progS, 4.5 * progS);
                 prog[i3] = ex;
                 prog[i3 + 1] = ey + 0.8;
                 prog[i3 + 2] = -2.0;
             } else if (progFrac < 0.90) {
                 // Code Symbol </>
-                const g = sr(35);
+                const g = sr(36);
                 let gx = 0, gy = 0;
                 if (g < 0.35) { // < 
                     const t = g / 0.35;
                     const peak = t < 0.5 ? t * 2 : (1 - t) * 2;
                     gx = lerp(-0.3, -1.6, peak); gy = lerp(1.3, -1.3, t);
                 } else if (g < 0.5) { // /
-                    const t = (g - 0.35) / 0.15;
+                    const t = (g - 0.36) / 0.15;
                     gx = lerp(0.5, -0.5, t); gy = lerp(1.3, -1.3, t);
                 } else { // >
                     const t = (g - 0.5) / 0.5;
@@ -179,8 +191,8 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
                 prog[i3 + 2] = -1.9;
             } else {
                 // Screen Surface
-                prog[i3] = (sr(36) - 0.5) * 6 * progS;
-                prog[i3 + 1] = (sr(37) - 0.5) * 4 * progS + 0.8;
+                prog[i3] = (sr(37) - 0.5) * 6 * progS;
+                prog[i3 + 1] = (sr(38) - 0.5) * 4 * progS + 0.8;
                 prog[i3 + 2] = -1.98;
             }
         }
@@ -211,9 +223,10 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
             color = colors.programming;
         }
 
-        const assembly = Math.pow(Math.sin(progress * Math.PI), 0.55);
+        // SNAPPY ASSEMBLY: Sharp sin power (0.3) makes the collection snap to target and hold longer
+        const assembly = Math.pow(Math.sin(progress * Math.PI), 0.3);
 
-        // Ambient blend logic (relaxed at top/bottom)
+        // Ambient blend logic
         const topFade = THREE.MathUtils.clamp((0.15 - scrollProgress) / 0.15, 0, 1);
         const botFade = THREE.MathUtils.clamp((scrollProgress - 0.85) / 0.15, 0, 1);
         const ambFactor = Math.max(topFade, botFade);
@@ -223,13 +236,14 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
 
         const dt = Math.min(delta, 0.05);
         const baseSpeed = dt * 2.5;
-        const shapeSpeed = baseSpeed * (0.8 + assembly * 4.0);
+        // High shapeSpeed for aggressive snap (x6.5)
+        const shapeSpeed = baseSpeed * (1.0 + assembly * 6.5);
         const driftSpeed = baseSpeed * 0.4;
         const speed = lerp(shapeSpeed, driftSpeed, ambFactor);
 
         for (let i = 0; i < COUNT; i++) {
             const i3 = i * 3;
-            // Target is a blend of the shape (with offset) and the ambient drift
+            // Target blend
             const sx = target[i3] + xOff;
             const sy = target[i3 + 1] + yOff;
             const sz = target[i3 + 2];
@@ -249,9 +263,9 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
             pos[i3 + 1] += (ty - pos[i3 + 1]) * speed + wave;
             pos[i3 + 2] += (tz - pos[i3 + 2]) * speed;
 
-            // Scatter logic: between sections
-            if (ambFactor < 0.2 && assembly < 0.1) {
-                const sc = baseSpeed * 0.5;
+            // Scatter logic: snap out when not assembling
+            if (ambFactor < 0.2 && assembly < 0.05) {
+                const sc = baseSpeed * 0.65;
                 pos[i3] += (targets.rand[i3] - pos[i3]) * sc;
                 pos[i3 + 1] += (targets.rand[i3 + 1] - pos[i3 + 1]) * sc;
                 pos[i3 + 2] += (targets.rand[i3 + 2] - pos[i3 + 2]) * sc;
@@ -263,9 +277,9 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
             materialRef.current.color.lerp(ambFactor > 0.6 ? colors.ambient : color, 0.08);
         }
 
-        // Gentle scroll-linked rotation
-        const rotX = Math.sin(t * 0.2) * 0.05;
-        const rotY = (scrollProgress - 0.5) * 1.5;
+        // Subdued Rotation
+        const rotX = Math.sin(t * 0.2) * 0.04;
+        const rotY = (scrollProgress - 0.5) * 1.0;
         pointsRef.current.rotation.set(rotX, rotY, 0);
     });
 
@@ -281,7 +295,7 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
             </bufferGeometry>
             <PointMaterial
                 ref={materialRef}
-                size={isMobile ? 0.08 : 0.06}
+                size={isMobile ? 0.08 : 0.05}
                 color="#ffffff"
                 transparent
                 opacity={0.92}

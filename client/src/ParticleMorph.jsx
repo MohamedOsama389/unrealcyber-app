@@ -112,11 +112,27 @@ function svgToParticlePositions(svgString, opts) {
         }
 
         let x = 0, y = 0;
-        // Try up to 16 times to find a point inside
-        for (let t = 0; t < 16; t++) {
-            x = minX + Math.random() * (maxX - minX);
-            y = minY + Math.random() * (maxY - minY);
-            if (shape.containsPoint(new THREE.Vector2(x, y))) break;
+        let found = false;
+
+        // Try to find a point inside the shape's path
+        if (shape && typeof shape.containsPoint === 'function') {
+            const v2 = new THREE.Vector2();
+            for (let t = 0; t < 12; t++) {
+                x = minX + Math.random() * (maxX - minX);
+                y = minY + Math.random() * (maxY - minY);
+                v2.set(x, y);
+                if (shape.containsPoint(v2)) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+
+        // Fallback: If no point found or method missing, sample from outline with heavy jitter
+        if (!found) {
+            const v = pick.outline[(Math.random() * pick.outline.length) | 0];
+            x = v.x + (Math.random() - 0.5) * (maxX - minX) * 0.4;
+            y = v.y + (Math.random() - 0.5) * (maxY - minY) * 0.4;
         }
 
         const z = (Math.random() - 0.5) * depth;
@@ -210,22 +226,33 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
         const hack = svgToParticlePositions(SVG_HACKING, opts);
         const prog = svgToParticlePositions(SVG_CODE, opts);
 
-        // Random dispersal field
+        // Random dispersal field (used for the "Swarm" shell)
         const rand = new Float32Array(COUNT * 3);
+        const swarm = new Float32Array(COUNT * 3);
+
         for (let i = 0; i < COUNT; i++) {
+            // Random scatter (extreme)
             rand[i * 3] = (Math.random() - 0.5) * 30;
             rand[i * 3 + 1] = (Math.random() - 0.5) * 20;
             rand[i * 3 + 2] = (Math.random() - 0.5) * 15;
+
+            // Swarm target (a soft, centered volumetric cloud/torus)
+            const r = 2.5 + Math.random() * 2;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos(2 * Math.random() - 1);
+            swarm[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+            swarm[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+            swarm[i * 3 + 2] = r * Math.cos(phi) * 0.5;
         }
 
-        return { net, hack, prog, rand };
+        return { net, hack, prog, rand, swarm };
     }, [COUNT, isMobile]);
 
     const colors = useMemo(() => ({
         networking: new THREE.Color("#00E5FF"), // Cyan
         hacking: new THREE.Color("#B257FF"),    // Purple
         programming: new THREE.Color("#60A5FA"), // Blue-ish
-        ambient: new THREE.Color("#4a5568")
+        ambient: new THREE.Color("#8aa0c8")      // Lightened grey
     }), []);
 
     useFrame((state, delta) => {
@@ -250,17 +277,14 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
             targetColor = colors.programming;
         }
 
-        const assembly = Math.pow(Math.sin(progress * Math.PI), 0.5); // Smoother bell curve
-
-        // Ambient fade logic
-        const topFade = THREE.MathUtils.clamp((0.12 - scrollProgress) / 0.12, 0, 1);
-        const botFade = THREE.MathUtils.clamp((scrollProgress - 0.88) / 0.12, 0, 1);
+        // Ambient fade logic (Head and Foot)
+        const topFade = THREE.MathUtils.clamp((0.15 - scrollProgress) / 0.15, 0, 1);
+        const botFade = THREE.MathUtils.clamp((scrollProgress - 0.85) / 0.15, 0, 1);
         const ambFactor = Math.max(topFade, botFade);
 
         // Colors
         if (materialRef.current) {
-            // Lerp to white/grey when ambient/scattered, else target color
-            materialRef.current.color.lerp(ambFactor > 0.6 ? colors.ambient : targetColor, 0.1);
+            materialRef.current.color.lerp(ambFactor > 0.5 ? colors.ambient : targetColor, 0.1);
         }
 
         // MOVEMENT
@@ -268,7 +292,10 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
         const yOff = isMobile ? 3.5 : 0;
 
         const dt = Math.min(delta, 0.05);
-        const speed = dt * 6.0; // Responsive speed
+        const t = state.clock.getElapsedTime();
+
+        // Relaxed speed for swarm, snappy for assembly
+        const speed = ambFactor > 0.5 ? dt * 2.5 : dt * 6.0;
 
         for (let i = 0; i < COUNT; i++) {
             const i3 = i * 3;
@@ -278,15 +305,19 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
             const ty = target[i3 + 1] + yOff;
             const tz = target[i3 + 2];
 
-            // Ambient Calc (Scattered)
-            const ax = targets.rand[i3];
-            const ay = targets.rand[i3 + 1];
-            const az = targets.rand[i3 + 2];
+            // Swarm Calc (Relaxing atmospheric cloud)
+            // Add per-particle sine wave "breathing"
+            const swarmMotionX = Math.sin(t * 0.4 + i) * 0.15;
+            const swarmMotionY = Math.cos(t * 0.3 + i * 0.5) * 0.15;
+
+            const sx = targets.swarm[i3] + swarmMotionX;
+            const sy = targets.swarm[i3 + 1] + swarmMotionY;
+            const sz = targets.swarm[i3 + 2] + Math.sin(t * 0.2 + i * 0.2) * 0.1;
 
             // Blend
-            const fx = THREE.MathUtils.lerp(tx, ax, ambFactor);
-            const fy = THREE.MathUtils.lerp(ty, ay, ambFactor);
-            const fz = THREE.MathUtils.lerp(tz, az, ambFactor);
+            const fx = THREE.MathUtils.lerp(tx, sx, ambFactor);
+            const fy = THREE.MathUtils.lerp(ty, sy, ambFactor);
+            const fz = THREE.MathUtils.lerp(tz, sz, ambFactor);
 
             // Interpolate position
             pos[i3] += (fx - pos[i3]) * speed;
@@ -296,11 +327,9 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
 
         pointsRef.current.geometry.attributes.position.needsUpdate = true;
 
-        // "Alive" Premium Motion (from snippet)
-        const t = state.clock.getElapsedTime();
-        pointsRef.current.rotation.y = Math.sin(t * 0.18) * 0.1; // Gentle sway
-        pointsRef.current.rotation.x = Math.sin(t * 0.12) * 0.05;
-        // Add scroll-based tilt
+        // "Alive" Premium Motion
+        pointsRef.current.rotation.y = Math.sin(t * 0.15) * 0.12;
+        pointsRef.current.rotation.x = Math.sin(t * 0.1) * 0.06;
         pointsRef.current.rotation.z = (scrollProgress - 0.5) * 0.1;
     });
 

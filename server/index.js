@@ -84,7 +84,13 @@ const DEFAULT_PUBLIC_CONTENT = {
 };
 
 const getPublicContent = () => {
+    if (!db) {
+        return DEFAULT_PUBLIC_CONTENT;
+    }
     try {
+        // Ensure table exists (defensive)
+        db.exec(`CREATE TABLE IF NOT EXISTS site_settings (key TEXT PRIMARY KEY, value TEXT)`);
+
         const row = db.prepare('SELECT value FROM site_settings WHERE key = ?').get('public_site_content');
         if (!row) {
             db.prepare('INSERT INTO site_settings (key, value) VALUES (?, ?)').run('public_site_content', JSON.stringify(DEFAULT_PUBLIC_CONTENT));
@@ -99,6 +105,10 @@ const getPublicContent = () => {
 };
 
 const savePublicContent = (content) => {
+    if (!db) {
+        console.error('[Public] Cannot save content: Database not initialized.');
+        return;
+    }
     const payload = JSON.stringify(content || DEFAULT_PUBLIC_CONTENT);
     const existing = db.prepare('SELECT key FROM site_settings WHERE key = ?').get('public_site_content');
     if (existing) {
@@ -681,9 +691,39 @@ app.get('/api/settings', (req, res) => {
 app.get('/api/public', (req, res) => {
     try {
         const content = getPublicContent();
+
+        // --- INJECT VIDEOS TO FIX "CONTENT LOADING..." ---
+        // Since we don't have a category column, we filter by keywords
+        try {
+            const allVideos = db.prepare('SELECT * FROM videos ORDER BY created_at DESC LIMIT 50').all();
+
+            const getVideosFor = (keywords) => {
+                if (!allVideos || allVideos.length === 0) return [];
+                return allVideos.filter(v => keywords.some(k => v.title.toLowerCase().includes(k))).slice(0, 3);
+            };
+
+            if (content.sections) {
+                // Networking
+                const netSec = content.sections.find(s => s.key === 'networking');
+                if (netSec) netSec.videos = getVideosFor(['network', 'rout', 'switch', 'osi', 'protocol', 'ip', 'subnet']);
+
+                // Hacking
+                const hackSec = content.sections.find(s => s.key === 'ethical-hacking' || s.key === 'hacking');
+                if (hackSec) hackSec.videos = getVideosFor(['hack', 'pentest', 'recon', 'exploit', 'security', 'ctf', 'nmap']);
+
+                // Programming
+                const progSec = content.sections.find(s => s.key === 'programming');
+                if (progSec) progSec.videos = getVideosFor(['python', 'javascript', 'code', 'script', 'automat', 'tool', 'bot']);
+            }
+        } catch (videoErr) {
+            console.error('[API] Video injection failed:', videoErr.message);
+            // Non-fatal, return content without videos if this fails
+        }
+
         res.json(content);
     } catch (err) {
-        res.status(500).json({ error: "Failed to load public content" });
+        console.error('[API] /api/public Error:', err);
+        res.status(500).json({ error: "Failed to load public content", details: err.message });
     }
 });
 
@@ -1482,13 +1522,22 @@ app.get('/api/files/download/:id', authenticateToken, async (req, res) => {
     }
 });
 
+// Public version of featured content (for Hero section)
+app.get('/api/public/featured', (req, res) => {
+    try {
+        const video = db.prepare('SELECT * FROM videos WHERE is_featured = 1').get();
+        const file = db.prepare('SELECT * FROM files WHERE is_featured = 1').get();
+        res.json({ featuredVideo: video, featuredFile: file });
+    } catch (err) {
+        res.json({ featuredVideo: null, featuredFile: null });
+    }
+});
+
 app.get('/api/dashboard/featured', authenticateToken, (req, res) => {
     const video = db.prepare('SELECT * FROM videos WHERE is_featured = 1').get();
     const file = db.prepare('SELECT * FROM files WHERE is_featured = 1').get();
     const folderIds = db.prepare('SELECT * FROM folders_meta WHERE is_featured = 1').all();
 
-    // We don't have a folder name here easily without Drive API, but we store the IDs.
-    // Dashboard can just show them as "Quick Access" or similar.
     res.json({ featuredVideo: video, featuredFile: file, featuredFolders: folderIds });
 });
 

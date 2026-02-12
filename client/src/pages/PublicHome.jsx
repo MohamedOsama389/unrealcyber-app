@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, Component } from 'react';
+import { useEffect, useRef, useState, Component, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { ShieldCheck, ArrowUpRight, Play, Activity, LogOut, Network, Shield, Code2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -52,7 +52,7 @@ const PublicHome = () => {
             try {
                 const [pubRes, featRes] = await Promise.all([
                     axios.get('/api/public'),
-                    axios.get('/api/dashboard/featured')
+                    axios.get('/api/public/featured')
                 ]);
                 setPublicContent(pubRes.data);
                 setFeatured(featRes.data);
@@ -120,7 +120,7 @@ const PublicHome = () => {
             dotClass: 'bg-cyan-300/70'
         },
         {
-            id: 'hacking',
+            id: 'ethical-hacking',
             label: 'Ethical Hacking',
             subtitle: 'Security / Defense',
             Icon: Shield,
@@ -140,20 +140,27 @@ const PublicHome = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-[#0a0f1d] text-primary selection:bg-cyan-500/30 overflow-x-hidden">
+        <div className="min-h-screen bg-[#0d1526] text-primary selection:bg-cyan-500/30 overflow-x-hidden">
             {/* Fixed 3D Particle Background */}
             <CanvasErrorBoundary>
-                <div className="fixed inset-0 z-0 bg-[#0a0f1d]">
+                <div className="fixed inset-0 z-0 bg-[#0d1526]">
                     <Canvas camera={{ position: [0, 0, 15], fov: 35 }} dpr={[1, 2]}>
-                        <color attach="background" args={['#0a0f1d']} />
-                        <fog attach="fog" args={['#0a0f1d', 20, 40]} />
+                        <color attach="background" args={['#0d1526']} />
+                        <fog attach="fog" args={['#0d1526', 20, 45]} />
                         <ambientLight intensity={0.5} />
                         <pointLight position={[10, 10, 10]} intensity={1} color="#00e5ff" />
                         <ParticleMorph scrollProgress={scrollProgress} />
                     </Canvas>
-                    <div className="absolute inset-0 bg-gradient-to-b from-[#02040a]/40 via-transparent to-[#02040a]/80 pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-[#0d1526]/30 via-transparent to-[#0d1526]/70 pointer-events-none" />
                 </div>
             </CanvasErrorBoundary>
+
+            {/* Warm ambient glow blobs to break monotone blue */}
+            <div className="fixed inset-0 z-[1] pointer-events-none">
+                <div className="absolute top-[20%] right-[10%] w-[500px] h-[500px] rounded-full bg-purple-600/[0.04] blur-[120px]" />
+                <div className="absolute bottom-[15%] left-[5%] w-[400px] h-[400px] rounded-full bg-amber-500/[0.03] blur-[100px]" />
+                <div className="absolute top-[60%] right-[30%] w-[300px] h-[300px] rounded-full bg-cyan-400/[0.03] blur-[80px]" />
+            </div>
 
             {/* HERO SECTION */}
             <section className="relative z-10 min-h-screen flex flex-col justify-center px-6 pt-32 lg:pt-36 pb-20">
@@ -165,7 +172,7 @@ const PublicHome = () => {
                                 Unreal<span className="text-cyan-500 underline decoration-cyan-500/20 underline-offset-8">Cyber</span><br />
                                 Academy
                             </h1>
-                            <p className="text-lg md:text-xl text-secondary/70 max-w-xl font-medium leading-relaxed">
+                            <p className="text-lg md:text-xl text-slate-300 max-w-xl font-medium leading-relaxed">
                                 {publicContent?.hero?.subtitle || 'Master the digital frontier. Professional training in networking, hacking, and modern engineering.'}
                             </p>
                         </div>
@@ -193,39 +200,42 @@ const PublicHome = () => {
                     </div>
 
                     {/* Right Column: Latest Video Card */}
-                    <div className="relative w-full lg:pt-14 xl:pt-16">
+                    <div className="relative w-full lg:pt-4 xl:pt-6">
                         {(publicContent?.hero?.heroVideoLink || featured?.featuredVideo) ? (
-                            <div className="space-y-6 lg:ml-auto max-w-[40rem]">
-                                <div className="group relative glass-panel p-2 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-cyan-500/10 transform hover:-rotate-1 transition-transform duration-500">
-                                    <div className="absolute top-6 left-6 z-10 bg-cyan-500 text-black text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-xl">
-                                        Latest Session
+                            <div className="space-y-10 lg:ml-auto max-w-[56rem]">
+                                <div className="group relative glass-panel p-4 rounded-[3.5rem] overflow-hidden shadow-2xl shadow-cyan-500/15 transform hover:-rotate-1 transition-all duration-700 hover:shadow-cyan-500/30">
+                                    <div className="absolute top-10 left-10 z-10 bg-cyan-500 text-black text-[12px] font-black px-6 py-2.5 rounded-full uppercase tracking-[0.25em] shadow-2xl">
+                                        Active Session
                                     </div>
                                     <a
                                         href={publicContent?.hero?.heroVideoLink || (featured?.featuredVideo?.drive_link ? featured.featuredVideo.drive_link : '#')}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="block aspect-video rounded-[2rem] overflow-hidden bg-slate-900 border border-white/5 relative"
+                                        className="block aspect-video rounded-[2.8rem] overflow-hidden bg-slate-900 border border-white/10 relative"
                                     >
                                         <img
-                                            src={publicContent?.hero?.heroVideoLink
+                                            src={(publicContent?.hero?.heroVideoLink && getVideoThumbnailUrl(publicContent.hero.heroVideoLink))
                                                 ? getVideoThumbnailUrl(publicContent.hero.heroVideoLink)
-                                                : `/api/public/thumbnail/${featured.featuredVideo.drive_link ? extractDriveId(featured.featuredVideo.drive_link) : featured.featuredVideo.id}`
+                                                : (featured?.featuredVideo ? `/api/public/thumbnail/${featured.featuredVideo.drive_link ? extractDriveId(featured.featuredVideo.drive_link) : featured.featuredVideo.id}` : '')
                                             }
-                                            className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700"
+                                            className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-1000 group-hover:opacity-90"
                                             alt=""
                                         />
                                         <div className="absolute inset-0 flex items-center justify-center">
-                                            <div className="w-20 h-20 rounded-full bg-cyan-500 text-black flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
-                                                <Play size={28} fill="currentColor" />
+                                            <div className="w-28 h-28 rounded-full bg-cyan-500 text-black flex items-center justify-center shadow-2xl group-hover:scale-110 transition-all duration-500 group-hover:shadow-cyan-500/60">
+                                                <Play size={38} fill="currentColor" />
                                             </div>
                                         </div>
                                     </a>
                                 </div>
 
-                                <div className="text-center md:text-left px-6">
-                                    <div className="space-y-1">
-                                        <p className="text-[11px] font-black uppercase tracking-[0.5em] text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]">LATEST VIDEO</p>
-                                        <h3 className="text-xl md:text-2xl font-bold text-white tracking-tight line-clamp-1">
+                                <div className="text-center md:text-left px-10 space-y-4">
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-6 justify-center md:justify-start">
+                                            <div className="h-px w-12 bg-cyan-500/40" />
+                                            <p className="text-lg md:text-2xl font-black uppercase tracking-[0.65em] text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.6)]">LATEST VIDEO</p>
+                                        </div>
+                                        <h3 className="text-3xl md:text-5xl font-black text-white tracking-tighter leading-tight lg:max-w-3xl">
                                             {publicContent?.hero?.heroVideoLink
                                                 ? "Featured Academy Session"
                                                 : (featured?.featuredVideo?.title || "Member Session")}
@@ -260,7 +270,7 @@ const PublicHome = () => {
                         <nav className="hidden lg:flex items-center gap-8 text-[10px] uppercase tracking-[0.4em] text-secondary font-bold">
                             <button type="button" onClick={scrollToAbout} className="hover:text-cyan-400 transition-colors">ABOUT</button>
                             <a href="#networking" className="hover:text-cyan-400 transition-colors">Network</a>
-                            <a href="#hacking" className="hover:text-purple-400 transition-colors">Ethical Hacking</a>
+                            <a href="#ethical-hacking" className="hover:text-purple-400 transition-colors">Ethical Hacking</a>
                             <a href="#programming" className="hover:text-blue-400 transition-colors">Programming</a>
                         </nav>
 

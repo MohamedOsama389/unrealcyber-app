@@ -10,14 +10,14 @@
   }
 
   :root {
-    /* DEFAULT (DARK) */
-    --bg: #0b1020;
-    --text: #e8eefc;
-    --card: rgba(18, 26, 45, 0.7);
-    --muted: #8aa0c8;
-    --border: rgba(255, 255, 255, 0.08);
+    /* DEFAULT (DARK) — Warmer, brighter */
+    --bg: #0d1526;
+    --text: #eaf0ff;
+    --card: rgba(18, 28, 50, 0.75);
+    --muted: #a3b8d8;
+    --border: rgba(255, 255, 255, 0.1);
     --accent: #22d3ee;
-    --accent-glow: rgba(34, 211, 238, 0.1);
+    --accent-glow: rgba(34, 211, 238, 0.12);
   }
 
   :root[data-theme='light'] {
@@ -86,4 +86,22 @@
 
 .btn-danger {
   @apply px-6 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg font-bold hover:shadow-lg hover:shadow-red-500/20 transition-all duration-300;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0d1526;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #22d3ee;
 }

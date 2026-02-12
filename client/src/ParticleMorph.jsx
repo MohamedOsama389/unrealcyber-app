@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useEffect } from 'react';
+import React, { useMemo, useRef, useEffect, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
@@ -206,81 +206,104 @@ function Dust({ count = 2000, radius = 7 }) {
 const ParticleMorph = ({ scrollProgress = 0 }) => {
     const pointsRef = useRef();
     const materialRef = useRef();
+    const [mousePos] = useState(() => new THREE.Vector2());
 
     // Determine user device for performance
     const isMobile = typeof window !== 'undefined' ? window.innerWidth < 1024 : false;
-    // User requested density. Snippet had 36k/30k. We'll stick to high density.
-    const COUNT = isMobile ? 12000 : 36000;
+    // High density as requested by user ("shapes look much greater")
+    const COUNT = isMobile ? 18000 : 45000;
 
     // Compute targets ONCE
     const targets = useMemo(() => {
         const opts = {
             points: COUNT,
-            depth: 0.7,
-            jitter: 0.012,
-            scale: 0.022,
-            edgeRatio: 0.88,
+            depth: 0.8,
+            jitter: 0.015,
+            scale: 0.024,
+            edgeRatio: 0.9,
         };
 
         const net = svgToParticlePositions(SVG_NETWORK, opts);
         const hack = svgToParticlePositions(SVG_HACKING, opts);
         const prog = svgToParticlePositions(SVG_CODE, opts);
 
-        // Random dispersal field (used for the "Swarm" shell)
         const rand = new Float32Array(COUNT * 3);
         const swarm = new Float32Array(COUNT * 3);
 
         for (let i = 0; i < COUNT; i++) {
-            // Random scatter (extreme)
-            rand[i * 3] = (Math.random() - 0.5) * 30;
-            rand[i * 3 + 1] = (Math.random() - 0.5) * 20;
-            rand[i * 3 + 2] = (Math.random() - 0.5) * 15;
+            rand[i * 3] = (Math.random() - 0.5) * 35;
+            rand[i * 3 + 1] = (Math.random() - 0.5) * 25;
+            rand[i * 3 + 2] = (Math.random() - 0.5) * 20;
 
-            // Swarm target (a soft, centered volumetric cloud/torus)
-            const r = 2.5 + Math.random() * 2;
+            // Swarm target: Orbital sphere for better wave motion
+            const r = 3.0 + Math.random() * 2.5;
             const theta = Math.random() * Math.PI * 2;
             const phi = Math.acos(2 * Math.random() - 1);
             swarm[i * 3] = r * Math.sin(phi) * Math.cos(theta);
             swarm[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-            swarm[i * 3 + 2] = r * Math.cos(phi) * 0.5;
+            swarm[i * 3 + 2] = r * Math.cos(phi) * 0.6;
         }
 
         return { net, hack, prog, rand, swarm };
-    }, [COUNT, isMobile]);
+    }, [COUNT]);
 
     const colors = useMemo(() => ({
-        networking: new THREE.Color("#00E5FF"), // Cyan
-        hacking: new THREE.Color("#B257FF"),    // Purple
-        programming: new THREE.Color("#60A5FA"), // Blue-ish
-        ambient: new THREE.Color("#8aa0c8")      // Lightened grey
+        networking: new THREE.Color("#00E5FF"),
+        hacking: new THREE.Color("#C084FC"),
+        programming: new THREE.Color("#60A5FA"),
+        ambient: new THREE.Color("#c4a0ff")
     }), []);
 
     useFrame((state, delta) => {
         if (!pointsRef.current) return;
+        const { mouse, clock } = state;
         const pos = pointsRef.current.geometry.attributes.position.array;
 
-        let target, targetColor;
-        let progress = 0;
+        let target, targetColor, xTargetOff = 0;
 
-        // SCROLL MAPPING
-        if (scrollProgress < 0.33) {
+        // SCROLL MAPPING & SWANG ZONES
+        // Zones: 0.16 (Net), 0.50 (Hack), 0.83 (Prog)
+        // We only assemble if within a "focus" range of the section center.
+        // Otherwise, we default to the "Swang Wave" (ambient).
+
+        target = targets.net; // Default to avoid null access, but ambFactor handles visibility
+        targetColor = colors.networking;
+
+        const center1 = 0.17;
+        const center2 = 0.50;
+        const center3 = 0.83;
+        const range = 0.12; // +/- 12% focus range
+
+        let dist = 1.0; // Distance from a center
+
+        if (Math.abs(scrollProgress - center1) < range) {
             target = targets.net;
-            progress = scrollProgress / 0.33;
             targetColor = colors.networking;
-        } else if (scrollProgress < 0.66) {
+            dist = Math.abs(scrollProgress - center1);
+        } else if (Math.abs(scrollProgress - center2) < range) {
             target = targets.hack;
-            progress = (scrollProgress - 0.33) / 0.33;
             targetColor = colors.hacking;
-        } else {
+            dist = Math.abs(scrollProgress - center2);
+        } else if (Math.abs(scrollProgress - center3) < range) {
             target = targets.prog;
-            progress = (scrollProgress - 0.66) / 0.34;
             targetColor = colors.programming;
+            dist = Math.abs(scrollProgress - center3);
         }
 
-        // Ambient fade logic (Head and Foot)
-        const topFade = THREE.MathUtils.clamp((0.15 - scrollProgress) / 0.15, 0, 1);
-        const botFade = THREE.MathUtils.clamp((scrollProgress - 0.85) / 0.15, 0, 1);
-        const ambFactor = Math.max(topFade, botFade);
+        // Swang Factor: 0 = fully assembled, 1 = fully swang/ambient
+        // We ramp up to 1 as we move away from the center
+        // Normalized distance (0 to 1 over the range)
+        const focusFactor = Math.min(dist / range, 1.0);
+        // Curve it for smoother transition
+        let ambFactor = THREE.MathUtils.smoothstep(focusFactor, 0.0, 1.0);
+
+        // Also fade out at extreme top/bottom
+        const topFade = THREE.MathUtils.clamp((0.05 - scrollProgress) / 0.05, 0, 1);
+        const botFade = THREE.MathUtils.clamp((scrollProgress - 0.95) / 0.05, 0, 1);
+        ambFactor = Math.max(ambFactor, topFade, botFade);
+
+        // TARGET OFFSET (Moved further right as requested)
+        xTargetOff = isMobile ? 0 : 3.2;
 
         // Colors
         if (materialRef.current) {
@@ -288,38 +311,36 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
         }
 
         // MOVEMENT
-        const xOff = isMobile ? 0 : 3.5;
-        const yOff = isMobile ? 3.5 : 0;
-
+        const yOff = isMobile ? 3.8 : 0;
         const dt = Math.min(delta, 0.05);
-        const t = state.clock.getElapsedTime();
+        const t = clock.getElapsedTime();
 
-        // Relaxed speed for swarm, snappy for assembly
-        const speed = ambFactor > 0.5 ? dt * 2.5 : dt * 6.0;
+        // Relaxed speed for swarm, SNAPPY for assembly
+        const speed = ambFactor > 0.5 ? dt * 3.5 : dt * 8.5;
 
         for (let i = 0; i < COUNT; i++) {
             const i3 = i * 3;
 
-            // Target Calc
-            const tx = target[i3] + xOff;
+            // Target Calc (Assemble next to the card)
+            const tx = target[i3] + xTargetOff;
             const ty = target[i3 + 1] + yOff;
             const tz = target[i3 + 2];
 
-            // Swarm Calc (Relaxing atmospheric cloud)
-            // Add per-particle sine wave "breathing"
-            const swarmMotionX = Math.sin(t * 0.4 + i) * 0.15;
-            const swarmMotionY = Math.cos(t * 0.3 + i * 0.5) * 0.15;
+            // "Swang" Wave Swarm Motion (High Intensity at extremes)
+            const swarmWaveX = Math.sin(t * 0.6 + targets.swarm[i3] * 0.25) * 2.5;
+            const swarmWaveY = Math.cos(t * 0.4 + targets.swarm[i3 + 1] * 0.25) * 2.5;
+            const swarmWaveZ = Math.sin(t * 0.3 + i * 0.01) * 3.8;
 
-            const sx = targets.swarm[i3] + swarmMotionX;
-            const sy = targets.swarm[i3 + 1] + swarmMotionY;
-            const sz = targets.swarm[i3 + 2] + Math.sin(t * 0.2 + i * 0.2) * 0.1;
+            const sx = targets.swarm[i3] + swarmWaveX;
+            const sy = targets.swarm[i3 + 1] + swarmWaveY;
+            const sz = targets.swarm[i3 + 2] + swarmWaveZ;
 
             // Blend
             const fx = THREE.MathUtils.lerp(tx, sx, ambFactor);
             const fy = THREE.MathUtils.lerp(ty, sy, ambFactor);
             const fz = THREE.MathUtils.lerp(tz, sz, ambFactor);
 
-            // Interpolate position
+            // Snappy position interpolation
             pos[i3] += (fx - pos[i3]) * speed;
             pos[i3 + 1] += (fy - pos[i3 + 1]) * speed;
             pos[i3 + 2] += (fz - pos[i3 + 2]) * speed;
@@ -327,10 +348,11 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
 
         pointsRef.current.geometry.attributes.position.needsUpdate = true;
 
-        // "Alive" Premium Motion
-        pointsRef.current.rotation.y = Math.sin(t * 0.15) * 0.12;
-        pointsRef.current.rotation.x = Math.sin(t * 0.1) * 0.06;
-        pointsRef.current.rotation.z = (scrollProgress - 0.5) * 0.1;
+        // Premium Mouse Rotation
+        mousePos.lerp(mouse, 0.08);
+        pointsRef.current.rotation.y = Math.sin(t * 0.12) * 0.08 + (mousePos.x * 0.4);
+        pointsRef.current.rotation.x = Math.sin(t * 0.08) * 0.05 + (-mousePos.y * 0.3);
+        pointsRef.current.rotation.z = (scrollProgress - 0.5) * 0.05;
     });
 
     const mat = useMemo(() => {
@@ -340,7 +362,7 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
             transparent: true,
             opacity: 0.95,
             color: "#ffffff",
-            size: isMobile ? 0.06 : 0.04,
+            size: isMobile ? 0.09 : 0.055,
             sizeAttenuation: true,
             depthWrite: false,
             blending: THREE.AdditiveBlending,
@@ -359,7 +381,7 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
                         itemSize={3}
                     />
                 </bufferGeometry>
-                <primitive object={mat} attach="material" />
+                <primitive ref={materialRef} object={mat} attach="material" />
             </points>
         </>
     );

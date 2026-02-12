@@ -41,7 +41,7 @@ const PublicSection = () => {
 
     if (!section) {
         return (
-            <div className="min-h-screen bg-app text-primary px-6 py-20">
+            <div className="min-h-screen bg-[#0d1526] text-white px-6 py-20">
                 <div className="max-w-4xl mx-auto glass-panel p-8 border-white/10">
                     <h1 className="text-2xl font-bold mb-4">Section not found</h1>
                     <p className="text-secondary mb-6">The section you’re looking for doesn’t exist.</p>
@@ -54,7 +54,7 @@ const PublicSection = () => {
     }
 
     return (
-        <div className="min-h-screen bg-app text-primary relative overflow-hidden">
+        <div className="min-h-screen bg-[#0d1526] text-white relative overflow-hidden">
             <div className="absolute -top-40 right-10 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
             <div className="absolute bottom-0 left-10 h-64 w-64 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
             <header className="border-b border-white/5 bg-slate-950/70 backdrop-blur">

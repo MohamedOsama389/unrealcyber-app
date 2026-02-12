@@ -31,7 +31,7 @@ const ScrollSections = ({ onProgress, sections }) => {
             tags: ['Routing', 'Switching', 'OSI Model']
         },
         {
-            key: 'hacking',
+            key: 'ethical-hacking',
             title: 'Ethical Hacking',
             description: 'Become the guardian. Learn penetration testing, reconnaissance, and exploitation to build impenetrable defenses.',
             color: 'purple',
@@ -85,7 +85,7 @@ const ScrollSections = ({ onProgress, sections }) => {
                                 <Link
                                     to={sectionPath}
                                     onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                                    className="block bg-slate-950/60 backdrop-blur-3xl p-8 md:p-14 rounded-[2.5rem] md:rounded-[3rem] border border-white/10 shadow-2xl space-y-8 transform transition-all duration-500 hover:bg-slate-900/80 hover:border-cyan-500/30 group-hover:scale-[1.01] active:scale-[0.99] overflow-hidden"
+                                    className="block bg-slate-900/70 backdrop-blur-3xl p-8 md:p-14 rounded-[2.5rem] md:rounded-[3rem] border border-white/10 shadow-2xl space-y-8 transform transition-all duration-500 hover:bg-slate-800/80 hover:border-cyan-500/30 group-hover:scale-[1.01] active:scale-[0.99] overflow-hidden"
                                 >
                                     <div className="space-y-4">
                                         <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-${section.color || 'cyan'}-500/20 border border-${section.color || 'cyan'}-500/30 text-[10px] font-black uppercase tracking-[0.3em] text-${section.color || 'cyan'}-400`}>
@@ -95,7 +95,7 @@ const ScrollSections = ({ onProgress, sections }) => {
                                         <h2 className={`${getAdaptiveTitleClass(section.title)} font-black text-white uppercase tracking-tighter leading-[0.95] break-normal md:whitespace-nowrap`}>
                                             {section.title}
                                         </h2>
-                                        <p className="text-base md:text-lg text-secondary/80 leading-relaxed font-medium line-clamp-4">
+                                        <p className="text-base md:text-lg text-slate-300/90 leading-relaxed font-medium line-clamp-4">
                                             {section.description}
                                         </p>
                                     </div>

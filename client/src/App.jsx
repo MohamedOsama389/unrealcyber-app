@@ -25,6 +25,7 @@ import PublicHome from './pages/PublicHome';
 import PublicSection from './pages/PublicSection';
 import PublicVideo from './pages/PublicVideo';
 import clsx from 'clsx';
+import ParticleIconsPage from './ParticleIconsPage';
 
 function AppContent() {
   const { user } = useAuth();
@@ -52,6 +53,7 @@ function AppContent() {
           <Route path="/vision/:sectionKey/:videoSlug" element={<PublicVideo />} />
           <Route path="/private/login" element={<Login />} />
           <Route path="/private/signup" element={<Signup />} />
+          <Route path="/particle-icons" element={<ParticleIconsPage />} />
 
           <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
             <Route path="/private" element={<Navigate to="/private/dashboard" replace />} />

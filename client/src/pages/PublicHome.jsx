@@ -13,7 +13,7 @@ class CanvasErrorBoundary extends Component {
     static getDerivedStateFromError() { return { hasError: true }; }
     render() {
         if (this.state.hasError) {
-            return <div className="fixed inset-0 z-0 bg-[#0a0f1d]" />;
+            return null;
         }
         return this.props.children;
     }

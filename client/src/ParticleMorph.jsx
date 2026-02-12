@@ -211,7 +211,7 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
     // Determine user device for performance
     const isMobile = typeof window !== 'undefined' ? window.innerWidth < 1024 : false;
     // High density as requested by user ("shapes look much greater")
-    const COUNT = isMobile ? 18000 : 45000;
+    const COUNT = isMobile ? 4000 : 10000;
 
     // Compute targets ONCE
     const targets = useMemo(() => {

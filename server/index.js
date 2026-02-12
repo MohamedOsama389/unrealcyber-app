@@ -1525,7 +1525,7 @@ app.get('/api/files/download/:id', authenticateToken, async (req, res) => {
 // Public version of featured content (for Hero section)
 app.get('/api/public/featured', (req, res) => {
     try {
-        const video = db.prepare('SELECT * FROM videos WHERE is_featured = 1').get();
+        const video = db.prepare("SELECT * FROM videos WHERE is_featured = 1 AND title NOT LIKE '%python%' AND title NOT LIKE '%Python%'").get();
         const file = db.prepare('SELECT * FROM files WHERE is_featured = 1').get();
         res.json({ featuredVideo: video, featuredFile: file });
     } catch (err) {

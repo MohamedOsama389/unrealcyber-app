@@ -112,11 +112,13 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
                 net[i3 + 2] = (onTop ? 1.41 : 1.61) * netS;
             }
 
-            // HACKING — CLEAN HERALDIC SHIELD + PADLOCK
+            // HACKING — DENSE SHIELD + SOLID PADLOCK
+            // Double outline for shield
             const hackFrac = i / COUNT;
             if (hackFrac < 0.5) {
-                // SHIELD SILHOUETTE
+                // SHIELD SILHOUETTE (Inner & Outer Layer)
                 const t = sr(22);
+                const layer = sr(22.1) > 0.5 ? 1.0 : 0.92; // Two distinct layers
                 let x, y;
                 if (t < 0.2) { // Top Flat Edge with slight arch
                     x = lerp(-3.2, 3.2, t / 0.2);
@@ -136,21 +138,27 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
                     x = -3.2;
                     y = lerp(-1.0, 1.8, (t - 0.8) / 0.2);
                 }
-                hack[i3] = x * hackS + (sr(23) - 0.5) * 0.1;
-                hack[i3 + 1] = y * hackS + (sr(24) - 0.5) * 0.1;
+                hack[i3] = x * hackS * layer + (sr(23) - 0.5) * 0.1;
+                hack[i3 + 1] = y * hackS * layer + (sr(24) - 0.5) * 0.1;
                 hack[i3 + 2] = (sr(25) - 0.5) * 0.2;
-            } else if (hackFrac < 0.8) {
-                // Padlock Body
+            } else if (hackFrac < 0.85) {
+                // Padlock Body - GRID FILL
                 const bw = 1.8 * hackS, bh = 1.4 * hackS;
-                const fill = sr(26) < 0.7;
-                const [ex, ey] = rectEdgePoint(sr(27), bw, bh);
-                hack[i3] = fill ? (sr(28) - 0.5) * bw : ex;
-                hack[i3 + 1] = (fill ? (sr(29) - 0.5) * bh : ey) - (0.6 * hackS);
+                // Grid distribution approx
+                const gx = Math.floor(sr(26) * 20) / 20;
+                const gy = Math.floor(sr(27) * 15) / 15;
+
+                const [ex, ey] = rectEdgePoint(sr(27.1), bw, bh);
+                const fill = sr(26.1) < 0.8; // High fill rate
+
+                hack[i3] = fill ? (gx - 0.5) * bw : ex;
+                hack[i3 + 1] = (fill ? (gy - 0.5) * bh : ey) - (0.6 * hackS);
                 hack[i3 + 2] = 0.3;
             } else {
-                // Shackle
+                // Shackle - Thick
                 const a = sr(30) * Math.PI;
-                const ar = 0.8 * hackS + (sr(31) - 0.5) * 0.12;
+                const thickness = sr(30.1) * 0.3;
+                const ar = (0.8 + thickness * 0.15) * hackS;
                 hack[i3] = Math.cos(a) * ar;
                 hack[i3 + 1] = 0.15 * hackS + Math.sin(a) * ar;
                 hack[i3 + 2] = 0.3;
@@ -208,10 +216,7 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
         let target, color;
         let progress = 0;
 
-        // CALIBRATED MAPPING: 0.33, 0.66, 1.0 logic
-        // Networking: 0-0.33 (centered at 0.165)
-        // Hacking: 0.33-0.66 (centered at 0.5)
-        // Programming: 0.66-1.0 (centered at 0.83)
+        // CALIBRATED MAPPING
         if (scrollProgress < 0.33) {
             target = targets.net;
             progress = scrollProgress / 0.33;
@@ -226,20 +231,25 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
             color = colors.programming;
         }
 
-        // AGGRESSIVE ASSEMBLY: pow 0.25 makes it flat but snappy at the peak
+        // AGGRESSIVE ASSEMBLY BUT SMOOTH BRAKING
         const assembly = Math.pow(Math.sin(progress * Math.PI), 0.25);
 
-        // Ambient blend logic — Fade out at very top/bottom
+        // Braking Factor: If assembly is high (>0.9), slow down drastically to lock shape
+        const braking = assembly > 0.9 ? 0.05 : 1.0;
+
+        // Ambient blend logic
         const topFade = THREE.MathUtils.clamp((0.12 - scrollProgress) / 0.12, 0, 1);
         const botFade = THREE.MathUtils.clamp((scrollProgress - 0.88) / 0.12, 0, 1);
         const ambFactor = Math.max(topFade, botFade);
 
-        const xOff = isMobile ? 0 : 6.5;
+        // ADJUSTED OFFSET: 4.5 to bring closer to card (was 6.5)
+        const xOff = isMobile ? 0 : 4.5;
         const yOff = isMobile ? 3.5 : 0;
 
         const dt = Math.min(delta, 0.05);
-        const baseSpeed = dt * 3.0; // Faster overall
-        const shapeSpeed = baseSpeed * (1.2 + assembly * 8.5); // Snappy collection x8.5
+        const baseSpeed = dt * 3.0;
+        // Peak speed 5.0 (was 8.5), applied with braking
+        const shapeSpeed = baseSpeed * (1.2 + assembly * 5.0) * braking;
         const driftSpeed = baseSpeed * 0.45;
         const speed = lerp(shapeSpeed, driftSpeed, ambFactor);
 
@@ -258,12 +268,13 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
             const ty = lerp(sy, ay, ambFactor);
             const tz = lerp(sz, az, ambFactor);
 
-            const wave = Math.sin(t * 0.45 + i * 0.04) * 0.02;
+            // Reduced Wave Amplitude (Noise) for stability
+            const wave = Math.sin(t * 0.45 + i * 0.04) * 0.005;
 
-            // Follow target
-            pos[i3] += (tx - pos[i3]) * speed + wave;
-            pos[i3 + 1] += (ty - pos[i3 + 1]) * speed + wave;
-            pos[i3 + 2] += (tz - pos[i3 + 2]) * speed;
+            // Follow target with REDUCED lerp for smoother trails (0.05 vs 0.1)
+            pos[i3] += (tx - pos[i3]) * speed * 0.8 + wave;
+            pos[i3 + 1] += (ty - pos[i3 + 1]) * speed * 0.8 + wave;
+            pos[i3 + 2] += (tz - pos[i3 + 2]) * speed * 0.8;
 
             // Inter-section scattering: Aggressive dispersal
             if (ambFactor < 0.15 && assembly < 0.05) {
@@ -281,7 +292,7 @@ const ParticleMorph = ({ scrollProgress = 0 }) => {
 
         // Subdued Rotation
         const rotX = Math.sin(t * 0.18) * 0.035;
-        const rotY = (scrollProgress - 0.5) * 0.8; // Calibrated for readability
+        const rotY = (scrollProgress - 0.5) * 0.8;
         pointsRef.current.rotation.set(rotX, rotY, 0);
     });
 

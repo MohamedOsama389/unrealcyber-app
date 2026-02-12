@@ -6,7 +6,7 @@ import { Canvas } from '@react-three/fiber';
 import axios from 'axios';
 import ParticleMorph from '../ParticleMorph';
 import ScrollSections from '../ScrollSections';
-import { getVideoThumbnailUrl } from '../data/publicSite';
+import { getVideoThumbnailUrl, DEFAULT_PUBLIC_CONTENT } from '../data/publicSite';
 
 class CanvasErrorBoundary extends Component {
     state = { hasError: false };
@@ -32,7 +32,8 @@ const PublicHome = () => {
     const footerRef = useRef(null);
     const [googleReady, setGoogleReady] = useState(false);
 
-    const [publicContent, setPublicContent] = useState(null);
+    // Initialize with default content to render immediately (prevents blank screen)
+    const [publicContent, setPublicContent] = useState(DEFAULT_PUBLIC_CONTENT);
     const [featured, setFeatured] = useState(null);
 
     const extractDriveId = (raw) => {
@@ -54,10 +55,11 @@ const PublicHome = () => {
                     axios.get('/api/public'),
                     axios.get('/api/public/featured')
                 ]);
-                setPublicContent(pubRes.data);
-                setFeatured(featRes.data);
+                if (pubRes.data) setPublicContent(pubRes.data);
+                if (featRes.data) setFeatured(featRes.data);
             } catch (err) {
                 console.error('[PublicHome] Failed to fetch layout data:', err);
+                // Keep default content on error
             }
         };
         fetchData();
@@ -149,7 +151,9 @@ const PublicHome = () => {
                         <fog attach="fog" args={['#0d1526', 20, 45]} />
                         <ambientLight intensity={0.5} />
                         <pointLight position={[10, 10, 10]} intensity={1} color="#00e5ff" />
-                        <ParticleMorph scrollProgress={scrollProgress} />
+                        <Suspense fallback={null}>
+                            <ParticleMorph scrollProgress={scrollProgress} />
+                        </Suspense>
                     </Canvas>
                     <div className="absolute inset-0 bg-gradient-to-b from-[#0d1526]/30 via-transparent to-[#0d1526]/70 pointer-events-none" />
                 </div>

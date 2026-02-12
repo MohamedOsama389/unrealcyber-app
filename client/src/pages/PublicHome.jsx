@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, Component, Suspense } from 'react';
 import { Link } from 'react-router-dom';
-import { ShieldCheck, ArrowUpRight, Play, Activity, LogOut, Network, Shield, Code2 } from 'lucide-react';
+import { ShieldCheck, ArrowUpRight, Play, Activity, LogOut, Network, Shield, Code2, Send, Twitter, Linkedin } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Canvas } from '@react-three/fiber';
 import axios from 'axios';

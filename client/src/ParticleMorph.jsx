@@ -212,7 +212,7 @@ const ParticleMorph = ({ scrollProgress = 0, sectionCount = 3 }) => {
     const isMobile = typeof window !== 'undefined' ? window.innerWidth < 1024 : false;
 
     // High density as requested by user ("shapes look much greater")
-    const COUNT = isMobile ? 4000 : 10000;
+    const COUNT = isMobile ? 6000 : 15000;
 
     // Compute targets ONCE
     const targets = useMemo(() => {
@@ -291,11 +291,11 @@ const ParticleMorph = ({ scrollProgress = 0, sectionCount = 3 }) => {
             const actualW = Math.min(size.width, 1280);
             const xOffPx = 0.25 * actualW + 20;
             xTargetOff = (xOffPx / size.width) * viewport.width;
-            yTargetOff = -0.12 * viewport.height; // Shifted slightly down for better visual weight
+            yTargetOff = -0.18 * viewport.height; // Shifted even lower for better visual alignment with card center
         } else {
             // Mobile: Adjusted lower to align better with the card content
             xTargetOff = 0;
-            yTargetOff = 0.08 * viewport.height;
+            yTargetOff = 0.04 * viewport.height; // Slightly lower on mobile too
         }
 
         let target = targets.net;
@@ -338,8 +338,8 @@ const ParticleMorph = ({ scrollProgress = 0, sectionCount = 3 }) => {
         const dt = Math.min(delta, 0.05);
         const t = clock.getElapsedTime();
 
-        // Relaxed speed for swarm, SNAPPY for assembly
-        const speed = ambFactor > 0.5 ? dt * 3.5 : dt * 9.5;
+        // Relaxed speed for swarm, SNAPPY for assembly with smooth damping
+        const speed = ambFactor > 0.5 ? dt * 2.5 : dt * 6.5;
 
         for (let i = 0; i < COUNT; i++) {
             const i3 = i * 3;

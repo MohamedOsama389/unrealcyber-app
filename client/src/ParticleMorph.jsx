@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { SVGLoader } from 'three-stdlib';
+import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js';
 
 // --- CONSTANTS & SVG STRINGS ---
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { ShieldCheck, ArrowUpRight, Play, Activity, LogOut, Network, Shield, Code2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -142,7 +142,9 @@ const PublicHome = () => {
                     <fog attach="fog" args={['#02040a', 20, 40]} />
                     <ambientLight intensity={0.5} />
                     <pointLight position={[10, 10, 10]} intensity={1} color="#00e5ff" />
-                    <ParticleMorph scrollProgress={scrollProgress} />
+                    <Suspense fallback={null}>
+                        <ParticleMorph scrollProgress={scrollProgress} />
+                    </Suspense>
                 </Canvas>
                 <div className="absolute inset-0 bg-gradient-to-b from-[#02040a]/40 via-transparent to-[#02040a]/80 pointer-events-none" />
             </div>

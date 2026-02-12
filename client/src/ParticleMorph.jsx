@@ -236,13 +236,10 @@ const ParticleMorph = ({ scrollProgress = 0, sectionCount = 3 }) => {
             rand[i * 3 + 1] = (Math.random() - 0.5) * 25;
             rand[i * 3 + 2] = (Math.random() - 0.5) * 20;
 
-            // Swarm target: Orbital sphere for better wave motion
-            const r = 3.0 + Math.random() * 2.5;
-            const theta = Math.random() * Math.PI * 2;
-            const phi = Math.acos(2 * Math.random() - 1);
-            swarm[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-            swarm[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-            swarm[i * 3 + 2] = r * Math.cos(phi) * 0.6;
+            // Swarm target: A wide horizontal field (inspired by the provided wave image)
+            swarm[i * 3] = (Math.random() - 0.5) * 45; // Very wide X
+            swarm[i * 3 + 1] = (Math.random() - 0.5) * 1.5; // Thin base Y
+            swarm[i * 3 + 2] = (Math.random() - 0.5) * 20; // Depth Z
         }
 
         return { net, hack, prog, rand, swarm };
@@ -254,7 +251,7 @@ const ParticleMorph = ({ scrollProgress = 0, sectionCount = 3 }) => {
         networking: new THREE.Color("#00E5FF"),
         hacking: new THREE.Color("#C084FC"),
         programming: new THREE.Color("#60A5FA"),
-        ambient: new THREE.Color("#c4a0ff")
+        ambient: new THREE.Color("#00a2ff") // Cyan-Blue ambient to match wave image
     }), []);
 
     const targetColors = useMemo(() => [colors.networking, colors.hacking, colors.programming], [colors]);
@@ -350,14 +347,20 @@ const ParticleMorph = ({ scrollProgress = 0, sectionCount = 3 }) => {
             const ty = target[i3 + 1] + yTargetOff;
             const tz = target[i3 + 2];
 
-            // "Swang" Wave Swarm Motion
-            const swarmWaveX = Math.sin(t * 0.6 + targets.swarm[i3] * 0.25) * 2.5;
-            const swarmWaveY = Math.cos(t * 0.4 + targets.swarm[i3 + 1] * 0.25) * 2.5;
-            const swarmWaveZ = Math.sin(t * 0.3 + i * 0.01) * 3.8;
+            // Flowing Sinusoidal Wave Motion (Inspired by the provided image)
+            const baseX = targets.swarm[i3];
+            const baseZ = targets.swarm[i3 + 2];
 
-            const sx = targets.swarm[i3] + swarmWaveX;
-            const sy = targets.swarm[i3 + 1] + swarmWaveY;
-            const sz = targets.swarm[i3 + 2] + swarmWaveZ;
+            // Primary wave
+            const wave1 = Math.sin(t * 0.4 + baseX * 0.15 + baseZ * 0.1) * 3.5;
+            // Secondary ripple for complexity
+            const wave2 = Math.cos(t * 0.7 + baseX * 0.3) * 1.5;
+            // Rolling depth wave
+            const wave3 = Math.sin(t * 0.2 + baseZ * 0.2) * 2.0;
+
+            const sx = baseX + Math.sin(t * 0.1 + baseZ * 0.1) * 2.0;
+            const sy = targets.swarm[i3 + 1] + wave1 + wave2 + wave3;
+            const sz = baseZ + Math.cos(t * 0.3 + baseX * 0.1) * 1.5;
 
             // Blend
             const fx = THREE.MathUtils.lerp(tx, sx, ambFactor);

@@ -6,6 +6,7 @@ import { Canvas } from '@react-three/fiber';
 import axios from 'axios';
 import ParticleMorph from '../ParticleMorph';
 import ScrollSections from '../ScrollSections';
+import { getVideoThumbnailUrl } from '../data/publicSite';
 
 /**
  * PublicHome
@@ -213,14 +214,15 @@ const PublicHome = () => {
                                     </a>
                                 </div>
 
-                                {/* User requested "Latest Video" text under the card */}
                                 <div className="text-center md:text-left px-6">
-                                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-cyan-400">LATEST VIDEO</p>
-                                    <h3 className="text-xl font-bold text-white mt-1 line-clamp-1">
-                                        {publicContent?.hero?.heroVideoLink
-                                            ? "Featured Content"
-                                            : featured.featuredVideo.title}
-                                    </h3>
+                                    <div className="space-y-1">
+                                        <p className="text-[11px] font-black uppercase tracking-[0.5em] text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.4)]">LATEST VIDEO</p>
+                                        <h3 className="text-xl md:text-2xl font-bold text-white tracking-tight line-clamp-1">
+                                            {publicContent?.hero?.heroVideoLink
+                                                ? "Featured Academy Session"
+                                                : (featured?.featuredVideo?.title || "Member Session")}
+                                        </h3>
+                                    </div>
                                 </div>
                             </div>
                         ) : (

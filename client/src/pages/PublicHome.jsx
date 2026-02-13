@@ -168,6 +168,13 @@ const PublicHome = () => {
         return rawUrl;
     };
 
+    const scrollToAbout = (event) => {
+        event.preventDefault();
+        if (!footerRef.current) return;
+        const top = footerRef.current.getBoundingClientRect().top + window.scrollY - 88;
+        window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    };
+
     const scrollToNetworking = (event) => {
         event.preventDefault();
         const networkingSection = document.getElementById('networking');

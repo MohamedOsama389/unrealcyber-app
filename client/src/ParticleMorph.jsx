@@ -211,8 +211,8 @@ const ParticleMorph = ({ scrollProgress = 0, sectionsProgress = -1, sectionCount
     // Determine user device for performance
     const isMobile = typeof window !== 'undefined' ? window.innerWidth < 1024 : false;
 
-    // High density as requested by user ("shapes look much greater")
-    const COUNT = isMobile ? 6000 : 15000;
+    // High density for "full" volumetric waves
+    const COUNT = isMobile ? 8000 : 25000;
 
     // Compute targets ONCE
     const targets = useMemo(() => {
@@ -236,10 +236,10 @@ const ParticleMorph = ({ scrollProgress = 0, sectionsProgress = -1, sectionCount
             rand[i * 3 + 1] = (Math.random() - 0.5) * 25;
             rand[i * 3 + 2] = (Math.random() - 0.5) * 20;
 
-            // Swarm target: A wide horizontal field (inspired by the provided wave image)
-            swarm[i * 3] = (Math.random() - 0.5) * 45; // Very wide X
-            swarm[i * 3 + 1] = (Math.random() - 0.5) * 1.5; // Thin base Y
-            swarm[i * 3 + 2] = (Math.random() - 0.5) * 20; // Depth Z
+            // Swarm target: A wide horizontal field with more vertical spread for "fullness"
+            swarm[i * 3] = (Math.random() - 0.5) * 50;
+            swarm[i * 3 + 1] = (Math.random() - 0.5) * 3.5; // Thicker base Y
+            swarm[i * 3 + 2] = (Math.random() - 0.5) * 22;
         }
 
         return { net, hack, prog, rand, swarm };
@@ -347,21 +347,19 @@ const ParticleMorph = ({ scrollProgress = 0, sectionsProgress = -1, sectionCount
             const baseX = targets.swarm[i3];
             const baseZ = targets.swarm[i3 + 2];
 
-            // Primary wave
-            const wave1 = Math.sin(t * 0.4 + baseX * 0.15 + baseZ * 0.1) * 3.5;
-            // Secondary ripple for complexity
-            const wave2 = Math.cos(t * 0.7 + baseX * 0.3) * 1.5;
-            // Rolling depth wave
-            const wave3 = Math.sin(t * 0.2 + baseZ * 0.2) * 2.0;
+            // Enhanced Majestic Waves for "Fullness"
+            const wave1 = Math.sin(t * 0.35 + baseX * 0.12 + baseZ * 0.08) * 4.5;
+            const wave2 = Math.cos(t * 0.6 + baseX * 0.25) * 2.0;
+            const wave3 = Math.sin(t * 0.15 + baseZ * 0.15) * 2.5;
 
-            const sx = baseX + Math.sin(t * 0.1 + baseZ * 0.1) * 2.0;
+            const sx = baseX + Math.sin(t * 0.08 + baseZ * 0.08) * 2.5;
             const sy = targets.swarm[i3 + 1] + wave1 + wave2 + wave3;
-            const sz = baseZ + Math.cos(t * 0.3 + baseX * 0.1) * 1.5;
+            const sz = baseZ + Math.cos(t * 0.25 + baseX * 0.08) * 2.0;
 
             // Blend
             const fx = THREE.MathUtils.lerp(tx, sx, ambFactor);
             const fy = THREE.MathUtils.lerp(ty, sy, ambFactor);
-            const fz = THREE.MathUtils.lerp(tz, sz, ambFactor);
+            const fz = THREE.MathUtils.lerp(fzTarget, sz, ambFactor);
 
             // Snappy position interpolation
             pos[i3] += (fx - pos[i3]) * speed;

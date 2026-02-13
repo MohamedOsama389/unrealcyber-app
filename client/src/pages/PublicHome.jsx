@@ -183,18 +183,19 @@ const PublicHome = () => {
         window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
     };
 
-    const scrollToNetworking = (event) => {
-        event.preventDefault();
-        const target = document.getElementById('networking');
+    const scrollToSection = (id, event) => {
+        if (event) event.preventDefault();
+        const target = document.getElementById(id);
         if (target) {
-            // Manual smooth scroll with refined offset for particle waves
-            const offset = 192; // 12rem * 16px
+            // Deep offset to match user screenshot: ~20rem (320px)
+            const offset = 320;
             const top = target.getBoundingClientRect().top + window.scrollY - offset;
             window.scrollTo({ top, behavior: 'smooth' });
-            // Update hash without jumping
-            window.history.pushState(null, null, '#networking');
+            window.history.pushState(null, null, `#${id}`);
         }
     };
+
+    const scrollToNetworking = (event) => scrollToSection('networking', event);
 
     useEffect(() => {
         // Global Scroll Tracking for Ambient Waves
@@ -315,9 +316,9 @@ const PublicHome = () => {
                                         TRACKS <ChevronDown size={12} />
                                     </button>
                                     <div className="absolute top-full left-0 mt-2 w-48 bg-[#0a101f] border border-white/10 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all transform translate-y-2 group-hover:translate-y-0 z-50 overflow-hidden">
-                                        <a href="#networking" className="block px-4 py-3 hover:bg-white/5 hover:text-cyan-400 transition-colors">Network</a>
-                                        <a href="#ethical-hacking" className="block px-4 py-3 hover:bg-white/5 hover:text-purple-400 transition-colors">Ethical Hacking</a>
-                                        <a href="#programming" className="block px-4 py-3 hover:bg-white/5 hover:text-blue-400 transition-colors">Programming</a>
+                                        <button onClick={(e) => scrollToSection('networking', e)} className="w-full text-left block px-4 py-3 hover:bg-white/5 hover:text-cyan-400 transition-colors">Network</button>
+                                        <button onClick={(e) => scrollToSection('ethical-hacking', e)} className="w-full text-left block px-4 py-3 hover:bg-white/5 hover:text-purple-400 transition-colors">Ethical Hacking</button>
+                                        <button onClick={(e) => scrollToSection('programming', e)} className="w-full text-left block px-4 py-3 hover:bg-white/5 hover:text-blue-400 transition-colors">Programming</button>
                                     </div>
                                 </div>
 

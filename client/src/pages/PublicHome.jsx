@@ -187,8 +187,8 @@ const PublicHome = () => {
         if (event) event.preventDefault();
         const target = document.getElementById(id);
         if (target) {
-            // Deep offset to match user screenshot: ~20rem (320px)
-            const offset = 320;
+            // Precise offset captured from user's manual scroll: 56px past the element top
+            const offset = -56;
             const top = target.getBoundingClientRect().top + window.scrollY - offset;
             window.scrollTo({ top, behavior: 'smooth' });
             window.history.pushState(null, null, `#${id}`);

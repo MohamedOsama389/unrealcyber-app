@@ -58,16 +58,11 @@ function AppContent() {
           <Route path="/private/signup" element={<Signup />} />
           <Route path="/particle-icons" element={<ParticleIconsPage />} />
 
-          <Route path="/private/signup" element={<Signup />} />
-          <Route path="/particle-icons" element={<ParticleIconsPage />} />
-          <Route path="/progress" element={<Progress />} />
-          <Route path="/profile" element={<Profile />} />
-
-          <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+          <Route element={<ProtectedRoute allowedRoles={['admin', 'student']} />}>
             <Route path="/private" element={<Navigate to="/private/dashboard" replace />} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/b/*" element={<BuilderPage />} />
-            <Route path="/admin" element={<ProtectedRoute requireAdmin={true}><AdminPanel /></ProtectedRoute>} />
+            <Route path="/private/dashboard" element={<Dashboard />} />
+            <Route path="/private/b/*" element={<BuilderPage />} />
+            <Route path="/private/admin" element={<AdminPanel />} />
             <Route path="/private/tasks" element={<Tasks />} />
             <Route path="/private/videos" element={<Videos />} />
             <Route path="/private/files" element={<Files />} />
@@ -77,7 +72,6 @@ function AppContent() {
             <Route path="/private/games/:gameId" element={<GameViewPage />} />
             <Route path="/private/games/atom-builder" element={<AtomGame />} />
             <Route path="/private/hands-on" element={<HandsOn />} />
-            <Route path="/private/admin" element={<AdminPanel />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -91,16 +91,21 @@ const PublicHome = () => {
     }, []);
 
     // Google Auth Initialization
+    // Cleanup Google One Tap if user is logged in
+    useEffect(() => {
+        if (user && window.google?.accounts?.id) {
+            window.google.accounts.id.cancel();
+            // Also hide the container explicitly via DOM as a fallback
+            const picker = document.getElementById('credential_picker_container');
+            if (picker) picker.style.display = 'none';
+        }
+    }, [user]);
+
     useEffect(() => {
         const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
-        // Cleanup if user is logged in
-        if (user && window.google?.accounts?.id) {
-            window.google.accounts.id.cancel();
-            return;
-        }
-
-        if (!clientId || user) return;
+        // Don't initialize if logged in
+        if (user) return;
 
         const initGoogle = () => {
             if (!window.google || !googleBtnRef.current) return;
@@ -286,8 +291,12 @@ const PublicHome = () => {
                                     <div className="flex items-center gap-3">
                                         <style>{`
                                             #credential_picker_container, 
-                                            iframe[src*="accounts.google.com/gsi/iframe"] { 
+                                            iframe[src*="accounts.google.com/gsi/iframe"],
+                                            .google-one-tap { 
                                                 display: none !important; 
+                                                visibility: hidden !important;
+                                                opacity: 0 !important;
+                                                pointer-events: none !important;
                                             }
                                         `}</style>
                                         <div className="flex flex-col items-end">
@@ -297,8 +306,8 @@ const PublicHome = () => {
                                                     await logout();
                                                     if (window.google?.accounts?.id) {
                                                         window.google.accounts.id.cancel();
-                                                        window.location.assign('/'); // Full reload and clear
                                                     }
+                                                    window.location.assign('/'); // Full reload and clear
                                                 }}
                                                 className="text-[8px] font-bold text-red-400/60 hover:text-red-400 uppercase tracking-[0.2em] transition-colors"
                                             >
@@ -332,89 +341,71 @@ const PublicHome = () => {
                 </header>
 
                 {/* HERO SECTION - REDESIGNED */}
-                <section className="relative z-10 min-h-screen flex flex-col justify-center px-6 pt-32 lg:pt-36 pb-20">
-                    <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] xl:grid-cols-[1.14fr_0.86fr] gap-10 lg:gap-14 xl:gap-16 items-start">
-                        {/* Left Column: Academy Branding */}
-                        <div className="space-y-10 relative z-20 lg:pr-4">
-                            <div className="space-y-6">
-                                <h1 className="text-[clamp(2.75rem,8.5vw,6.8rem)] font-black tracking-tighter uppercase leading-[0.85] text-white max-w-[15ch]">
-                                    Unreal<span className="text-cyan-500 underline decoration-cyan-500/20 underline-offset-8">Cyber</span><br />
+                <section className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 pt-32 pb-20">
+                    <div className="max-w-4xl mx-auto w-full text-center space-y-12">
+                        {/* 1. Preview Top */}
+                        <div className="relative group w-full max-w-4xl mx-auto">
+                            <div className="absolute -inset-4 bg-cyan-500/5 rounded-[2rem] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                            {publicContent?.hero?.heroVideoLink || featured?.featuredVideo ? (
+                                <div className="aspect-video w-full rounded-2xl overflow-hidden shadow-2xl border border-white/5 bg-slate-900/50 backdrop-blur-sm relative transition-transform hover:scale-[1.01] duration-500">
+                                    <iframe
+                                        className="w-full h-full"
+                                        src={publicContent?.hero?.heroVideoLink || (featured?.featuredVideo?.drive_link ? featured.featuredVideo.drive_link : '')}
+                                        title="Platform Preview"
+                                        frameBorder="0"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowFullScreen
+                                    />
+                                </div>
+                            ) : (
+                                <div className="aspect-video w-full rounded-3xl overflow-hidden shadow-2xl border border-white/10 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center relative group/vid">
+                                    <div className="text-center space-y-4">
+                                        <Activity size={48} className="mx-auto text-cyan-500/30 animate-pulse" />
+                                        <p className="text-secondary/40 uppercase tracking-[0.3em] text-[11px] font-black">Syncing Unreal Collective Data...</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* 2. Headline & Content Bottom */}
+                        <div className="space-y-8 max-w-3xl mx-auto">
+                            <div className="space-y-4">
+                                <h1 className="text-[clamp(2.5rem,10vw,7.5rem)] font-black tracking-tighter uppercase leading-[0.8] text-white">
+                                    Unreal<span className="text-cyan-500">Cyber</span><br />
                                     Academy
                                 </h1>
-                                <p className="text-lg md:text-xl text-slate-300 max-w-xl font-medium leading-relaxed">
+                                <p className="text-lg md:text-xl text-slate-300 font-medium leading-relaxed max-w-2xl mx-auto">
                                     {publicContent?.hero?.subtitle || 'Master the digital frontier. Professional training in networking, hacking, and modern engineering.'}
                                 </p>
                             </div>
 
-                            {/* Navigation Blocks */}
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-5 max-w-3xl">
-                                {heroTiles.map((tile) => (
-                                    <a
-                                        key={tile.id}
-                                        href={`#${tile.id}`}
-                                        className={`group relative overflow-hidden rounded-[1.75rem] border ${tile.cardClass} bg-[radial-gradient(circle_at_18%_-10%,rgba(255,255,255,0.08),transparent_45%),linear-gradient(165deg,rgba(12,21,45,0.92),rgba(5,10,25,0.92))] px-5 py-5 min-h-[138px] transition-all duration-500 hover:-translate-y-1`}
-                                    >
-                                        <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[linear-gradient(130deg,transparent_10%,rgba(255,255,255,0.08)_45%,transparent_80%)]" />
-                                        <span className={`absolute right-4 top-4 w-1.5 h-1.5 rounded-full ${tile.dotClass}`} />
-                                        <div className={`relative w-10 h-10 rounded-xl border flex items-center justify-center ${tile.iconClass}`}>
-                                            <tile.Icon size={17} />
-                                        </div>
-                                        <div className="relative mt-8 space-y-1">
-                                            <p className="text-[12px] font-black uppercase tracking-[0.28em] text-white/90">{tile.label}</p>
-                                            <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-secondary/55">{tile.subtitle}</p>
-                                        </div>
-                                    </a>
-                                ))}
+                            <div className="flex flex-wrap items-center justify-center gap-6 pt-4">
+                                <a
+                                    href={publicContent?.hero?.ctaLink || "https://www.youtube.com/@UnrealCyber"}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-8 py-4 rounded-2xl bg-white text-black font-black uppercase tracking-widest text-xs hover:bg-cyan-400 transition-all transform hover:-translate-y-1"
+                                >
+                                    {publicContent?.hero?.ctaText || 'Watch on YouTube'}
+                                </a>
+                                <button
+                                    onClick={scrollToAbout}
+                                    className="px-8 py-4 rounded-2xl bg-white/5 border border-white/10 text-white font-black uppercase tracking-widest text-xs hover:bg-white/10 transition-all"
+                                >
+                                    Explore Academy
+                                </button>
                             </div>
-                        </div>
-
-                        {/* Right Column: Featured Video (Redesigned - Prominent) */}
-                        <div className="relative w-full lg:pt-4 xl:pt-6">
-                            {(publicContent?.hero?.heroVideoLink || featured?.featuredVideo) ? (
-                                <div className="space-y-6 lg:ml-auto max-w-[56rem]">
-                                    <div className="group relative glass-panel p-2 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-cyan-500/10 transform hover:scale-[1.02] transition-all duration-700 hover:shadow-cyan-500/30">
-                                        <a
-                                            href={publicContent?.hero?.heroVideoLink || (featured?.featuredVideo?.drive_link ? featured.featuredVideo.drive_link : '#')}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="block aspect-video rounded-[2.2rem] overflow-hidden bg-slate-900 border border-white/10 relative"
-                                        >
-                                            <img
-                                                src={(publicContent?.hero?.heroVideoLink && getVideoThumbnailUrl(publicContent.hero.heroVideoLink))
-                                                    ? getVideoThumbnailUrl(publicContent.hero.heroVideoLink)
-                                                    : (featured?.featuredVideo ? `/api/public/thumbnail/${featured.featuredVideo.drive_link ? extractDriveId(featured.featuredVideo.drive_link) : featured.featuredVideo.id}` : '')
-                                                }
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
-                                                alt=""
-                                            />
-                                            <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors">
-                                                <div className="w-24 h-24 rounded-full bg-cyan-500/90 text-black flex items-center justify-center shadow-xl group-hover:scale-110 transition-all duration-500 group-hover:shadow-cyan-500/60 backdrop-blur-sm">
-                                                    <Play size={32} fill="currentColor" />
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </div>
-
-                                    {/* Minimal Video Title underneath if needed, or keeping it clean as per 'removing extraneous text' */}
-                                    {/* Leaving completely clean to match 'ensuring the thumbnail fills its container' focus */}
-                                </div>
-                            ) : (
-                                <div className="glass-panel p-16 rounded-[2.5rem] text-center border-dashed border-2 border-white/5 space-y-6 max-w-[40rem] lg:ml-auto">
-                                    <Activity className="mx-auto text-cyan-500/20 animate-pulse" size={64} />
-                                    <p className="text-secondary/40 uppercase tracking-widest text-[10px] font-black">Syncing Unreal Collective Data...</p>
-                                </div>
-                            )}
                         </div>
                     </div>
                 </section>
 
                 {/* Scrollable Content Layers */}
-                <main ref={sectionsContainerRef} className="relative z-10">
+                < main ref={sectionsContainerRef} className="relative z-10" >
                     <ScrollSections sections={publicContent?.sections} />
-                </main>
+                </main >
 
                 {/* Footer */}
-                <footer id="about-section" ref={footerRef} className="relative z-10 border-t border-white/5 bg-[#02040a]/90 backdrop-blur-2xl">
+                < footer id="about-section" ref={footerRef} className="relative z-10 border-t border-white/5 bg-[#02040a]/90 backdrop-blur-2xl" >
                     <div className="max-w-7xl mx-auto px-6 py-16 flex flex-col md:flex-row justify-between items-center gap-12 text-center md:text-left">
                         <div className="space-y-4">
                             <div className="flex items-center justify-center md:justify-start gap-4">
@@ -499,7 +490,7 @@ const PublicHome = () => {
                             {/* Policy links removed as per request */}
                         </div>
                     </div>
-                </footer>
+                </footer >
             </div >
         </GlobalErrorBoundary >
     );

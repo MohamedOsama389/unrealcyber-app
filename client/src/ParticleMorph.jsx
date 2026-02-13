@@ -212,7 +212,8 @@ const ParticleMorph = ({ scrollProgress = 0, sectionsProgress = -1, sectionCount
     const isMobile = typeof window !== 'undefined' ? window.innerWidth < 1024 : false;
 
     // High density for "full" volumetric waves
-    const COUNT = isMobile ? 8000 : 25000;
+    // Ultra high density for maximum volumetric "nebula" effect
+    const COUNT = isMobile ? 12000 : 35000;
 
     // Compute targets ONCE
     const targets = useMemo(() => {
@@ -236,10 +237,10 @@ const ParticleMorph = ({ scrollProgress = 0, sectionsProgress = -1, sectionCount
             rand[i * 3 + 1] = (Math.random() - 0.5) * 25;
             rand[i * 3 + 2] = (Math.random() - 0.5) * 20;
 
-            // Swarm target: A wide horizontal field spanning full browser length
-            swarm[i * 3] = (Math.random() - 0.5) * 120;
-            swarm[i * 3 + 1] = (Math.random() - 0.5) * 10.0; // Thick volumetric base
-            swarm[i * 3 + 2] = (Math.random() - 0.5) * 25;
+            // Swarm target: Massive horizontal and vertical spread for "nebula" look
+            swarm[i * 3] = (Math.random() - 0.5) * 125;
+            swarm[i * 3 + 1] = (Math.random() - 0.5) * 16.0; // Expanded vault height
+            swarm[i * 3 + 2] = (Math.random() - 0.5) * 28;
         }
 
         return { net, hack, prog, rand, swarm };
@@ -347,12 +348,11 @@ const ParticleMorph = ({ scrollProgress = 0, sectionsProgress = -1, sectionCount
             const baseX = targets.swarm[i3];
             const baseZ = targets.swarm[i3 + 2];
 
-            // Enhanced Majestic Waves for "Fullness" 
-            // Ambient waves are dramatically boosted to maintain majesty across the 120-unit horizontal span
-            const ambWaveBoost = ambFactor > 0.5 ? 2.5 : 1.0;
-            const wave1 = Math.sin(t * 0.35 + baseX * 0.12 + baseZ * 0.08) * 8.5 * ambWaveBoost;
-            const wave2 = Math.cos(t * 0.6 + baseX * 0.25) * 4.0 * ambWaveBoost;
-            const wave3 = Math.sin(t * 0.15 + baseZ * 0.15) * 4.5 * ambWaveBoost;
+            // Enhanced Majestic Swells (Smoother, wider patterns to match reference image)
+            const ambWaveBoost = ambFactor > 0.5 ? 2.8 : 1.0;
+            const wave1 = Math.sin(t * 0.25 + baseX * 0.08 + baseZ * 0.05) * 9.5 * ambWaveBoost;
+            const wave2 = Math.cos(t * 0.45 + baseX * 0.15) * 5.0 * ambWaveBoost;
+            const wave3 = Math.sin(t * 0.12 + baseZ * 0.12) * 5.5 * ambWaveBoost;
 
             const sx = baseX + Math.sin(t * 0.08 + baseZ * 0.08) * 2.5;
             // Ambient swarm is perfectly centered for symmetry across the page
@@ -384,9 +384,9 @@ const ParticleMorph = ({ scrollProgress = 0, sectionsProgress = -1, sectionCount
         return new THREE.PointsMaterial({
             map: tex,
             transparent: true,
-            opacity: 0.95,
+            opacity: 0.98,
             color: "#ffffff",
-            size: isMobile ? 0.09 : 0.055,
+            size: isMobile ? 0.07 : 0.045, // Refined "stardust" resolution
             sizeAttenuation: true,
             depthWrite: false,
             blending: THREE.AdditiveBlending,

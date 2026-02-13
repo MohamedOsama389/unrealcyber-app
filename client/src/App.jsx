@@ -58,6 +58,8 @@ function AppContent() {
           <Route path="/private/signup" element={<Signup />} />
           <Route path="/particle-icons" element={<ParticleIconsPage />} />
 
+          <Route path="/progress" element={<Progress />} />
+          <Route path="/profile" element={<Profile />} />
           <Route element={<ProtectedRoute allowedRoles={['admin', 'student']} />}>
             <Route path="/private" element={<Navigate to="/private/dashboard" replace />} />
             <Route path="/private/dashboard" element={<Dashboard />} />

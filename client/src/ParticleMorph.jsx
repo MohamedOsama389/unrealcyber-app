@@ -236,8 +236,8 @@ const ParticleMorph = ({ scrollProgress = 0, sectionsProgress = -1, sectionCount
             rand[i * 3 + 1] = (Math.random() - 0.5) * 25;
             rand[i * 3 + 2] = (Math.random() - 0.5) * 20;
 
-            // Swarm target: A wide horizontal field with maximum vertical spread for "full wave shape"
-            swarm[i * 3] = (Math.random() - 0.5) * 55;
+            // Swarm target: A wide horizontal field spanning full browser length
+            swarm[i * 3] = (Math.random() - 0.5) * 120;
             swarm[i * 3 + 1] = (Math.random() - 0.5) * 10.0; // Thick volumetric base
             swarm[i * 3 + 2] = (Math.random() - 0.5) * 25;
         }
@@ -348,11 +348,11 @@ const ParticleMorph = ({ scrollProgress = 0, sectionsProgress = -1, sectionCount
             const baseZ = targets.swarm[i3 + 2];
 
             // Enhanced Majestic Waves for "Fullness" 
-            // Ambient waves are doubled in dramatic motion to match the "full wave shape" requirement
-            const ambWaveBoost = ambFactor > 0.5 ? 2.0 : 1.0;
-            const wave1 = Math.sin(t * 0.35 + baseX * 0.12 + baseZ * 0.08) * 6.5 * ambWaveBoost;
-            const wave2 = Math.cos(t * 0.6 + baseX * 0.25) * 3.0 * ambWaveBoost;
-            const wave3 = Math.sin(t * 0.15 + baseZ * 0.15) * 3.5 * ambWaveBoost;
+            // Ambient waves are dramatically boosted to maintain majesty across the 120-unit horizontal span
+            const ambWaveBoost = ambFactor > 0.5 ? 2.5 : 1.0;
+            const wave1 = Math.sin(t * 0.35 + baseX * 0.12 + baseZ * 0.08) * 8.5 * ambWaveBoost;
+            const wave2 = Math.cos(t * 0.6 + baseX * 0.25) * 4.0 * ambWaveBoost;
+            const wave3 = Math.sin(t * 0.15 + baseZ * 0.15) * 4.5 * ambWaveBoost;
 
             const sx = baseX + Math.sin(t * 0.08 + baseZ * 0.08) * 2.5;
             // Ambient swarm is perfectly centered for symmetry across the page

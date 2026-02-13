@@ -284,6 +284,12 @@ const PublicHome = () => {
                                     </div>
                                 ) : (
                                     <div className="flex items-center gap-3">
+                                        <style>{`
+                                            #credential_picker_container, 
+                                            iframe[src*="accounts.google.com/gsi/iframe"] { 
+                                                display: none !important; 
+                                            }
+                                        `}</style>
                                         <div className="flex flex-col items-end">
                                             <span className="text-[10px] font-black text-white uppercase tracking-wider">{user.display_name || user.username}</span>
                                             <button
@@ -291,7 +297,7 @@ const PublicHome = () => {
                                                     await logout();
                                                     if (window.google?.accounts?.id) {
                                                         window.google.accounts.id.cancel();
-                                                        window.location.reload(); // Force clean state
+                                                        window.location.assign('/'); // Full reload and clear
                                                     }
                                                 }}
                                                 className="text-[8px] font-bold text-red-400/60 hover:text-red-400 uppercase tracking-[0.2em] transition-colors"

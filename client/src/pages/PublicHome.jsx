@@ -80,7 +80,13 @@ const PublicHome = () => {
                     axios.get('/api/public'),
                     axios.get('/api/public/featured')
                 ]);
-                if (pubRes.data) setPublicContent(pubRes.data);
+                if (pubRes.data) {
+                    setPublicContent(prev => ({
+                        ...prev,
+                        ...pubRes.data,
+                        hero: { ...prev.hero, ...pubRes.data.hero }
+                    }));
+                }
                 if (featRes.data) setFeatured(featRes.data);
             } catch (err) {
                 console.error('[PublicHome] Failed to fetch layout data:', err);
@@ -411,11 +417,11 @@ const PublicHome = () => {
                         {/* 2. Video Card Second (Below) */}
                         <div className="relative group w-full max-w-4xl mx-auto order-2">
                             <div className="absolute -inset-4 bg-cyan-500/5 rounded-[2rem] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                            {publicContent?.hero?.heroVideoLink || featured?.featuredVideo ? (
+                            {publicContent?.hero?.heroVideoLink || featured?.featuredVideo || DEFAULT_PUBLIC_CONTENT.hero.heroVideoLink ? (
                                 <div className="aspect-video w-full rounded-2xl overflow-hidden shadow-2xl border border-white/5 bg-slate-900/50 backdrop-blur-sm relative transition-transform hover:scale-[1.01] duration-500">
                                     <iframe
                                         className="w-full h-full"
-                                        src={getEmbedUrl(publicContent?.hero?.heroVideoLink || (featured?.featuredVideo?.drive_link ? featured.featuredVideo.drive_link : ''))}
+                                        src={getEmbedUrl(publicContent?.hero?.heroVideoLink || (featured?.featuredVideo?.drive_link ? featured.featuredVideo.drive_link : DEFAULT_PUBLIC_CONTENT.hero.heroVideoLink))}
                                         title="Platform Preview"
                                         frameBorder="0"
                                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

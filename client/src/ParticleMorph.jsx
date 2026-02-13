@@ -347,13 +347,16 @@ const ParticleMorph = ({ scrollProgress = 0, sectionsProgress = -1, sectionCount
             const baseX = targets.swarm[i3];
             const baseZ = targets.swarm[i3 + 2];
 
-            // Enhanced Majestic Waves for "Fullness"
-            const wave1 = Math.sin(t * 0.35 + baseX * 0.12 + baseZ * 0.08) * 6.5;
-            const wave2 = Math.cos(t * 0.6 + baseX * 0.25) * 3.0;
-            const wave3 = Math.sin(t * 0.15 + baseZ * 0.15) * 3.5;
+            // Enhanced Majestic Waves for "Fullness" 
+            // Ambient waves are slightly more dramatic to create the requested "wave shape"
+            const ambWaveBoost = ambFactor > 0.5 ? 1.5 : 1.0;
+            const wave1 = Math.sin(t * 0.35 + baseX * 0.12 + baseZ * 0.08) * 6.5 * ambWaveBoost;
+            const wave2 = Math.cos(t * 0.6 + baseX * 0.25) * 3.0 * ambWaveBoost;
+            const wave3 = Math.sin(t * 0.15 + baseZ * 0.15) * 3.5 * ambWaveBoost;
 
             const sx = baseX + Math.sin(t * 0.08 + baseZ * 0.08) * 2.5;
-            const sy = targets.swarm[i3 + 1] + wave1 + wave2 + wave3;
+            // Ambient swarm is shifted slightly lower to align with the "foot" of the page
+            const sy = targets.swarm[i3 + 1] + wave1 + wave2 + wave3 + (ambFactor * -2.0);
             const sz = baseZ + Math.cos(t * 0.25 + baseX * 0.08) * 2.0;
 
             // Blend

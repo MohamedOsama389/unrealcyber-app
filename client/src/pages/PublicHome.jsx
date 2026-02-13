@@ -140,10 +140,31 @@ const PublicHome = () => {
         }
     }, [loginWithGoogle, user, googleReady]);
 
-    const scrollToAbout = (event) => {
+    const getEmbedUrl = (url) => {
+        if (!url) return '';
+        if (url.includes('youtube.com/embed/') || url.includes('drive.google.com/file/d/')) {
+            if (url.includes('drive.google.com')) {
+                return url.replace('/view', '/preview');
+            }
+            return url;
+        }
+
+        // YouTube
+        const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+        if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
+
+        // Drive
+        const driveMatch = url.match(/(?:drive\.google\.com\/(?:file\/d\/|open\?id=))([a-zA-Z0-9_-]+)/);
+        if (driveMatch) return `https://drive.google.com/file/d/${driveMatch[1]}/preview`;
+
+        return url;
+    };
+
+    const scrollToNetworking = (event) => {
         event.preventDefault();
-        if (!footerRef.current) return;
-        const top = footerRef.current.getBoundingClientRect().top + window.scrollY - 88;
+        const networkingSection = document.getElementById('networking');
+        if (!networkingSection) return;
+        const top = networkingSection.getBoundingClientRect().top + window.scrollY - 88;
         window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
     };
 
@@ -340,17 +361,47 @@ const PublicHome = () => {
                     </div>
                 </header>
 
-                {/* HERO SECTION - REDESIGNED */}
+                {/* HERO SECTION - REFINED */}
                 <section className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 pt-32 pb-20">
-                    <div className="max-w-4xl mx-auto w-full text-center space-y-12">
-                        {/* 1. Preview Top */}
+                    <div className="max-w-4xl mx-auto w-full text-center space-y-16">
+                        {/* 1. Headline & Content First */}
+                        <div className="space-y-8 max-w-3xl mx-auto">
+                            <div className="space-y-4">
+                                <h1 className="text-[clamp(2.5rem,10vw,7.5rem)] font-black tracking-tighter uppercase leading-[0.8] text-white">
+                                    Unreal<span className="text-cyan-500">Cyber</span><br />
+                                    Academy
+                                </h1>
+                                <p className="text-lg md:text-xl text-slate-300 font-medium leading-relaxed max-w-2xl mx-auto">
+                                    {publicContent?.hero?.subtitle || 'Networking, ethical hacking, and programming. Learn fast, build real skills.'}
+                                </p>
+                            </div>
+
+                            <div className="flex flex-wrap items-center justify-center gap-6 pt-4">
+                                <a
+                                    href={publicContent?.hero?.ctaLink || "https://www.youtube.com/@UnrealCyber"}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-8 py-4 rounded-2xl bg-white text-black font-black uppercase tracking-widest text-xs hover:bg-cyan-400 transition-all transform hover:-translate-y-1"
+                                >
+                                    {publicContent?.hero?.ctaText || 'Watch on YouTube'}
+                                </a>
+                                <button
+                                    onClick={scrollToNetworking}
+                                    className="px-8 py-4 rounded-2xl bg-white/5 border border-white/10 text-white font-black uppercase tracking-widest text-xs hover:bg-white/10 transition-all"
+                                >
+                                    Explore Academy
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* 2. Video Card Second */}
                         <div className="relative group w-full max-w-4xl mx-auto">
                             <div className="absolute -inset-4 bg-cyan-500/5 rounded-[2rem] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
                             {publicContent?.hero?.heroVideoLink || featured?.featuredVideo ? (
                                 <div className="aspect-video w-full rounded-2xl overflow-hidden shadow-2xl border border-white/5 bg-slate-900/50 backdrop-blur-sm relative transition-transform hover:scale-[1.01] duration-500">
                                     <iframe
                                         className="w-full h-full"
-                                        src={publicContent?.hero?.heroVideoLink || (featured?.featuredVideo?.drive_link ? featured.featuredVideo.drive_link : '')}
+                                        src={getEmbedUrl(publicContent?.hero?.heroVideoLink || (featured?.featuredVideo?.drive_link ? featured.featuredVideo.drive_link : ''))}
                                         title="Platform Preview"
                                         frameBorder="0"
                                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -365,36 +416,6 @@ const PublicHome = () => {
                                     </div>
                                 </div>
                             )}
-                        </div>
-
-                        {/* 2. Headline & Content Bottom */}
-                        <div className="space-y-8 max-w-3xl mx-auto">
-                            <div className="space-y-4">
-                                <h1 className="text-[clamp(2.5rem,10vw,7.5rem)] font-black tracking-tighter uppercase leading-[0.8] text-white">
-                                    Unreal<span className="text-cyan-500">Cyber</span><br />
-                                    Academy
-                                </h1>
-                                <p className="text-lg md:text-xl text-slate-300 font-medium leading-relaxed max-w-2xl mx-auto">
-                                    {publicContent?.hero?.subtitle || 'Master the digital frontier. Professional training in networking, hacking, and modern engineering.'}
-                                </p>
-                            </div>
-
-                            <div className="flex flex-wrap items-center justify-center gap-6 pt-4">
-                                <a
-                                    href={publicContent?.hero?.ctaLink || "https://www.youtube.com/@UnrealCyber"}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="px-8 py-4 rounded-2xl bg-white text-black font-black uppercase tracking-widest text-xs hover:bg-cyan-400 transition-all transform hover:-translate-y-1"
-                                >
-                                    {publicContent?.hero?.ctaText || 'Watch on YouTube'}
-                                </a>
-                                <button
-                                    onClick={scrollToAbout}
-                                    className="px-8 py-4 rounded-2xl bg-white/5 border border-white/10 text-white font-black uppercase tracking-widest text-xs hover:bg-white/10 transition-all"
-                                >
-                                    Explore Academy
-                                </button>
-                            </div>
                         </div>
                     </div>
                 </section>

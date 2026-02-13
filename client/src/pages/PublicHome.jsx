@@ -185,7 +185,15 @@ const PublicHome = () => {
 
     const scrollToNetworking = (event) => {
         event.preventDefault();
-        window.location.hash = 'networking';
+        const target = document.getElementById('networking');
+        if (target) {
+            // Manual smooth scroll with refined offset for particle waves
+            const offset = 192; // 12rem * 16px
+            const top = target.getBoundingClientRect().top + window.scrollY - offset;
+            window.scrollTo({ top, behavior: 'smooth' });
+            // Update hash without jumping
+            window.history.pushState(null, null, '#networking');
+        }
     };
 
     useEffect(() => {

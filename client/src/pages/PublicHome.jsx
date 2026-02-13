@@ -93,6 +93,13 @@ const PublicHome = () => {
     // Google Auth Initialization
     useEffect(() => {
         const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+        // Cleanup if user is logged in
+        if (user && window.google?.accounts?.id) {
+            window.google.accounts.id.cancel();
+            return;
+        }
+
         if (!clientId || user) return;
 
         const initGoogle = () => {
@@ -114,20 +121,19 @@ const PublicHome = () => {
 
         if (window.google) {
             initGoogle();
-            return;
+        } else {
+            const script = document.createElement('script');
+            script.src = 'https://accounts.google.com/gsi/client?hl=en';
+            script.async = true;
+            script.defer = true;
+            script.onload = initGoogle;
+            document.body.appendChild(script);
+
+            return () => {
+                script.onload = null;
+            };
         }
-
-        const script = document.createElement('script');
-        script.src = 'https://accounts.google.com/gsi/client?hl=en';
-        script.async = true;
-        script.defer = true;
-        script.onload = initGoogle;
-        document.body.appendChild(script);
-
-        return () => {
-            script.onload = null;
-        };
-    }, [loginWithGoogle, user]);
+    }, [loginWithGoogle, user, googleReady]);
 
     const scrollToAbout = (event) => {
         event.preventDefault();
@@ -281,7 +287,13 @@ const PublicHome = () => {
                                         <div className="flex flex-col items-end">
                                             <span className="text-[10px] font-black text-white uppercase tracking-wider">{user.display_name || user.username}</span>
                                             <button
-                                                onClick={logout}
+                                                onClick={async () => {
+                                                    await logout();
+                                                    if (window.google?.accounts?.id) {
+                                                        window.google.accounts.id.cancel();
+                                                        window.location.reload(); // Force clean state
+                                                    }
+                                                }}
                                                 className="text-[8px] font-bold text-red-400/60 hover:text-red-400 uppercase tracking-[0.2em] transition-colors"
                                             >
                                                 Sign Out
@@ -300,15 +312,13 @@ const PublicHome = () => {
                                 )}
 
                                 {user && (user.role === 'admin' || user.private_access === 1) && (
-                                    <a
-                                        href="https://unrealcyber.up.railway.app/"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
+                                    <Link
+                                        to="/private"
                                         className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-[10px] font-black text-cyan-400 hover:bg-cyan-500/20 transition-all uppercase tracking-[0.2em] hover:shadow-[0_0_20px_rgba(6,182,212,0.15)] group"
                                     >
                                         <span>Join Private Lab</span>
                                         <ArrowUpRight size={12} strokeWidth={3} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                                    </a>
+                                    </Link>
                                 )}
                             </div>
                         </div>

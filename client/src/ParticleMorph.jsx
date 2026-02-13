@@ -341,7 +341,7 @@ const ParticleMorph = ({ scrollProgress = 0, sectionsProgress = -1, sectionCount
             // Target Calc
             const tx = target[i3] + xTargetOff;
             const ty = target[i3 + 1] + yTargetOff;
-            const tz = target[i3 + 2];
+            const fzTarget = target[i3 + 2];
 
             // Flowing Sinusoidal Wave Motion (Inspired by the provided image)
             const baseX = targets.swarm[i3];

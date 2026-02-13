@@ -4,7 +4,7 @@ export const DEFAULT_PUBLIC_CONTENT = {
         subtitle: 'Networking, ethical hacking, and programming. Learn fast, build real skills.',
         ctaText: 'Watch on YouTube',
         ctaLink: 'https://www.youtube.com/',
-        heroVideoLink: ''
+        heroVideoLink: 'https://www.youtube.com/watch?v=W1rJ6EvDWU4'
     },
     pillars: [
         { title: 'Networking', description: 'Routing, switching, protocols, and real labs.' },

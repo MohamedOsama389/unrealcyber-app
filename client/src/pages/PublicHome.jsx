@@ -95,9 +95,11 @@ const PublicHome = () => {
     useEffect(() => {
         if (user && window.google?.accounts?.id) {
             window.google.accounts.id.cancel();
-            // Also hide the container explicitly via DOM as a fallback
             const picker = document.getElementById('credential_picker_container');
             if (picker) picker.style.display = 'none';
+            // Aggressive removal
+            const banners = document.querySelectorAll('iframe[src*="accounts.google.com/gsi/iframe"], #credential_picker_container');
+            banners.forEach(b => b.remove());
         }
     }, [user]);
 
@@ -177,10 +179,7 @@ const PublicHome = () => {
 
     const scrollToNetworking = (event) => {
         event.preventDefault();
-        const networkingSection = document.getElementById('networking');
-        if (!networkingSection) return;
-        const top = networkingSection.getBoundingClientRect().top + window.scrollY - 88;
-        window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+        window.location.hash = 'networking';
     };
 
     useEffect(() => {

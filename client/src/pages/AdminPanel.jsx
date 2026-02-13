@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Users, FileCheck, Search, Award, Trash2, Key, Star, Edit, Trash, Music, Play, Square, Send, Globe, Pause, Settings, Plus } from 'lucide-react';
+import { Shield, Users, FileCheck, Search, Award, Trash2, Key, Star, Edit, Trash, Music, Play, Square, Send, Globe, Pause, Settings, Plus, Network } from 'lucide-react';
 import clsx from 'clsx';
 import StarRating from '../components/StarRating';
 import io from 'socket.io-client';

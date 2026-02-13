@@ -24,6 +24,18 @@ db.exec(`
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );
 
+  -- Migration to ensure password column exists (for old DBs)
+`);
+
+// Migration to ensure password column exists (for old DBs)
+try { db.exec("ALTER TABLE users ADD COLUMN password TEXT DEFAULT 'unreal_cyber_default'"); } catch (e) { }
+try { db.exec("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'student'"); } catch (e) { }
+try { db.exec("ALTER TABLE users ADD COLUMN display_name TEXT"); } catch (e) { }
+try { db.exec("ALTER TABLE users ADD COLUMN avatar_url TEXT"); } catch (e) { }
+try { db.exec("ALTER TABLE users ADD COLUMN private_access INTEGER DEFAULT 0"); } catch (e) { }
+
+db.exec(`
+
   CREATE TABLE IF NOT EXISTS meetings (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     link TEXT,
@@ -177,7 +189,58 @@ db.exec(`
     thumbnail_link TEXT,
     drive_link TEXT,
     file_id TEXT,
+    video_link TEXT,
+    extra_files TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS tracks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    description TEXT,
+    icon TEXT, 
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS track_steps (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    track_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    type TEXT CHECK(type IN ('video', 'quiz', 'lab', 'text')) NOT NULL,
+    content_id TEXT, 
+    order_index INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(track_id) REFERENCES tracks(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS track_progress (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    step_id INTEGER NOT NULL,
+    status TEXT CHECK(status IN ('locked', 'unlocked', 'completed')) DEFAULT 'locked',
+    completed_at TIMESTAMP,
+    FOREIGN KEY(user_id) REFERENCES users(id),
+    FOREIGN KEY(step_id) REFERENCES track_steps(id),
+    UNIQUE(user_id, step_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS quizzes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    description TEXT,
+    questions_json TEXT, 
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS user_quiz_attempts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    quiz_id INTEGER,
+    score INTEGER,
+    passed BOOLEAN,
+    attempted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(user_id) REFERENCES users(id),
+    FOREIGN KEY(quiz_id) REFERENCES quizzes(id)
   );
 `);
 

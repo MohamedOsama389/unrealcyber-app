@@ -37,6 +37,47 @@ const AdminPanel = () => {
     const [sqlText, setSqlText] = useState('');
     const [dbPassword, setDbPassword] = useState('');
     const [showSqlModal, setShowSqlModal] = useState(false);
+    const [tracks, setTracks] = useState([]);
+    const [selectedTrack, setSelectedTrack] = useState(null);
+    const [newTrack, setNewTrack] = useState({ title: '', description: '', icon: 'Network' });
+    const [newStep, setNewStep] = useState({ title: '', type: 'video', content_id: '', order_index: 0 });
+
+    const fetchTracks = async () => {
+        try {
+            const res = await axios.get('/api/tracks');
+            setTracks(res.data);
+        } catch (err) { console.error("Failed to fetch tracks"); }
+    };
+
+    const handleCreateTrack = async (e) => {
+        e.preventDefault();
+        try {
+            await axios.post('/api/tracks', newTrack);
+            setNewTrack({ title: '', description: '', icon: 'Network' });
+            fetchTracks();
+            alert("Track created!");
+        } catch (err) { alert("Failed to create track"); }
+    };
+
+    const handleAddStep = async (e) => {
+        e.preventDefault();
+        if (!selectedTrack) return;
+        try {
+            await axios.post(`/api/tracks/${selectedTrack.id}/steps`, newStep);
+            setNewStep({ title: '', type: 'video', content_id: '', order_index: 0 });
+            // Refresh detailed track info
+            const res = await axios.get(`/api/tracks/${selectedTrack.id}`);
+            setSelectedTrack(res.data);
+            alert("Step added!");
+        } catch (err) { alert("Failed to add step"); }
+    };
+
+    const selectTrackForEdit = async (trackId) => {
+        try {
+            const res = await axios.get(`/api/tracks/${trackId}`);
+            setSelectedTrack(res.data);
+        } catch (err) { alert("Failed to load track details"); }
+    };
 
     useEffect(() => {
         fetchUsers();
@@ -592,6 +633,16 @@ const AdminPanel = () => {
                 >
                     <Shield size={20} />
                     <span>Database</span>
+                </button>
+                <button
+                    onClick={() => { setActiveTab('tracks'); fetchTracks(); }}
+                    className={clsx(
+                        "flex items-center space-x-2 px-6 py-3 rounded-xl font-bold transition-all",
+                        activeTab === 'tracks' ? "bg-orange-600 text-white shadow-lg shadow-orange-500/30" : "bg-panel text-secondary hover:bg-white/10 dark:hover:bg-slate-800 hover:text-primary border border-border"
+                    )}
+                >
+                    <Network size={20} />
+                    <span>Tracks</span>
                 </button>
             </div>
 
@@ -1836,6 +1887,121 @@ const AdminPanel = () => {
                                 Download database.db
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* TRACKS TAB */}
+            {activeTab === 'tracks' && (
+                <div className="space-y-8">
+                    {/* Create Track */}
+                    <div className="glass-panel p-6 border-l-4 border-l-orange-500">
+                        <h3 className="font-bold text-lg text-primary mb-4 flex items-center">
+                            <Network className="mr-2 text-orange-400" /> Create New Track
+                        </h3>
+                        <form onSubmit={handleCreateTrack} className="flex gap-4 items-end">
+                            <div className="flex-1 space-y-2">
+                                <input
+                                    type="text"
+                                    placeholder="Track Title (e.g. Network Engineering)"
+                                    value={newTrack.title}
+                                    onChange={(e) => setNewTrack({ ...newTrack, title: e.target.value })}
+                                    className="input-field w-full"
+                                    required
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="Description"
+                                    value={newTrack.description}
+                                    onChange={(e) => setNewTrack({ ...newTrack, description: e.target.value })}
+                                    className="input-field w-full"
+                                />
+                            </div>
+                            <button type="submit" className="btn-primary px-8 h-[48px]">Create Track</button>
+                        </form>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Track List */}
+                        <div className="glass-panel p-6">
+                            <h3 className="font-bold text-lg text-primary mb-4">Existing Tracks</h3>
+                            <div className="space-y-4">
+                                {tracks.map(track => (
+                                    <div
+                                        key={track.id}
+                                        onClick={() => selectTrackForEdit(track.id)}
+                                        className={`p-4 rounded-xl border cursor-pointer transition-all ${selectedTrack?.id === track.id ? 'bg-orange-500/20 border-orange-500/50' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
+                                    >
+                                        <div className="font-bold text-primary">{track.title}</div>
+                                        <div className="text-xs text-secondary">{track.description}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Selected Track Editor */}
+                        {selectedTrack ? (
+                            <div className="glass-panel p-6 border border-orange-500/30">
+                                <h3 className="font-bold text-lg text-primary mb-4">Editing: {selectedTrack.title}</h3>
+
+                                {/* Add Step Form */}
+                                <form onSubmit={handleAddStep} className="mb-8 space-y-4 bg-white/5 p-4 rounded-xl">
+                                    <h4 className="font-bold text-sm text-secondary uppercase tracking-widest">Add Step</h4>
+                                    <input
+                                        type="text"
+                                        placeholder="Step Title"
+                                        value={newStep.title}
+                                        onChange={(e) => setNewStep({ ...newStep, title: e.target.value })}
+                                        className="input-field w-full"
+                                        required
+                                    />
+                                    <div className="flex gap-4">
+                                        <select
+                                            value={newStep.type}
+                                            onChange={(e) => setNewStep({ ...newStep, type: e.target.value })}
+                                            className="input-field bg-panel"
+                                        >
+                                            <option value="video">Video</option>
+                                            <option value="quiz">Quiz</option>
+                                            <option value="lab">Lab</option>
+                                        </select>
+                                        <input
+                                            type="text"
+                                            placeholder="Content ID (Video ID / Quiz ID)"
+                                            value={newStep.content_id}
+                                            onChange={(e) => setNewStep({ ...newStep, content_id: e.target.value })}
+                                            className="input-field w-full"
+                                        />
+                                        <input
+                                            type="number"
+                                            placeholder="Order"
+                                            value={newStep.order_index}
+                                            onChange={(e) => setNewStep({ ...newStep, order_index: parseInt(e.target.value) })}
+                                            className="input-field w-20"
+                                        />
+                                    </div>
+                                    <button type="submit" className="btn-primary w-full">Add Step</button>
+                                </form>
+
+                                {/* Steps List */}
+                                <div className="space-y-2">
+                                    <h4 className="font-bold text-sm text-secondary uppercase tracking-widest mb-2">Steps Sequence</h4>
+                                    {(selectedTrack.steps || []).map((step, idx) => (
+                                        <div key={idx} className="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/5">
+                                            <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-mono">{step.order_index}</div>
+                                            <div className="flex-1">
+                                                <div className="font-bold text-sm">{step.title}</div>
+                                                <div className="text-[10px] uppercase text-secondary">{step.type} • ID: {step.content_id}</div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex items-center justify-center text-secondary/40 text-sm uppercase tracking-widest font-bold">
+                                Select a track to manage steps
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

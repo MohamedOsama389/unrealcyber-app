@@ -24,8 +24,11 @@ import AdminPanel from './pages/AdminPanel';
 import PublicHome from './pages/PublicHome';
 import PublicSection from './pages/PublicSection';
 import PublicVideo from './pages/PublicVideo';
+import Progress from './pages/Progress';
+import Profile from './pages/Profile';
 import clsx from 'clsx';
 import ParticleIconsPage from './ParticleIconsPage';
+import BuilderPage from './pages/BuilderPage';
 
 function AppContent() {
   const { user } = useAuth();
@@ -55,10 +58,16 @@ function AppContent() {
           <Route path="/private/signup" element={<Signup />} />
           <Route path="/particle-icons" element={<ParticleIconsPage />} />
 
+          <Route path="/private/signup" element={<Signup />} />
+          <Route path="/particle-icons" element={<ParticleIconsPage />} />
+          <Route path="/progress" element={<Progress />} />
+          <Route path="/profile" element={<Profile />} />
+
           <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
             <Route path="/private" element={<Navigate to="/private/dashboard" replace />} />
-            <Route path="/private/dashboard" element={<Dashboard />} />
-            <Route path="/private/meetings" element={<Meetings />} />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/b/*" element={<BuilderPage />} />
+            <Route path="/admin" element={<ProtectedRoute requireAdmin={true}><AdminPanel /></ProtectedRoute>} />
             <Route path="/private/tasks" element={<Tasks />} />
             <Route path="/private/videos" element={<Videos />} />
             <Route path="/private/files" element={<Files />} />

@@ -6,6 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const botImport = require('./bot');
 const backupService = require('./backupService');
+const tracksRouter = require('./routes/tracks');
 const { initBot } = botImport; // Destructure initBot from the bot module
 // Removed top-level db require
 let db;
@@ -182,6 +183,7 @@ let partyState = {
 
 app.use(cors());
 app.use(express.json());
+app.use('/api/tracks', tracksRouter);
 
 const SECRET_KEY = "UNREAL_CYBER_SECRET_KEY_2026"; // In prod, use .env
 

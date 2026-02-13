@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, Component, Suspense } from 'react';
 import { Link } from 'react-router-dom';
-import { ShieldCheck, ArrowUpRight, Play, Activity, LogOut, Network, Shield, Code2, Send, Twitter, Linkedin, Youtube, MessageSquare, Instagram, Music, Facebook } from 'lucide-react';
+import { ShieldCheck, ArrowUpRight, Play, Activity, LogOut, Network, Shield, Code2, Send, Twitter, Linkedin, Youtube, MessageSquare, Instagram, Music, Facebook, ChevronDown, Map, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Canvas } from '@react-three/fiber';
 import axios from 'axios';
@@ -143,6 +143,9 @@ const PublicHome = () => {
             start: 0,
             end: "bottom bottom",
             onUpdate: (self) => {
+                // setScrollProgress(self.progress);
+                // Wait, the previous code triggered re-renders every frame? 
+                // That might be intentional for the morph. 
                 setScrollProgress(self.progress);
             }
         });
@@ -231,97 +234,6 @@ const PublicHome = () => {
                     <div className="absolute top-[60%] right-[30%] w-[300px] h-[300px] rounded-full bg-cyan-400/[0.03] blur-[80px]" />
                 </div>
 
-                {/* HERO SECTION */}
-                <section className="relative z-10 min-h-screen flex flex-col justify-center px-6 pt-32 lg:pt-36 pb-20">
-                    <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] xl:grid-cols-[1.14fr_0.86fr] gap-10 lg:gap-14 xl:gap-16 items-start">
-                        {/* Left Column: Academy Branding */}
-                        <div className="space-y-10 relative z-20 lg:pr-4">
-                            <div className="space-y-6">
-                                <h1 className="text-[clamp(2.75rem,8.5vw,6.8rem)] font-black tracking-tighter uppercase leading-[0.85] text-white max-w-[15ch]">
-                                    Unreal<span className="text-cyan-500 underline decoration-cyan-500/20 underline-offset-8">Cyber</span><br />
-                                    Academy
-                                </h1>
-                                <p className="text-lg md:text-xl text-slate-300 max-w-xl font-medium leading-relaxed">
-                                    {publicContent?.hero?.subtitle || 'Master the digital frontier. Professional training in networking, hacking, and modern engineering.'}
-                                </p>
-                            </div>
-
-                            {/* Navigation Blocks */}
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-5 max-w-3xl">
-                                {heroTiles.map((tile) => (
-                                    <a
-                                        key={tile.id}
-                                        href={`#${tile.id}`}
-                                        className={`group relative overflow-hidden rounded-[1.75rem] border ${tile.cardClass} bg-[radial-gradient(circle_at_18%_-10%,rgba(255,255,255,0.08),transparent_45%),linear-gradient(165deg,rgba(12,21,45,0.92),rgba(5,10,25,0.92))] px-5 py-5 min-h-[138px] transition-all duration-500 hover:-translate-y-1`}
-                                    >
-                                        <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[linear-gradient(130deg,transparent_10%,rgba(255,255,255,0.08)_45%,transparent_80%)]" />
-                                        <span className={`absolute right-4 top-4 w-1.5 h-1.5 rounded-full ${tile.dotClass}`} />
-                                        <div className={`relative w-10 h-10 rounded-xl border flex items-center justify-center ${tile.iconClass}`}>
-                                            <tile.Icon size={17} />
-                                        </div>
-                                        <div className="relative mt-8 space-y-1">
-                                            <p className="text-[12px] font-black uppercase tracking-[0.28em] text-white/90">{tile.label}</p>
-                                            <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-secondary/55">{tile.subtitle}</p>
-                                        </div>
-                                    </a>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Right Column: Latest Video Card */}
-                        <div className="relative w-full lg:pt-4 xl:pt-6">
-                            {(publicContent?.hero?.heroVideoLink || featured?.featuredVideo) ? (
-                                <div className="space-y-10 lg:ml-auto max-w-[56rem]">
-                                    <div className="group relative glass-panel p-4 rounded-[3.5rem] overflow-hidden shadow-2xl shadow-cyan-500/15 transform hover:-rotate-1 transition-all duration-700 hover:shadow-cyan-500/30">
-                                        <div className="absolute top-10 left-10 z-10 bg-cyan-500 text-black text-[12px] font-black px-6 py-2.5 rounded-full uppercase tracking-[0.25em] shadow-2xl">
-                                            Active Session
-                                        </div>
-                                        <a
-                                            href={publicContent?.hero?.heroVideoLink || (featured?.featuredVideo?.drive_link ? featured.featuredVideo.drive_link : '#')}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="block aspect-video rounded-[2.8rem] overflow-hidden bg-slate-900 border border-white/10 relative"
-                                        >
-                                            <img
-                                                src={(publicContent?.hero?.heroVideoLink && getVideoThumbnailUrl(publicContent.hero.heroVideoLink))
-                                                    ? getVideoThumbnailUrl(publicContent.hero.heroVideoLink)
-                                                    : (featured?.featuredVideo ? `/api/public/thumbnail/${featured.featuredVideo.drive_link ? extractDriveId(featured.featuredVideo.drive_link) : featured.featuredVideo.id}` : '')
-                                                }
-                                                className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-1000 group-hover:opacity-90"
-                                                alt=""
-                                            />
-                                            <div className="absolute inset-0 flex items-center justify-center">
-                                                <div className="w-28 h-28 rounded-full bg-cyan-500 text-black flex items-center justify-center shadow-2xl group-hover:scale-110 transition-all duration-500 group-hover:shadow-cyan-500/60">
-                                                    <Play size={38} fill="currentColor" />
-                                                </div>
-                                            </div>
-                                        </a>
-                                    </div>
-
-                                    <div className="text-center md:text-left px-10 space-y-4">
-                                        <div className="space-y-3">
-                                            <div className="flex items-center gap-6 justify-center md:justify-start">
-                                                <div className="h-px w-12 bg-cyan-500/40" />
-                                                <p className="text-lg md:text-2xl font-black uppercase tracking-[0.65em] text-cyan-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.6)]">LATEST VIDEO</p>
-                                            </div>
-                                            <h3 className="text-3xl md:text-5xl font-black text-white tracking-tighter leading-tight lg:max-w-3xl">
-                                                {publicContent?.hero?.heroVideoLink
-                                                    ? "Featured Academy Session"
-                                                    : (featured?.featuredVideo?.title || "Member Session")}
-                                            </h3>
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="glass-panel p-16 rounded-[2.5rem] text-center border-dashed border-2 border-white/5 space-y-6 max-w-[40rem] lg:ml-auto">
-                                    <Activity className="mx-auto text-cyan-500/20 animate-pulse" size={64} />
-                                    <p className="text-secondary/40 uppercase tracking-widest text-[10px] font-black">Syncing Unreal Collective Data...</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </section>
-
                 {/* Header / Navbar */}
                 <header className="fixed top-0 left-0 w-full z-50 border-b border-white/5 bg-slate-950/20 backdrop-blur-md">
                     <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -336,11 +248,22 @@ const PublicHome = () => {
                         </div>
 
                         <div className="flex items-center gap-6">
-                            <nav className="hidden lg:flex items-center gap-8 text-[10px] uppercase tracking-[0.4em] text-secondary font-bold">
+                            <nav className="hidden lg:flex items-center gap-8 text-[10px] uppercase tracking-[0.2em] text-secondary font-bold">
+                                {/* Tracks Dropdown */}
+                                <div className="relative group">
+                                    <button className="flex items-center gap-1 hover:text-cyan-400 transition-colors py-2">
+                                        TRACKS <ChevronDown size={12} />
+                                    </button>
+                                    <div className="absolute top-full left-0 mt-2 w-48 bg-[#0a101f] border border-white/10 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all transform translate-y-2 group-hover:translate-y-0 z-50 overflow-hidden">
+                                        <a href="#networking" className="block px-4 py-3 hover:bg-white/5 hover:text-cyan-400 transition-colors">Network</a>
+                                        <a href="#ethical-hacking" className="block px-4 py-3 hover:bg-white/5 hover:text-purple-400 transition-colors">Ethical Hacking</a>
+                                        <a href="#programming" className="block px-4 py-3 hover:bg-white/5 hover:text-blue-400 transition-colors">Programming</a>
+                                    </div>
+                                </div>
+
+                                <Link to="/progress" className="hover:text-cyan-400 transition-colors">Progress</Link>
+                                <Link to="/profile" className="hover:text-cyan-400 transition-colors">Profile</Link>
                                 <button type="button" onClick={scrollToAbout} className="hover:text-cyan-400 transition-colors">ABOUT</button>
-                                <a href="#networking" className="hover:text-cyan-400 transition-colors">Network</a>
-                                <a href="#ethical-hacking" className="hover:text-purple-400 transition-colors">Ethical Hacking</a>
-                                <a href="#programming" className="hover:text-blue-400 transition-colors">Programming</a>
                             </nav>
 
                             <div className="h-6 w-[1px] bg-white/10 hidden lg:block" />
@@ -386,6 +309,83 @@ const PublicHome = () => {
                     </div>
                 </header>
 
+                {/* HERO SECTION - REDESIGNED */}
+                <section className="relative z-10 min-h-screen flex flex-col justify-center px-6 pt-32 lg:pt-36 pb-20">
+                    <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] xl:grid-cols-[1.14fr_0.86fr] gap-10 lg:gap-14 xl:gap-16 items-start">
+                        {/* Left Column: Academy Branding */}
+                        <div className="space-y-10 relative z-20 lg:pr-4">
+                            <div className="space-y-6">
+                                <h1 className="text-[clamp(2.75rem,8.5vw,6.8rem)] font-black tracking-tighter uppercase leading-[0.85] text-white max-w-[15ch]">
+                                    Unreal<span className="text-cyan-500 underline decoration-cyan-500/20 underline-offset-8">Cyber</span><br />
+                                    Academy
+                                </h1>
+                                <p className="text-lg md:text-xl text-slate-300 max-w-xl font-medium leading-relaxed">
+                                    {publicContent?.hero?.subtitle || 'Master the digital frontier. Professional training in networking, hacking, and modern engineering.'}
+                                </p>
+                            </div>
+
+                            {/* Navigation Blocks */}
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-5 max-w-3xl">
+                                {heroTiles.map((tile) => (
+                                    <a
+                                        key={tile.id}
+                                        href={`#${tile.id}`}
+                                        className={`group relative overflow-hidden rounded-[1.75rem] border ${tile.cardClass} bg-[radial-gradient(circle_at_18%_-10%,rgba(255,255,255,0.08),transparent_45%),linear-gradient(165deg,rgba(12,21,45,0.92),rgba(5,10,25,0.92))] px-5 py-5 min-h-[138px] transition-all duration-500 hover:-translate-y-1`}
+                                    >
+                                        <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[linear-gradient(130deg,transparent_10%,rgba(255,255,255,0.08)_45%,transparent_80%)]" />
+                                        <span className={`absolute right-4 top-4 w-1.5 h-1.5 rounded-full ${tile.dotClass}`} />
+                                        <div className={`relative w-10 h-10 rounded-xl border flex items-center justify-center ${tile.iconClass}`}>
+                                            <tile.Icon size={17} />
+                                        </div>
+                                        <div className="relative mt-8 space-y-1">
+                                            <p className="text-[12px] font-black uppercase tracking-[0.28em] text-white/90">{tile.label}</p>
+                                            <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-secondary/55">{tile.subtitle}</p>
+                                        </div>
+                                    </a>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Right Column: Featured Video (Redesigned - Prominent) */}
+                        <div className="relative w-full lg:pt-4 xl:pt-6">
+                            {(publicContent?.hero?.heroVideoLink || featured?.featuredVideo) ? (
+                                <div className="space-y-6 lg:ml-auto max-w-[56rem]">
+                                    <div className="group relative glass-panel p-2 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-cyan-500/10 transform hover:scale-[1.02] transition-all duration-700 hover:shadow-cyan-500/30">
+                                        <a
+                                            href={publicContent?.hero?.heroVideoLink || (featured?.featuredVideo?.drive_link ? featured.featuredVideo.drive_link : '#')}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="block aspect-video rounded-[2.2rem] overflow-hidden bg-slate-900 border border-white/10 relative"
+                                        >
+                                            <img
+                                                src={(publicContent?.hero?.heroVideoLink && getVideoThumbnailUrl(publicContent.hero.heroVideoLink))
+                                                    ? getVideoThumbnailUrl(publicContent.hero.heroVideoLink)
+                                                    : (featured?.featuredVideo ? `/api/public/thumbnail/${featured.featuredVideo.drive_link ? extractDriveId(featured.featuredVideo.drive_link) : featured.featuredVideo.id}` : '')
+                                                }
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
+                                                alt=""
+                                            />
+                                            <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors">
+                                                <div className="w-24 h-24 rounded-full bg-cyan-500/90 text-black flex items-center justify-center shadow-xl group-hover:scale-110 transition-all duration-500 group-hover:shadow-cyan-500/60 backdrop-blur-sm">
+                                                    <Play size={32} fill="currentColor" />
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </div>
+
+                                    {/* Minimal Video Title underneath if needed, or keeping it clean as per 'removing extraneous text' */}
+                                    {/* Leaving completely clean to match 'ensuring the thumbnail fills its container' focus */}
+                                </div>
+                            ) : (
+                                <div className="glass-panel p-16 rounded-[2.5rem] text-center border-dashed border-2 border-white/5 space-y-6 max-w-[40rem] lg:ml-auto">
+                                    <Activity className="mx-auto text-cyan-500/20 animate-pulse" size={64} />
+                                    <p className="text-secondary/40 uppercase tracking-widest text-[10px] font-black">Syncing Unreal Collective Data...</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </section>
+
                 {/* Scrollable Content Layers */}
                 <main ref={sectionsContainerRef} className="relative z-10">
                     <ScrollSections sections={publicContent?.sections} />
@@ -402,9 +402,11 @@ const PublicHome = () => {
                             <p className="text-secondary text-[10px] max-w-sm leading-relaxed opacity-50 font-medium">
                                 The elite training ground for the next generation of cybersecurity experts. Join the collective and master the digital frontier.
                             </p>
+                        </div>
 
-                            {/* Join Buttons */}
-                            <div className="flex flex-wrap gap-2 justify-center md:justify-start pt-2">
+                        <div className="space-y-6">
+                            <h3 className="text-xl font-black uppercase tracking-tight">Connect</h3>
+                            <div className="flex flex-wrap justify-end gap-3">
                                 {publicContent?.socials?.youtube && (
                                     <a href={publicContent.socials.youtube} target="_blank" rel="noopener noreferrer"
                                         className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500/20 transition-all" title="YouTube">
@@ -455,21 +457,18 @@ const PublicHome = () => {
                                 )}
                             </div>
                         </div>
-
-                        <div className="flex flex-wrap justify-center gap-8">
-                            {publicContent?.socialLinks?.filter((link) => link.url).map((link, idx) => (
-                                <a
-                                    key={idx}
-                                    href={link.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-cyan-500/50 hover:bg-cyan-500/5 transition-all group"
-                                    title={link.platform}
-                                >
-                                    <span className="text-secondary group-hover:text-white uppercase text-[10px] font-black tracking-widest">{link.platform}</span>
-                                </a>
-                            ))}
-                        </div>
+                        {publicContent?.socialLinks?.filter((link) => link.url).map((link, idx) => (
+                            <a
+                                key={idx}
+                                href={link.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-cyan-500/50 hover:bg-cyan-500/5 transition-all group"
+                                title={link.platform}
+                            >
+                                <span className="text-secondary group-hover:text-white uppercase text-[10px] font-black tracking-widest">{link.platform}</span>
+                            </a>
+                        ))}
                     </div>
 
                     <div className="max-w-7xl mx-auto px-6 py-8 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4 text-[8px] uppercase tracking-[0.4em] text-secondary/30 font-bold">
@@ -479,8 +478,8 @@ const PublicHome = () => {
                         </div>
                     </div>
                 </footer>
-            </div>
-        </GlobalErrorBoundary>
+            </div >
+        </GlobalErrorBoundary >
     );
 };
 

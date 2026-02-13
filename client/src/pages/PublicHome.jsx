@@ -277,32 +277,38 @@ const PublicHome = () => {
                                         )}
                                     </div>
                                 ) : (
-                                    <div className="flex items-center gap-4 bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl backdrop-blur-md">
-                                        <div className="w-7 h-7 rounded-full overflow-hidden border border-white/20">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-[10px] font-black text-white uppercase tracking-wider">{user.display_name || user.username}</span>
+                                            <button
+                                                onClick={logout}
+                                                className="text-[8px] font-bold text-red-400/60 hover:text-red-400 uppercase tracking-[0.2em] transition-colors"
+                                            >
+                                                Sign Out
+                                            </button>
+                                        </div>
+                                        <div className="w-9 h-9 rounded-xl overflow-hidden border border-white/10 bg-white/5 p-0.5">
                                             {user.avatar_url ? (
-                                                <img src={user.avatar_url} className="w-full h-full object-cover" alt="" />
+                                                <img src={user.avatar_url} className="w-full h-full object-cover rounded-lg" alt="" />
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-white bg-gradient-to-tr from-cyan-500 to-blue-600">
+                                                <div className="w-full h-full flex items-center justify-center text-[11px] font-black text-white bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-lg">
                                                     {user.display_name?.[0] || 'U'}
                                                 </div>
                                             )}
                                         </div>
-                                        <button onClick={logout} className="inline-flex items-center gap-2 text-[9px] font-black text-red-400/80 hover:text-red-400 uppercase tracking-[0.2em] transition-colors">
-                                            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-red-400/40 bg-red-400/10">
-                                                <LogOut size={10} />
-                                            </span>
-                                            <span>Sign Out</span>
-                                        </button>
                                     </div>
                                 )}
 
-                                {user && (user.role === 'admin' || user.private_access) && (
-                                    <Link
-                                        to="/private/dashboard"
-                                        className="hidden sm:inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-[10px] font-black text-cyan-400 hover:bg-cyan-500/20 transition-all uppercase tracking-[0.2em] shadow-lg shadow-cyan-500/5"
+                                {user && (user.role === 'admin' || user.private_access === 1) && (
+                                    <a
+                                        href="https://unrealcyber.up.railway.app/"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-[10px] font-black text-cyan-400 hover:bg-cyan-500/20 transition-all uppercase tracking-[0.2em] hover:shadow-[0_0_20px_rgba(6,182,212,0.15)] group"
                                     >
-                                        Login to Lab <ArrowUpRight size={12} strokeWidth={3} />
-                                    </Link>
+                                        <span>Join Private Lab</span>
+                                        <ArrowUpRight size={12} strokeWidth={3} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                                    </a>
                                 )}
                             </div>
                         </div>

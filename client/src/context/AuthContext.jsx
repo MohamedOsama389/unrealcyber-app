@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
+
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
@@ -8,13 +9,23 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        const savedUser = localStorage.getItem('user');
-        if (token && savedUser) {
-            setUser(JSON.parse(savedUser));
-            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        }
-        setLoading(false);
+        const initAuth = async () => {
+            const token = localStorage.getItem('token');
+            if (token) {
+                try {
+                    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+                    const res = await axios.get('/api/auth/me');
+                    const userData = res.data;
+                    setUser(userData);
+                    localStorage.setItem('user', JSON.stringify(userData));
+                } catch (err) {
+                    console.error("Auth refresh failed:", err);
+                    logout(); // Token might be invalid/expired
+                }
+            }
+            setLoading(false);
+        };
+        initAuth();
     }, []);
 
     const login = async (username, password) => {

@@ -349,17 +349,43 @@ app.post('/api/auth/google', async (req, res) => {
         const token = jwt.sign({ id: user.id, username: user.username, role: user.role, private_access: user.private_access || 0 }, SECRET_KEY);
         res.json({
             token,
-            role: user.role,
             username: user.username,
+            role: user.role,
             display_name: user.display_name,
             avatar_url: user.avatar_url,
-            avatar_id: user.avatar_id,
-            avatar_version: user.avatar_version,
             private_access: user.private_access || 0
         });
     } catch (err) {
-        console.error("[Auth] Google login failed:", err.message);
-        res.status(500).json({ error: "Google login failed" });
+        console.error("Google Auth error:", err);
+        res.status(500).json({ error: "Authentication failed" });
+    }
+});
+
+// Get current user profile (refresh)
+app.get('/api/auth/me', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: "No token provided" });
+        }
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, SECRET_KEY);
+
+        const user = db.prepare('SELECT id, username, role, private_access, display_name, avatar_url, avatar_id, avatar_version, streak_count FROM users WHERE id = ?').get(decoded.id);
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        res.json({
+            username: user.username,
+            role: user.role,
+            display_name: user.display_name,
+            avatar_url: user.avatar_url,
+            private_access: user.private_access || 0,
+            avatar_id: user.avatar_id,
+            avatar_version: user.avatar_version,
+            streak_count: user.streak_count
+        });
+    } catch (err) {
+        res.status(401).json({ error: "Invalid token" });
     }
 });
 

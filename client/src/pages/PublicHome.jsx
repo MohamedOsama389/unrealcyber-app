@@ -142,22 +142,30 @@ const PublicHome = () => {
 
     const getEmbedUrl = (url) => {
         if (!url) return '';
-        if (url.includes('youtube.com/embed/') || url.includes('drive.google.com/file/d/')) {
-            if (url.includes('drive.google.com')) {
-                return url.replace('/view', '/preview');
+        const rawUrl = String(url).trim();
+
+        if (rawUrl.includes('youtube.com/embed/') || rawUrl.includes('drive.google.com/file/d/')) {
+            if (rawUrl.includes('drive.google.com')) {
+                return rawUrl.replace('/view', '/preview');
             }
-            return url;
+            return rawUrl;
         }
 
-        // YouTube
-        const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
-        if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
+        // YouTube robust check
+        const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+        const match = rawUrl.match(ytRegex);
+        if (match && match[1]) {
+            return `https://www.youtube.com/embed/${match[1]}?autoplay=0&rel=0`;
+        }
 
-        // Drive
-        const driveMatch = url.match(/(?:drive\.google\.com\/(?:file\/d\/|open\?id=))([a-zA-Z0-9_-]+)/);
-        if (driveMatch) return `https://drive.google.com/file/d/${driveMatch[1]}/preview`;
+        // Google Drive
+        const driveRegex = /[-\w]{25,}/;
+        if (rawUrl.includes('drive.google.com')) {
+            const dMatch = rawUrl.match(driveRegex);
+            if (dMatch) return `https://drive.google.com/file/d/${dMatch[0]}/preview`;
+        }
 
-        return url;
+        return rawUrl;
     };
 
     const scrollToNetworking = (event) => {
@@ -362,10 +370,10 @@ const PublicHome = () => {
                 </header>
 
                 {/* HERO SECTION - REFINED */}
-                <section className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 pt-32 pb-20">
-                    <div className="max-w-4xl mx-auto w-full text-center space-y-16">
-                        {/* 1. Headline & Content First */}
-                        <div className="space-y-8 max-w-3xl mx-auto">
+                <section className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 pt-32 pb-20 overflow-hidden">
+                    <div className="max-w-4xl mx-auto w-full text-center flex flex-col gap-16">
+                        {/* 1. Headline & CTA First (Top) */}
+                        <div className="space-y-8 max-w-3xl mx-auto order-1">
                             <div className="space-y-4">
                                 <h1 className="text-[clamp(2.5rem,10vw,7.5rem)] font-black tracking-tighter uppercase leading-[0.8] text-white">
                                     Unreal<span className="text-cyan-500">Cyber</span><br />
@@ -394,8 +402,8 @@ const PublicHome = () => {
                             </div>
                         </div>
 
-                        {/* 2. Video Card Second */}
-                        <div className="relative group w-full max-w-4xl mx-auto">
+                        {/* 2. Video Card Second (Below) */}
+                        <div className="relative group w-full max-w-4xl mx-auto order-2">
                             <div className="absolute -inset-4 bg-cyan-500/5 rounded-[2rem] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
                             {publicContent?.hero?.heroVideoLink || featured?.featuredVideo ? (
                                 <div className="aspect-video w-full rounded-2xl overflow-hidden shadow-2xl border border-white/5 bg-slate-900/50 backdrop-blur-sm relative transition-transform hover:scale-[1.01] duration-500">

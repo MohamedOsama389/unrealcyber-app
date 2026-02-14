@@ -207,7 +207,9 @@ db.exec(`
     track_id INTEGER NOT NULL,
     title TEXT NOT NULL,
     type TEXT CHECK(type IN ('video', 'quiz', 'lab', 'text')) NOT NULL,
-    content_id TEXT, 
+    online_id TEXT, 
+    drive_id TEXT,
+    upload_url TEXT,
     order_index INTEGER DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(track_id) REFERENCES tracks(id)
@@ -265,6 +267,8 @@ ensureColumn('users', 'last_activity_date', 'TEXT');
 ensureColumn('users', 'display_name', 'TEXT');
 ensureColumn('users', 'avatar_url', 'TEXT');
 ensureColumn('users', 'private_access', 'INTEGER DEFAULT 0');
+ensureColumn('users', 'assigned_track_id', 'INTEGER');
+ensureColumn('users', 'pref_source', "TEXT DEFAULT 'online'");
 
 ensureColumn('tasks', 'notes', 'TEXT');
 
@@ -274,6 +278,11 @@ ensureColumn('labs', 'extra_files', 'TEXT'); // JSON array of supporting files {
 ensureColumn('videos', 'folder_id', 'TEXT');
 ensureColumn('videos', 'resources', 'TEXT');
 ensureColumn('files', 'folder_id', 'TEXT');
+
+// Track steps enhancements
+ensureColumn('track_steps', 'online_id', 'TEXT');
+ensureColumn('track_steps', 'drive_id', 'TEXT');
+ensureColumn('track_steps', 'upload_url', 'TEXT');
 
 // Seed Admin using PREPARED STATEMENTS to avoid syntax errors with special chars
 const seedAdmin = () => {

@@ -1643,6 +1643,18 @@ app.put('/api/users/:id/private-access', authenticateToken, (req, res) => {
     res.json({ success: true, private_access: enabled ? 1 : 0 });
 });
 
+app.put('/api/users/:id/track', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') return res.sendStatus(403);
+    const { id } = req.params;
+    const { trackId, prefSource } = req.body;
+    try {
+        db.prepare('UPDATE users SET assigned_track_id = ?, pref_source = ? WHERE id = ?').run(trackId || null, prefSource || 'online', id);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.put('/api/users/:id/password', authenticateToken, (req, res) => {
     if (req.user.role !== 'admin') return res.sendStatus(403);
     const { id } = req.params;

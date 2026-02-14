@@ -19,18 +19,7 @@ router.get('/:id', (req, res) => {
         if (!track) return res.status(404).json({ error: 'Track not found' });
 
         const steps = db.prepare('SELECT * FROM track_steps WHERE track_id = ? ORDER BY order_index ASC').all(req.params.id);
-
-        // Enhance steps with content where possible (simple names)
-        // Ideally, you'd JOIN or separate fetching, but simple loop is okay for now
-        const enhancedSteps = steps.map(step => {
-            if (step.type === 'video' && step.content_id) {
-                const vid = db.prepare('SELECT title FROM videos WHERE id = ?').get(step.content_id);
-                if (vid) step.content_title = vid.title;
-            }
-            return step;
-        });
-
-        res.json({ ...track, steps: enhancedSteps });
+        res.json({ ...track, steps });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -49,9 +38,17 @@ router.post('/', (req, res) => {
 
 // POST /api/tracks/:id/steps - Add Step (Admin)
 router.post('/:id/steps', (req, res) => {
-    const { title, type, content_id, order_index } = req.body;
+    const { title, type, online_id, drive_id, upload_url, order_index } = req.body;
     try {
-        const info = db.prepare('INSERT INTO track_steps (track_id, title, type, content_id, order_index) VALUES (?, ?, ?, ?, ?)').run(req.params.id, title, type, content_id, order_index);
+        const info = db.prepare('INSERT INTO track_steps (track_id, title, type, online_id, drive_id, upload_url, order_index) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
+            req.params.id,
+            title,
+            type,
+            online_id || null,
+            drive_id || null,
+            upload_url || null,
+            order_index
+        );
         res.json({ id: info.lastInsertRowid });
     } catch (err) {
         res.status(500).json({ error: err.message });

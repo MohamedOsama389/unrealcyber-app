@@ -455,7 +455,7 @@ const PublicHome = () => {
                 </main >
 
                 {/* Footer */}
-                < footer id="about-section" ref={footerRef} className="relative z-10 border-t border-white/5 bg-[#02040a]/90 backdrop-blur-2xl" >
+                < footer id="about-section" ref={footerRef} className="relative z-10 border-t border-white/5 bg-[#02040a]/40" >
                     <div className="max-w-7xl mx-auto px-6 py-16 flex flex-col md:flex-row justify-between items-center gap-12 text-center md:text-left">
                         <div className="space-y-4">
                             <div className="flex items-center justify-center md:justify-start gap-4">

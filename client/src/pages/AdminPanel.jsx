@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Users, FileCheck, Search, Award, Trash2, Key, Star, Edit, Trash, Music, Play, Square, Send, Globe, Pause, Settings, Plus, Network } from 'lucide-react';
+import { Shield, Users, FileCheck, Search, Award, Trash2, Key, Star, Edit, Trash, Music, Play, Square, Send, Globe, Pause, Settings, Plus, Network, TrendingUp } from 'lucide-react';
 import clsx from 'clsx';
 import StarRating from '../components/StarRating';
 import io from 'socket.io-client';
@@ -40,7 +40,7 @@ const AdminPanel = () => {
     const [tracks, setTracks] = useState([]);
     const [selectedTrack, setSelectedTrack] = useState(null);
     const [newTrack, setNewTrack] = useState({ title: '', description: '', icon: 'Network' });
-    const [newStep, setNewStep] = useState({ title: '', type: 'video', content_id: '', order_index: 0 });
+    const [newStep, setNewStep] = useState({ title: '', type: 'video', online_id: '', drive_id: '', upload_url: '', order_index: 0 });
 
     const fetchTracks = async () => {
         try {
@@ -64,7 +64,7 @@ const AdminPanel = () => {
         if (!selectedTrack) return;
         try {
             await axios.post(`/api/tracks/${selectedTrack.id}/steps`, newStep);
-            setNewStep({ title: '', type: 'video', content_id: '', order_index: 0 });
+            setNewStep({ title: '', type: 'video', online_id: '', drive_id: '', upload_url: '', order_index: 0 });
             // Refresh detailed track info
             const res = await axios.get(`/api/tracks/${selectedTrack.id}`);
             setSelectedTrack(res.data);
@@ -362,6 +362,16 @@ const AdminPanel = () => {
         }
     };
 
+    const updateUserTrack = async (userId, trackId, prefSource) => {
+        try {
+            await axios.put(`/api/users/${userId}/track`, { assigned_track_id: trackId, pref_source: prefSource });
+            fetchUsers();
+            alert("User progress updated!");
+        } catch (err) {
+            alert("Failed to update user track");
+        }
+    };
+
     const fetchSiteSettings = async () => {
         try {
             const res = await axios.get('/api/settings');
@@ -643,6 +653,16 @@ const AdminPanel = () => {
                 >
                     <Network size={20} />
                     <span>Tracks</span>
+                </button>
+                <button
+                    onClick={() => { setActiveTab('progress'); fetchTracks(); fetchUsers(); }}
+                    className={clsx(
+                        "flex items-center space-x-2 px-6 py-3 rounded-xl font-bold transition-all",
+                        activeTab === 'progress' ? "bg-cyan-600 text-white shadow-lg shadow-cyan-500/30" : "bg-panel text-secondary hover:bg-white/10 dark:hover:bg-slate-800 hover:text-primary border border-border"
+                    )}
+                >
+                    <TrendingUp size={20} />
+                    <span>Recruit Progress</span>
                 </button>
             </div>
 
@@ -1959,27 +1979,54 @@ const AdminPanel = () => {
                                         <select
                                             value={newStep.type}
                                             onChange={(e) => setNewStep({ ...newStep, type: e.target.value })}
-                                            className="input-field bg-panel"
+                                            className="input-field bg-panel h-11"
                                         >
                                             <option value="video">Video</option>
                                             <option value="quiz">Quiz</option>
                                             <option value="lab">Lab</option>
                                         </select>
                                         <input
-                                            type="text"
-                                            placeholder="Content ID (Video ID / Quiz ID)"
-                                            value={newStep.content_id}
-                                            onChange={(e) => setNewStep({ ...newStep, content_id: e.target.value })}
-                                            className="input-field w-full"
-                                        />
-                                        <input
                                             type="number"
                                             placeholder="Order"
                                             value={newStep.order_index}
                                             onChange={(e) => setNewStep({ ...newStep, order_index: parseInt(e.target.value) })}
-                                            className="input-field w-20"
+                                            className="input-field w-20 h-11"
                                         />
                                     </div>
+
+                                    {newStep.type === 'video' ? (
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <input
+                                                type="text"
+                                                placeholder="Online (YT ID)"
+                                                value={newStep.online_id}
+                                                onChange={(e) => setNewStep({ ...newStep, online_id: e.target.value })}
+                                                className="input-field h-11"
+                                            />
+                                            <input
+                                                type="text"
+                                                placeholder="Drive ID"
+                                                value={newStep.drive_id}
+                                                onChange={(e) => setNewStep({ ...newStep, drive_id: e.target.value })}
+                                                className="input-field h-11"
+                                            />
+                                            <input
+                                                type="text"
+                                                placeholder="Upload URL"
+                                                value={newStep.upload_url}
+                                                onChange={(e) => setNewStep({ ...newStep, upload_url: e.target.value })}
+                                                className="input-field h-11"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <input
+                                            type="text"
+                                            placeholder="Content ID (Quiz/Lab)"
+                                            value={newStep.online_id}
+                                            onChange={(e) => setNewStep({ ...newStep, online_id: e.target.value })}
+                                            className="input-field w-full h-11"
+                                        />
+                                    )}
                                     <button type="submit" className="btn-primary w-full">Add Step</button>
                                 </form>
 
@@ -1987,12 +2034,21 @@ const AdminPanel = () => {
                                 <div className="space-y-2">
                                     <h4 className="font-bold text-sm text-secondary uppercase tracking-widest mb-2">Steps Sequence</h4>
                                     {(selectedTrack.steps || []).map((step, idx) => (
-                                        <div key={idx} className="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/5">
-                                            <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-mono">{step.order_index}</div>
-                                            <div className="flex-1">
-                                                <div className="font-bold text-sm">{step.title}</div>
-                                                <div className="text-[10px] uppercase text-secondary">{step.type} • ID: {step.content_id}</div>
+                                        <div key={idx} className="flex flex-col gap-2 p-3 bg-white/5 rounded-lg border border-white/5">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-mono">{step.order_index}</div>
+                                                <div className="flex-1">
+                                                    <div className="font-bold text-sm">{step.title}</div>
+                                                    <div className="text-[10px] uppercase text-secondary">{step.type}</div>
+                                                </div>
                                             </div>
+                                            {step.type === 'video' && (
+                                                <div className="grid grid-cols-1 gap-1 pl-9 text-[9px] font-mono text-secondary/60">
+                                                    {step.online_id && <div>ONLINE: {step.online_id}</div>}
+                                                    {step.drive_id && <div>DRIVE: {step.drive_id}</div>}
+                                                    {step.upload_url && <div>UPLOAD: {step.upload_url}</div>}
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
@@ -2002,6 +2058,68 @@ const AdminPanel = () => {
                                 Select a track to manage steps
                             </div>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {/* PROGRESS TAB */}
+            {activeTab === 'progress' && (
+                <div className="space-y-6">
+                    <div className="glass-panel p-6 border-l-4 border-l-cyan-500">
+                        <h3 className="text-xl font-bold text-primary flex items-center">
+                            <TrendingUp size={24} className="mr-3 text-cyan-400" /> Recruit Progress Management
+                        </h3>
+
+                        <div className="overflow-hidden rounded-2xl border border-border">
+                            <table className="w-full text-left">
+                                <thead className="bg-panel border-b border-border text-secondary uppercase text-[10px] tracking-wider font-black">
+                                    <tr>
+                                        <th className="p-4">Recruit</th>
+                                        <th className="p-4">Assigned Track</th>
+                                        <th className="p-4">Video Source</th>
+                                        <th className="p-4 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-border">
+                                    {users.filter(u => u.role !== 'admin').map((u) => (
+                                        <tr key={u.id} className="hover:bg-white/5 transition-colors">
+                                            <td className="p-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center text-[10px] font-bold text-cyan-400 uppercase">
+                                                        {u.username[0]}
+                                                    </div>
+                                                    <span className="font-bold text-primary">{u.username}</span>
+                                                </div>
+                                            </td>
+                                            <td className="p-4">
+                                                <select
+                                                    value={u.assigned_track_id || ''}
+                                                    onChange={(e) => updateUserTrack(u.id, e.target.value || null, u.pref_source)}
+                                                    className="input-field py-1 text-xs bg-panel h-9"
+                                                >
+                                                    <option value="">No Track Assigned</option>
+                                                    {tracks.map(t => <option key={t.id} value={t.id}>{t.title}</option>)}
+                                                </select>
+                                            </td>
+                                            <td className="p-4">
+                                                <select
+                                                    value={u.pref_source || 'online'}
+                                                    onChange={(e) => updateUserTrack(u.id, u.assigned_track_id, e.target.value)}
+                                                    className="input-field py-1 text-xs bg-panel h-9"
+                                                >
+                                                    <option value="online">Online (YouTube)</option>
+                                                    <option value="drive">Google Drive</option>
+                                                    <option value="upload">Local Upload</option>
+                                                </select>
+                                            </td>
+                                            <td className="p-4 text-right">
+                                                <button className="text-xs font-bold text-cyan-400 hover:underline">View History</button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             )}

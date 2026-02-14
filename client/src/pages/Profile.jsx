@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, User, Shield, Zap, Award, Edit2, Video, TrendingUp, Target, BookOpen, Activity } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Profile() {
-    const { user } = useAuth();
+    const { user, updateUser } = useAuth();
     const [stats, setStats] = useState({
         totalVideosWatched: 0,
         fieldProgress: {
@@ -18,6 +19,8 @@ export default function Profile() {
         recentActivity: []
     });
     const [loading, setLoading] = useState(true);
+    const [uploadingAvatar, setUploadingAvatar] = useState(false);
+    const fileInputRef = useRef(null);
 
     useEffect(() => {
         if (!user) return;
@@ -104,7 +107,7 @@ export default function Profile() {
                 <Link to="/" className="flex items-center gap-2 text-sm font-bold tracking-widest uppercase hover:text-cyan-400">
                     <ArrowLeft size={16} /> Back to Home
                 </Link>
-                <div className="text-xl font-black uppercase tracking-tighter text-cyan-500">Operative Profile</div>
+                <div className="text-xl font-black uppercase tracking-tighter text-cyan-500">Profile</div>
                 <div className="w-10" />
             </header>
 
@@ -123,14 +126,42 @@ export default function Profile() {
                                     <div className="w-full h-full flex items-center justify-center text-4xl font-black text-cyan-500">{user.username[0].toUpperCase()}</div>
                                 )}
                             </div>
-                            <button className="absolute bottom-0 right-0 p-2 rounded-full bg-cyan-500 text-black hover:scale-110 transition-transform shadow-lg">
-                                <Edit2 size={14} />
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                className="hidden"
+                                accept="image/*"
+                                onChange={async (e) => {
+                                    const file = e.target.files[0];
+                                    if (!file) return;
+
+                                    const formData = new FormData();
+                                    formData.append('avatar', file);
+
+                                    try {
+                                        setUploadingAvatar(true);
+                                        const res = await axios.post('/api/profile/upload-avatar', formData);
+                                        const { avatar_id, avatar_version } = res.data;
+                                        updateUser({ avatar_id, avatar_version });
+                                    } catch (err) {
+                                        console.error("Avatar upload failed:", err);
+                                    } finally {
+                                        setUploadingAvatar(false);
+                                    }
+                                }}
+                            />
+                            <button
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={uploadingAvatar}
+                                className="absolute bottom-0 right-0 p-2 rounded-full bg-cyan-500 text-black hover:scale-110 transition-transform shadow-lg disabled:opacity-50"
+                            >
+                                <Edit2 size={14} className={uploadingAvatar ? 'animate-spin' : ''} />
                             </button>
                         </div>
 
                         <div className="space-y-1">
                             <h2 className="text-2xl font-black uppercase tracking-tight">{user.display_name || user.username}</h2>
-                            <p className="text-xs font-mono text-cyan-500/60 uppercase tracking-widest">Level {stats.level} Operative</p>
+                            <p className="text-xs font-mono text-cyan-500/60 uppercase tracking-widest">Level {stats.level}</p>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">

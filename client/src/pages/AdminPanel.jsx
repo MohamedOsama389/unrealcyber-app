@@ -41,6 +41,7 @@ const AdminPanel = () => {
     const [selectedTrack, setSelectedTrack] = useState(null);
     const [newTrack, setNewTrack] = useState({ title: '', description: '', icon: 'Network' });
     const [newStep, setNewStep] = useState({ title: '', type: 'video', online_id: '', drive_id: '', upload_url: '', order_index: 0 });
+    const [showPublicVideoSelector, setShowPublicVideoSelector] = useState(false);
 
     const fetchTracks = async () => {
         try {
@@ -72,6 +73,16 @@ const AdminPanel = () => {
         } catch (err) { alert("Failed to add step"); }
     };
 
+    const handleDeleteTrack = async (trackId) => {
+        if (!window.confirm("Are you sure you want to delete this track? All associated steps and progress will be lost.")) return;
+        try {
+            await axios.delete(`/api/tracks/${trackId}`);
+            if (selectedTrack?.id === trackId) setSelectedTrack(null);
+            fetchTracks();
+            alert("Track deleted!");
+        } catch (err) { alert("Failed to delete track"); }
+    };
+
     const selectTrackForEdit = async (trackId) => {
         try {
             const res = await axios.get(`/api/tracks/${trackId}`);
@@ -88,6 +99,7 @@ const AdminPanel = () => {
         fetchPublicContent();
         fetchPrivateAllowlist();
         fetchStats();
+        fetchTracks();
 
         const socket = io();
         socket.on('party_update', (state) => {
@@ -1949,11 +1961,25 @@ const AdminPanel = () => {
                                 {tracks.map(track => (
                                     <div
                                         key={track.id}
-                                        onClick={() => selectTrackForEdit(track.id)}
-                                        className={`p-4 rounded-xl border cursor-pointer transition-all ${selectedTrack?.id === track.id ? 'bg-orange-500/20 border-orange-500/50' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
+                                        className={`p-4 rounded-xl border flex items-center justify-between transition-all ${selectedTrack?.id === track.id ? 'bg-orange-500/20 border-orange-500/50' : 'bg-white/5 border-white/10 hover:bg-white/10'}`}
                                     >
-                                        <div className="font-bold text-primary">{track.title}</div>
-                                        <div className="text-xs text-secondary">{track.description}</div>
+                                        <div
+                                            onClick={() => selectTrackForEdit(track.id)}
+                                            className="flex-1 cursor-pointer"
+                                        >
+                                            <div className="font-bold text-primary">{track.title}</div>
+                                            <div className="text-xs text-secondary">{track.description}</div>
+                                        </div>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDeleteTrack(track.id);
+                                            }}
+                                            className="text-red-500 hover:text-red-400 p-2 ml-2"
+                                            title="Delete Track"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
                                     </div>
                                 ))}
                             </div>
@@ -1993,6 +2019,18 @@ const AdminPanel = () => {
                                             className="input-field w-20 h-11"
                                         />
                                     </div>
+
+                                    {newStep.type === 'video' && (
+                                        <div className="flex justify-end">
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPublicVideoSelector(true)}
+                                                className="text-[10px] font-bold text-cyan-400 hover:text-cyan-300 flex items-center gap-1.5 border border-cyan-400/20 px-2 py-1 rounded bg-cyan-400/5 transition-all"
+                                            >
+                                                <Globe size={12} /> SELECT FROM PUBLIC WEBSITE
+                                            </button>
+                                        </div>
+                                    )}
 
                                     {newStep.type === 'video' ? (
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -2167,6 +2205,84 @@ const AdminPanel = () => {
                                 >
                                     Cancel
                                 </button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Public Video Selector Modal */}
+            <AnimatePresence>
+                {showPublicVideoSelector && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
+                        onClick={() => setShowPublicVideoSelector(false)}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="bg-panel border border-border rounded-2xl p-6 max-w-2xl w-full max-h-[80vh] flex flex-col"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-xl font-bold text-primary flex items-center gap-2">
+                                    <Globe className="text-cyan-400" />
+                                    Select Video from Public Site
+                                </h3>
+                                <button onClick={() => setShowPublicVideoSelector(false)} className="text-secondary hover:text-white">
+                                    <Plus size={24} className="rotate-45" />
+                                </button>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto space-y-6 pr-2">
+                                {(publicContent?.sections || []).map((section, sIdx) => (
+                                    <div key={sIdx} className="space-y-3">
+                                        <h4 className="text-xs font-black uppercase text-secondary/60 tracking-widest border-b border-white/5 pb-1">
+                                            {section.title || `Section ${sIdx + 1}`}
+                                        </h4>
+                                        <div className="grid gap-2">
+                                            {(section.videos || []).map((video, vIdx) => (
+                                                <button
+                                                    key={vIdx}
+                                                    onClick={() => {
+                                                        const driveId = getDriveId(video.url);
+                                                        const isYoutube = video.url?.includes('youtube.com') || video.url?.includes('youtu.be');
+                                                        let youtubeId = '';
+                                                        if (isYoutube) {
+                                                            if (video.url.includes('v=')) youtubeId = video.url.split('v=')[1].split('&')[0];
+                                                            else if (video.url.includes('youtu.be/')) youtubeId = video.url.split('youtu.be/')[1].split('?')[0];
+                                                        }
+
+                                                        setNewStep(prev => ({
+                                                            ...prev,
+                                                            title: video.title || prev.title,
+                                                            online_id: youtubeId || prev.online_id,
+                                                            drive_id: driveId || prev.drive_id,
+                                                            upload_url: (!youtubeId && !driveId) ? video.url : prev.upload_url
+                                                        }));
+                                                        setShowPublicVideoSelector(false);
+                                                    }}
+                                                    className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-cyan-500/10 hover:border-cyan-500/30 text-left transition-all group"
+                                                >
+                                                    <div className="w-10 h-10 rounded-lg bg-white/5 flex-shrink-0 flex items-center justify-center text-cyan-400 group-hover:scale-110 transition-transform">
+                                                        <Play size={18} fill="currentColor" />
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-sm font-bold text-primary group-hover:text-cyan-400 transition-colors">{video.title}</div>
+                                                        <div className="text-[10px] text-secondary line-clamp-1">{video.url}</div>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                            {(section.videos || []).length === 0 && (
+                                                <div className="text-[10px] text-secondary/30 italic py-2">No videos in this section</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </motion.div>
                     </motion.div>

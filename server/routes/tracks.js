@@ -83,4 +83,25 @@ router.post('/progress/:stepId', (req, res) => {
     }
 });
 
+// DELETE /api/tracks/:id - Remove Track (Admin)
+router.delete('/:id', (req, res) => {
+    const { id } = req.params;
+    try {
+        // Use a transaction for atomic deletion
+        const deleteTransaction = db.transaction(() => {
+            // 1. Delete progress
+            db.prepare('DELETE FROM track_progress WHERE step_id IN (SELECT id FROM track_steps WHERE track_id = ?)').run(id);
+            // 2. Delete steps
+            db.prepare('DELETE FROM track_steps WHERE track_id = ?').run(id);
+            // 3. Delete track
+            db.prepare('DELETE FROM tracks WHERE id = ?').run(id);
+        });
+
+        deleteTransaction();
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 module.exports = router;

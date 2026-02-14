@@ -299,13 +299,30 @@ const ParticleMorph = ({ scrollProgress = 0, sectionsProgress = -1, sectionCount
         let dist = 1.0;
         let activeIdx = -1;
 
-        const range = 0.22; // Wider range for more tolerant assembly
+        const range = 0.18; // Tighter range for more "wavy" space between sections
         let minDist = 1000;
 
         // Only try to assemble if we are within the sections container scroll area
         if (sectionsProgress !== -1) {
+            // --- STYLE REPLICATION LOGIC ---
+            // The user wants to replicate the "style" from Position 1 (approx 0.365)
+            // at Position 2 (approx 0.96+ at far footer).
+            const targetSource = 0.365;
+            const targetDest = 0.96;
+            const rRange = 0.08; // Tighter range to avoid overlap with Programming
+
+            const distToDest = Math.abs(sectionsProgress - targetDest);
+            let lookupProgress = sectionsProgress;
+
+            if (distToDest < rRange) {
+                // As we get closer to the destination, we "look up" the state 
+                // from the target source position.
+                const blend = 1.0 - THREE.MathUtils.clamp(distToDest / rRange, 0, 1);
+                lookupProgress = THREE.MathUtils.lerp(sectionsProgress, targetSource, blend);
+            }
+
             for (let i = 0; i < centers.length; i++) {
-                const d = Math.abs(sectionsProgress - centers[i]);
+                const d = Math.abs(lookupProgress - centers[i]);
                 if (d < range && d < minDist) {
                     activeIdx = i;
                     minDist = d;

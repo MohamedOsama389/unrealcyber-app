@@ -24,11 +24,14 @@ import AdminPanel from './pages/AdminPanel';
 import PublicHome from './pages/PublicHome';
 import PublicSection from './pages/PublicSection';
 import PublicVideo from './pages/PublicVideo';
+import AboutPage from './pages/AboutPage';
+import TrackingPage from './pages/TrackingPage';
 import Progress from './pages/Progress';
 import Profile from './pages/Profile';
 import clsx from 'clsx';
 import ParticleIconsPage from './ParticleIconsPage';
 import BuilderPage from './pages/BuilderPage';
+import PublicLogin from './pages/PublicLogin';
 
 function AppContent() {
   const { user } = useAuth();
@@ -54,6 +57,10 @@ function AppContent() {
           <Route path="/" element={<PublicHome />} />
           <Route path="/vision/:sectionKey" element={<PublicSection />} />
           <Route path="/vision/:sectionKey/:videoSlug" element={<PublicVideo />} />
+          <Route path="/about" element={<Navigate to="/tracking" replace />} />
+          <Route path="/tracking" element={<AboutPage />} />
+          <Route path="/tracks/:trackId" element={<TrackingPage />} />
+          <Route path="/login" element={<PublicLogin />} />
           <Route path="/private/login" element={<Login />} />
           <Route path="/private/signup" element={<Signup />} />
           <Route path="/particle-icons" element={<ParticleIconsPage />} />

@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, ArrowUpRight, Play } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { ArrowLeft, ArrowUpRight, Play, ChevronDown, ChevronUp, BookOpen } from 'lucide-react';
 import { DEFAULT_PUBLIC_CONTENT, normalizePublicContent, buildVideoSlug, getSectionTheme, getVideoThumbnailUrl } from '../data/publicSite';
+import PublicNavbar from '../components/PublicNavbar';
 
-const PublicSection = () => {
+export default function PublicSection() {
     const { sectionKey } = useParams();
     const [content, setContent] = useState(DEFAULT_PUBLIC_CONTENT);
     const [loading, setLoading] = useState(true);
-    const { user } = useAuth();
+    const [expandedModules, setExpandedModules] = useState({});
 
     useEffect(() => {
         const load = async () => {
@@ -25,125 +25,147 @@ const PublicSection = () => {
         load();
     }, []);
 
-    const sections = useMemo(() => (
-        (content.sections || []).map((section, sectionIndex) => ({
-            ...section,
-            key: section.key || `section-${sectionIndex}`,
-            videos: (section.videos || []).map((video, videoIndex) => ({
-                ...video,
-                slug: buildVideoSlug(video.title, videoIndex)
-            }))
-        }))
-    ), [content]);
+    const sections = useMemo(
+        () =>
+            (content.sections || []).map((section, sectionIndex) => ({
+                ...section,
+                key: section.key || `section-${sectionIndex}`,
+                videos: (section.videos || []).map((video, videoIndex) => ({
+                    ...video,
+                    slug: buildVideoSlug(video.title, videoIndex),
+                })),
+            })),
+        [content]
+    );
 
     const section = sections.find((item) => item.key === sectionKey);
     const theme = getSectionTheme(sectionKey);
 
+    const toggleModule = (index) => {
+        setExpandedModules((prev) => ({ ...prev, [index]: !prev[index] }));
+    };
+
     if (!section) {
         return (
-            <div className="min-h-screen bg-[#0d1526] text-white px-6 py-20">
-                <div className="max-w-4xl mx-auto glass-panel p-8 border-white/10">
-                    <h1 className="text-2xl font-bold mb-4">Section not found</h1>
-                    <p className="text-secondary mb-6">The section you’re looking for doesn’t exist.</p>
-                    <Link to="/" className="inline-flex items-center gap-2 text-cyan-400 font-bold">
-                        <ArrowLeft size={16} /> Back to Home
-                    </Link>
+            <div className="min-h-screen bg-app text-primary">
+                <PublicNavbar />
+                <div className="pt-28 px-6 max-w-4xl mx-auto">
+                    <div className="glass-card p-8">
+                        <h1 className="text-2xl font-bold mb-3">Track not found</h1>
+                        <p className="text-slate-300/80 mb-6">The requested course track does not exist.</p>
+                        <Link to="/" className="inline-flex items-center gap-2 text-cyan-300 hover:text-cyan-200">
+                            <ArrowLeft size={15} /> Back to Home
+                        </Link>
+                    </div>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-[#0d1526] text-white relative overflow-hidden">
-            <div className="absolute -top-40 right-10 h-72 w-72 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
-            <div className="absolute bottom-0 left-10 h-64 w-64 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
-            <header className="border-b border-white/5 bg-slate-950/70 backdrop-blur">
-                <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-                    <Link to="/" className="inline-flex items-center gap-2 text-xs text-secondary hover:text-primary">
-                        <ArrowLeft size={14} /> Back to Home
-                    </Link>
-                    <div className="flex items-center gap-3">
-                        {user && (user.role === 'admin' || user.private_access) && (
-                            <Link
-                                to="/private/dashboard"
-                                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 border border-white/10 text-xs font-bold text-secondary hover:text-primary hover:border-cyan-400/40 transition-colors"
-                            >
-                                Private Website
-                                <ArrowUpRight size={14} />
-                            </Link>
-                        )}
-                        <Link to="/" className="text-xs uppercase tracking-[0.3em] text-secondary">UnrealCyber Vision</Link>
-                    </div>
-                </div>
-            </header>
+        <div className="min-h-screen bg-app text-primary relative overflow-hidden">
+            <div className="fixed inset-0 bg-gradient-to-b from-[#08152e] via-[#071226] to-[#08152e] -z-10" />
+            <div className="fixed inset-0 pointer-events-none -z-10">
+                <div className="absolute top-8 right-8 h-72 w-72 rounded-full bg-cyan-500/8 blur-[110px]" />
+                <div className="absolute bottom-8 left-8 h-72 w-72 rounded-full bg-blue-500/7 blur-[110px]" />
+            </div>
 
-            <main className="max-w-6xl mx-auto px-6 py-16 relative z-10">
-                <div className={`glass-panel border ${theme.border} ${theme.glow} p-8 bg-gradient-to-br ${theme.gradient}`}>
+            <PublicNavbar />
+
+            <main className="relative z-10 max-w-6xl mx-auto px-6 pt-24 md:pt-28 pb-20">
+                <Link to="/" className="inline-flex items-center gap-2 text-xs text-slate-300/75 hover:text-white transition-colors mb-7">
+                    <ArrowLeft size={14} /> Back to Home
+                </Link>
+
+                <section className={`glass-card border ${theme.border} ${theme.glow} p-7 md:p-10 bg-gradient-to-br ${theme.gradient}`}>
                     <div className={`inline-flex items-center px-3 py-1 text-[10px] uppercase tracking-[0.3em] rounded-full border ${theme.chip}`}>
-                        Track
+                        Course Track
                     </div>
-                    <h1 className="text-3xl md:text-5xl font-extrabold mt-4">{section.title}</h1>
-                    {section.description && (
-                        <p className="text-secondary text-lg mt-4 max-w-3xl">{section.description}</p>
-                    )}
-                </div>
+                    <h1 className="text-3xl md:text-5xl font-bold mt-4 glitch-hover">{section.title}</h1>
+                    {section.description && <p className="text-slate-300/85 text-base md:text-lg mt-4 max-w-3xl">{section.description}</p>}
+                </section>
 
-                <div className="mt-10">
-                    <div className="flex items-center justify-between mb-6">
+                <section className="mt-10">
+                    <div className="flex items-center justify-between mb-5">
                         <h2 className="text-2xl font-bold">Sessions</h2>
-                        <span className={`text-xs font-bold ${theme.accent}`}>
-                            {section.videos.length} total
+                        <span className={`text-xs uppercase tracking-[0.2em] font-semibold ${theme.accent}`}>
+                            {section.videos.length} modules
                         </span>
                     </div>
+
                     {section.videos.length === 0 ? (
-                        <div className="glass-panel p-6 border-white/10 text-secondary text-sm">
-                            No videos added yet.
+                        <div className="glass-card p-10 text-center">
+                            <BookOpen className="w-11 h-11 text-slate-500 mx-auto mb-4" />
+                            <h3 className="text-lg font-bold text-white mb-2">Course content coming soon.</h3>
+                            <p className="text-slate-300/75 text-sm max-w-md mx-auto">
+                                This track is being prepared. New sessions will appear here.
+                            </p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {section.videos.map((video) => {
+                        <div className="space-y-3">
+                            {section.videos.map((video, index) => {
                                 const thumb = getVideoThumbnailUrl(video.url);
+                                const isExpanded = expandedModules[index];
                                 return (
-                                    <Link
+                                    <article
                                         key={video.slug}
-                                        to={`/vision/${section.key}/${video.slug}`}
-                                        className={`glass-panel p-6 border ${theme.border} hover:border-cyan-400/40 transition-all hover:-translate-y-1 bg-gradient-to-br ${theme.gradient}`}
+                                        className={`glass-card overflow-hidden border ${theme.border} transition-all hover:border-cyan-400/30`}
                                     >
-                                        <div className="aspect-video rounded-2xl bg-slate-900/60 border border-white/5 flex items-center justify-center mb-4 relative overflow-hidden">
-                                            {thumb && (
-                                                <img
-                                                    src={thumb}
-                                                    alt=""
-                                                    className="absolute inset-0 w-full h-full object-cover"
-                                                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                                                    loading="lazy"
-                                                />
-                                            )}
-                                            <div className="relative z-10 w-12 h-12 rounded-full bg-black/40 border border-white/10 flex items-center justify-center">
-                                                <Play className={theme.accent} />
+                                        <button
+                                            className="w-full flex items-center justify-between p-5 text-left hover:bg-white/[0.03] transition-colors"
+                                            onClick={() => toggleModule(index)}
+                                        >
+                                            <div className="flex items-center gap-4 min-w-0">
+                                                <span className={`text-xs font-bold ${theme.accent} w-8`}>{String(index + 1).padStart(2, '0')}</span>
+                                                <div className="min-w-0">
+                                                    <h3 className="text-base font-semibold text-white truncate">{video.title}</h3>
+                                                    {video.description && (
+                                                        <p className="text-slate-400 text-xs mt-1 line-clamp-1">{video.description}</p>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
-                                        <h3 className="text-lg font-bold">{video.title}</h3>
-                                        <p className="text-secondary text-sm mt-2">{video.description}</p>
-                                        <div className={`mt-4 text-xs font-bold flex items-center gap-2 ${theme.accent}`}>
-                                            Open Session
-                                            <ArrowUpRight size={14} />
-                                        </div>
-                                    </Link>
+                                            {isExpanded ? (
+                                                <ChevronUp size={16} className="text-slate-300" />
+                                            ) : (
+                                                <ChevronDown size={16} className="text-slate-300" />
+                                            )}
+                                        </button>
+
+                                        {isExpanded && (
+                                            <div className="border-t border-white/8 p-5 bg-[#0b1831]/65">
+                                                {thumb && (
+                                                    <div className="aspect-video rounded-xl bg-slate-900/70 border border-white/10 overflow-hidden mb-4">
+                                                        <img
+                                                            src={thumb}
+                                                            alt=""
+                                                            className="w-full h-full object-cover"
+                                                            onError={(e) => {
+                                                                e.currentTarget.style.display = 'none';
+                                                            }}
+                                                            loading="lazy"
+                                                        />
+                                                    </div>
+                                                )}
+                                                {video.description && <p className="text-slate-300/80 text-sm mb-4">{video.description}</p>}
+                                                <Link
+                                                    to={`/vision/${section.key}/${video.slug}`}
+                                                    className={`inline-flex items-center gap-2 text-sm font-semibold ${theme.accent} hover:opacity-85 transition-opacity glitch-hover`}
+                                                >
+                                                    <Play size={14} /> Open Session <ArrowUpRight size={14} />
+                                                </Link>
+                                            </div>
+                                        )}
+                                    </article>
                                 );
                             })}
                         </div>
                     )}
-                </div>
+                </section>
 
                 {loading && (
-                    <div className="fixed bottom-4 right-4 text-xs text-secondary bg-panel/80 border border-border rounded-full px-4 py-2">
-                        Loading section...
-                    </div>
+                    <div className="fixed bottom-5 right-5 text-xs text-slate-200 glass-card px-4 py-2">Loading section...</div>
                 )}
             </main>
         </div>
     );
-};
-
-export default PublicSection;
+}

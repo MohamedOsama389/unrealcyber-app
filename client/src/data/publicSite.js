@@ -42,6 +42,37 @@ export const DEFAULT_PUBLIC_CONTENT = {
         facebook: '',
         twitter: '',
         linkedin: ''
+    },
+    footer: {
+        enabled: true,
+        brand: 'UNREALCYBER',
+        description: 'Hands-on cybersecurity learning focused on networking, ethical hacking, and programming.',
+        madeWithText: 'Made with ❤️ for Unreal Cyber community',
+        copyrightText: '© 2026 Unreal Cyber Academy. All Rights Reserved.',
+        headings: {
+            platform: 'Platform',
+            resources: 'Resources',
+            legal: 'Legal'
+        },
+        columns: {
+            platform: [
+                { label: 'About', url: '/about' },
+                { label: 'Tracking', url: '/tracking' },
+                { label: 'Progress', url: '/progress' },
+                { label: 'Profile', url: '/profile' }
+            ],
+            resources: [
+                { label: 'Documentation', url: '#' },
+                { label: 'Community', url: '#' },
+                { label: 'Blog', url: '#' },
+                { label: 'Careers', url: '#' }
+            ],
+            legal: [
+                { label: 'Privacy Policy', url: '#' },
+                { label: 'Terms of Service', url: '#' },
+                { label: 'Cookie Policy', url: '#' }
+            ]
+        }
     }
 };
 
@@ -58,6 +89,27 @@ export const normalizePublicContent = (content) => {
         key: section.key || DEFAULT_PUBLIC_CONTENT.sections[idx]?.key || `section-${idx}`,
         videos: Array.isArray(section.videos) ? section.videos : []
     }));
+    merged.footer = {
+        ...DEFAULT_PUBLIC_CONTENT.footer,
+        ...(merged.footer || {}),
+        headings: {
+            ...DEFAULT_PUBLIC_CONTENT.footer.headings,
+            ...(merged.footer?.headings || {})
+        },
+        columns: {
+            ...DEFAULT_PUBLIC_CONTENT.footer.columns,
+            ...(merged.footer?.columns || {})
+        }
+    };
+    merged.footer.columns.platform = Array.isArray(merged.footer.columns.platform)
+        ? merged.footer.columns.platform
+        : DEFAULT_PUBLIC_CONTENT.footer.columns.platform;
+    merged.footer.columns.resources = Array.isArray(merged.footer.columns.resources)
+        ? merged.footer.columns.resources
+        : DEFAULT_PUBLIC_CONTENT.footer.columns.resources;
+    merged.footer.columns.legal = Array.isArray(merged.footer.columns.legal)
+        ? merged.footer.columns.legal
+        : DEFAULT_PUBLIC_CONTENT.footer.columns.legal;
     return merged;
 };
 
@@ -157,18 +209,18 @@ export const getSectionTheme = (key) => {
             gradient: 'from-cyan-500/15 via-slate-900/80 to-blue-600/10'
         },
         'ethical-hacking': {
-            border: 'border-amber-500/30',
-            accent: 'text-amber-300',
-            glow: 'shadow-[0_0_40px_rgba(251,191,36,0.12)]',
-            chip: 'bg-amber-500/10 text-amber-300 border-amber-500/30',
-            gradient: 'from-amber-500/15 via-slate-900/80 to-orange-500/10'
+            border: 'border-sky-500/30',
+            accent: 'text-sky-300',
+            glow: 'shadow-[0_0_40px_rgba(56,189,248,0.12)]',
+            chip: 'bg-sky-500/10 text-sky-300 border-sky-500/30',
+            gradient: 'from-sky-500/15 via-slate-900/80 to-cyan-500/10'
         },
         programming: {
-            border: 'border-emerald-500/30',
-            accent: 'text-emerald-300',
-            glow: 'shadow-[0_0_40px_rgba(16,185,129,0.12)]',
-            chip: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30',
-            gradient: 'from-emerald-500/15 via-slate-900/80 to-teal-500/10'
+            border: 'border-blue-500/30',
+            accent: 'text-blue-300',
+            glow: 'shadow-[0_0_40px_rgba(59,130,246,0.12)]',
+            chip: 'bg-blue-500/10 text-blue-300 border-blue-500/30',
+            gradient: 'from-blue-500/15 via-slate-900/80 to-sky-500/10'
         }
     };
     return themes[key] || {

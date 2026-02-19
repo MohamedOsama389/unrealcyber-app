@@ -254,6 +254,38 @@ const AdminPanel = () => {
         });
     };
 
+    const updateFooterColumnLink = (column, linkIndex, patch) => {
+        setPublicContent(prev => {
+            const footer = { ...(prev.footer || DEFAULT_PUBLIC_CONTENT.footer) };
+            const columns = { ...(footer.columns || DEFAULT_PUBLIC_CONTENT.footer.columns) };
+            const links = [...(columns[column] || [])];
+            links[linkIndex] = { ...(links[linkIndex] || {}), ...patch };
+            columns[column] = links;
+            footer.columns = columns;
+            return { ...prev, footer };
+        });
+    };
+
+    const addFooterColumnLink = (column) => {
+        setPublicContent(prev => {
+            const footer = { ...(prev.footer || DEFAULT_PUBLIC_CONTENT.footer) };
+            const columns = { ...(footer.columns || DEFAULT_PUBLIC_CONTENT.footer.columns) };
+            columns[column] = [...(columns[column] || []), { label: '', url: '' }];
+            footer.columns = columns;
+            return { ...prev, footer };
+        });
+    };
+
+    const removeFooterColumnLink = (column, linkIndex) => {
+        setPublicContent(prev => {
+            const footer = { ...(prev.footer || DEFAULT_PUBLIC_CONTENT.footer) };
+            const columns = { ...(footer.columns || DEFAULT_PUBLIC_CONTENT.footer.columns) };
+            columns[column] = (columns[column] || []).filter((_, idx) => idx !== linkIndex);
+            footer.columns = columns;
+            return { ...prev, footer };
+        });
+    };
+
     const fetchPrivateAllowlist = async () => {
         try {
             const res = await axios.get('/api/admin/private-access');
@@ -1433,6 +1465,154 @@ const AdminPanel = () => {
                     </div>
 
                     <div className="glass-panel p-6 border border-border space-y-4">
+                        <h4 className="text-lg font-bold text-primary">Footer Content</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold uppercase text-secondary">Show Footer</label>
+                                <button
+                                    onClick={() => setPublicContent(prev => ({
+                                        ...prev,
+                                        footer: { ...(prev.footer || {}), enabled: !(prev?.footer?.enabled !== false) }
+                                    }))}
+                                    className={`w-full h-11 rounded-xl border text-xs font-bold uppercase tracking-widest transition-colors ${(publicContent?.footer?.enabled !== false)
+                                            ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
+                                            : 'bg-white/5 border-white/10 text-secondary'
+                                        }`}
+                                >
+                                    {(publicContent?.footer?.enabled !== false) ? 'Enabled' : 'Disabled'}
+                                </button>
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold uppercase text-secondary">Brand</label>
+                                <input
+                                    className="input-field"
+                                    value={publicContent?.footer?.brand || ''}
+                                    onChange={(e) => setPublicContent(prev => ({ ...prev, footer: { ...(prev.footer || {}), brand: e.target.value } }))}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold uppercase text-secondary">Bottom Right Text</label>
+                                <input
+                                    className="input-field"
+                                    value={publicContent?.footer?.madeWithText || ''}
+                                    onChange={(e) => setPublicContent(prev => ({ ...prev, footer: { ...(prev.footer || {}), madeWithText: e.target.value } }))}
+                                />
+                            </div>
+                            <div className="space-y-2 md:col-span-2">
+                                <label className="text-xs font-bold uppercase text-secondary">Footer Description</label>
+                                <textarea
+                                    rows={2}
+                                    className="input-field"
+                                    value={publicContent?.footer?.description || ''}
+                                    onChange={(e) => setPublicContent(prev => ({ ...prev, footer: { ...(prev.footer || {}), description: e.target.value } }))}
+                                />
+                            </div>
+                            <div className="space-y-2 md:col-span-2">
+                                <label className="text-xs font-bold uppercase text-secondary">Copyright Text</label>
+                                <input
+                                    className="input-field"
+                                    value={publicContent?.footer?.copyrightText || ''}
+                                    onChange={(e) => setPublicContent(prev => ({ ...prev, footer: { ...(prev.footer || {}), copyrightText: e.target.value } }))}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold uppercase text-secondary">Platform Heading</label>
+                                <input
+                                    className="input-field"
+                                    value={publicContent?.footer?.headings?.platform || ''}
+                                    onChange={(e) => setPublicContent(prev => ({
+                                        ...prev,
+                                        footer: {
+                                            ...(prev.footer || {}),
+                                            headings: { ...(prev.footer?.headings || {}), platform: e.target.value }
+                                        }
+                                    }))}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold uppercase text-secondary">Resources Heading</label>
+                                <input
+                                    className="input-field"
+                                    value={publicContent?.footer?.headings?.resources || ''}
+                                    onChange={(e) => setPublicContent(prev => ({
+                                        ...prev,
+                                        footer: {
+                                            ...(prev.footer || {}),
+                                            headings: { ...(prev.footer?.headings || {}), resources: e.target.value }
+                                        }
+                                    }))}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold uppercase text-secondary">Legal Heading</label>
+                                <input
+                                    className="input-field"
+                                    value={publicContent?.footer?.headings?.legal || ''}
+                                    onChange={(e) => setPublicContent(prev => ({
+                                        ...prev,
+                                        footer: {
+                                            ...(prev.footer || {}),
+                                            headings: { ...(prev.footer?.headings || {}), legal: e.target.value }
+                                        }
+                                    }))}
+                                />
+                            </div>
+                        </div>
+
+                        {['platform', 'resources', 'legal'].map((column) => (
+                            <div key={column} className="space-y-3 p-4 rounded-2xl border border-white/10 bg-panel/60">
+                                <div className="flex items-center justify-between">
+                                    <h5 className="text-sm font-bold uppercase text-secondary">{column} Links</h5>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => addFooterColumnLink(column)}
+                                            className="px-3 py-1 rounded-lg bg-white/10 border border-white/10 text-secondary text-xs font-bold"
+                                        >
+                                            Add Link
+                                        </button>
+                                        <button
+                                            onClick={() => setPublicContent(prev => ({
+                                                ...prev,
+                                                footer: {
+                                                    ...(prev.footer || {}),
+                                                    columns: { ...(prev.footer?.columns || {}), [column]: [] }
+                                                }
+                                            }))}
+                                            className="px-3 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-red-300 text-xs font-bold"
+                                        >
+                                            Clear
+                                        </button>
+                                    </div>
+                                </div>
+                                {(publicContent?.footer?.columns?.[column] || []).map((link, linkIndex) => (
+                                    <div key={`${column}-${linkIndex}`} className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                        <input
+                                            className="input-field"
+                                            placeholder="Label"
+                                            value={link.label || ''}
+                                            onChange={(e) => updateFooterColumnLink(column, linkIndex, { label: e.target.value })}
+                                        />
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                className="input-field flex-1"
+                                                placeholder="URL (/about or https://...)"
+                                                value={link.url || ''}
+                                                onChange={(e) => updateFooterColumnLink(column, linkIndex, { url: e.target.value })}
+                                            />
+                                            <button
+                                                onClick={() => removeFooterColumnLink(column, linkIndex)}
+                                                className="text-red-400 hover:text-red-300"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="glass-panel p-6 border border-border space-y-4">
                         <h4 className="text-lg font-bold text-primary">Vision Pillars</h4>
                         <div className="space-y-4">
                             {(publicContent?.pillars || []).map((pillar, idx) => (
@@ -1608,30 +1788,6 @@ const AdminPanel = () => {
                                     </div>
                                 </div>
                             ))}
-                        </div>
-                    </div>
-
-                    <div className="glass-panel p-6 border border-border space-y-4">
-                        <h4 className="text-lg font-bold text-primary">Social Links</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <input
-                                className="input-field"
-                                placeholder="YouTube URL"
-                                value={publicContent?.socials?.youtube || ''}
-                                onChange={(e) => setPublicContent(prev => ({ ...prev, socials: { ...prev.socials, youtube: e.target.value } }))}
-                            />
-                            <input
-                                className="input-field"
-                                placeholder="Telegram URL"
-                                value={publicContent?.socials?.telegram || ''}
-                                onChange={(e) => setPublicContent(prev => ({ ...prev, socials: { ...prev.socials, telegram: e.target.value } }))}
-                            />
-                            <input
-                                className="input-field"
-                                placeholder="Discord URL"
-                                value={publicContent?.socials?.discord || ''}
-                                onChange={(e) => setPublicContent(prev => ({ ...prev, socials: { ...prev.socials, discord: e.target.value } }))}
-                            />
                         </div>
                     </div>
 

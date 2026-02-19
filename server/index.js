@@ -42,6 +42,66 @@ const extractDriveId = (raw) => {
     return fallback ? fallback[0] : null;
 };
 
+const extractYouTubeVideoId = (url = '') => {
+    if (!url) return '';
+    try {
+        if (url.includes('youtu.be/')) return url.split('youtu.be/')[1].split(/[?&]/)[0];
+        if (url.includes('watch?v=')) return url.split('watch?v=')[1].split('&')[0];
+        if (url.includes('/embed/')) return url.split('/embed/')[1].split(/[?&]/)[0];
+    } catch {
+        return '';
+    }
+    return '';
+};
+
+const decodeXmlEntities = (value = '') =>
+    value
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'");
+
+const fetchWithTimeout = async (url, timeoutMs = 8000) => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        return await fetch(url, {
+            signal: controller.signal,
+            headers: {
+                'User-Agent': 'UnrealCyber/1.0',
+                Accept: 'text/html,application/xml;q=0.9,*/*;q=0.8'
+            }
+        });
+    } finally {
+        clearTimeout(timeout);
+    }
+};
+
+const resolveYouTubeChannelId = async (channelUrl = '') => {
+    if (!channelUrl) return '';
+    try {
+        const parsed = new URL(channelUrl);
+        if (!parsed.hostname.includes('youtube.com') && !parsed.hostname.includes('youtu.be')) return '';
+
+        const parts = parsed.pathname.split('/').filter(Boolean);
+        if (parts[0] === 'channel' && parts[1]) return parts[1];
+
+        const response = await fetchWithTimeout(channelUrl, 9000);
+        if (!response.ok) return '';
+        const html = await response.text();
+
+        const directMatch = html.match(/"channelId":"(UC[a-zA-Z0-9_-]{20,})"/);
+        if (directMatch?.[1]) return directMatch[1];
+
+        const canonicalMatch = html.match(/https:\/\/www\.youtube\.com\/channel\/(UC[a-zA-Z0-9_-]{20,})/);
+        if (canonicalMatch?.[1]) return canonicalMatch[1];
+    } catch {
+        return '';
+    }
+    return '';
+};
+
 const DEFAULT_PUBLIC_CONTENT = {
     hero: {
         title: 'UnrealCyber Vision',
@@ -80,7 +140,43 @@ const DEFAULT_PUBLIC_CONTENT = {
     socials: {
         youtube: '',
         telegram: '',
-        discord: ''
+        discord: '',
+        instagram: '',
+        tiktok: '',
+        facebook: '',
+        twitter: '',
+        linkedin: ''
+    },
+    footer: {
+        enabled: true,
+        brand: 'UNREALCYBER',
+        description: 'Hands-on cybersecurity learning focused on networking, ethical hacking, and programming.',
+        madeWithText: 'Made with ❤️ for Unreal Cyber community',
+        copyrightText: '© 2026 Unreal Cyber Academy. All Rights Reserved.',
+        headings: {
+            platform: 'Platform',
+            resources: 'Resources',
+            legal: 'Legal'
+        },
+        columns: {
+            platform: [
+                { label: 'About', url: '/about' },
+                { label: 'Tracking', url: '/tracking' },
+                { label: 'Progress', url: '/progress' },
+                { label: 'Profile', url: '/profile' }
+            ],
+            resources: [
+                { label: 'Documentation', url: '#' },
+                { label: 'Community', url: '#' },
+                { label: 'Blog', url: '#' },
+                { label: 'Careers', url: '#' }
+            ],
+            legal: [
+                { label: 'Privacy Policy', url: '#' },
+                { label: 'Terms of Service', url: '#' },
+                { label: 'Cookie Policy', url: '#' }
+            ]
+        }
     }
 };
 
@@ -752,6 +848,58 @@ app.get('/api/public', (req, res) => {
     } catch (err) {
         console.error('[API] /api/public Error:', err);
         res.status(500).json({ error: "Failed to load public content", details: err.message });
+    }
+});
+
+app.get('/api/public/youtube-latest', async (req, res) => {
+    try {
+        const content = getPublicContent();
+        const channelUrl = req.query.channel || content?.socials?.youtube || '';
+        if (!channelUrl) {
+            return res.status(404).json({ error: 'No YouTube channel configured.' });
+        }
+
+        const channelId = await resolveYouTubeChannelId(channelUrl);
+        if (!channelId) {
+            return res.status(404).json({ error: 'Could not resolve YouTube channel ID.' });
+        }
+
+        const feedResponse = await fetchWithTimeout(`https://www.youtube.com/feeds/videos.xml?channel_id=${encodeURIComponent(channelId)}`);
+        if (!feedResponse.ok) {
+            return res.status(502).json({ error: 'Failed to load YouTube channel feed.' });
+        }
+
+        const xml = await feedResponse.text();
+        const entry = xml.match(/<entry>([\s\S]*?)<\/entry>/);
+        if (!entry?.[1]) {
+            return res.status(404).json({ error: 'No channel uploads found yet.' });
+        }
+
+        const block = entry[1];
+        const titleMatch = block.match(/<title>([\s\S]*?)<\/title>/);
+        const linkMatch = block.match(/<link[^>]+href="([^"]+)"/);
+        const publishedMatch = block.match(/<published>([^<]+)<\/published>/);
+        const descMatch = block.match(/<media:description>([\s\S]*?)<\/media:description>/);
+        const thumbMatch = block.match(/<media:thumbnail[^>]+url="([^"]+)"/);
+
+        const videoUrl = linkMatch?.[1] || '';
+        const videoId = extractYouTubeVideoId(videoUrl);
+
+        if (!videoId) {
+            return res.status(404).json({ error: 'Could not parse latest YouTube video.' });
+        }
+
+        res.json({
+            id: videoId,
+            title: decodeXmlEntities((titleMatch?.[1] || '').trim()) || 'Latest upload',
+            description: decodeXmlEntities((descMatch?.[1] || '').trim()) || '',
+            url: videoUrl || `https://www.youtube.com/watch?v=${videoId}`,
+            thumbnail: thumbMatch?.[1] || `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+            publishedAt: publishedMatch?.[1] || null
+        });
+    } catch (err) {
+        console.error('[API] /api/public/youtube-latest Error:', err.message);
+        res.status(500).json({ error: 'Failed to load latest YouTube video.' });
     }
 });
 

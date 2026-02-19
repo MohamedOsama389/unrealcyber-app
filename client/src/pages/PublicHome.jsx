@@ -1,549 +1,458 @@
-import { useEffect, useRef, useState, Component, Suspense } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ShieldCheck, ArrowUpRight, Play, Activity, LogOut, Network, Shield, Code2, Send, Twitter, Linkedin, Youtube, MessageSquare, Instagram, Music, Facebook, ChevronDown, Map, User } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { Canvas } from '@react-three/fiber';
 import axios from 'axios';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import ParticleMorph from '../ParticleMorph';
-import ScrollSections from '../ScrollSections';
-import { getVideoThumbnailUrl, DEFAULT_PUBLIC_CONTENT } from '../data/publicSite';
+import {
+    ArrowUpRight,
+    Play,
+    Network,
+    Shield,
+    Code2,
+    Eye,
+    FlaskConical,
+    Cpu,
+    Youtube,
+    Send,
+    MessageSquare,
+    Instagram,
+    Music,
+    Facebook,
+    Twitter,
+    Linkedin
+} from 'lucide-react';
+import { DEFAULT_PUBLIC_CONTENT, normalizePublicContent } from '../data/publicSite';
+import PublicNavbar from '../components/PublicNavbar';
 
-gsap.registerPlugin(ScrollTrigger);
+const METHOD_STEPS = [
+    {
+        title: 'Watch',
+        description: 'Learn core concepts through clear, practical walkthroughs.',
+        icon: Eye,
+    },
+    {
+        title: 'Test',
+        description: 'Validate understanding with checkpoints and focused challenges.',
+        icon: Cpu,
+    },
+    {
+        title: 'Practice Hands-On',
+        description: 'Apply everything in labs and realistic cybersecurity scenarios.',
+        icon: FlaskConical,
+    },
+];
 
-class CanvasErrorBoundary extends Component {
-    state = { hasError: false };
-    static getDerivedStateFromError() { return { hasError: true }; }
-    render() {
-        if (this.state.hasError) {
-            return null;
-        }
-        return this.props.children;
+const SECTION_META = {
+    networking: {
+        icon: Network,
+        accent: 'text-cyan-300',
+        chip: 'bg-cyan-500/12 border-cyan-500/30',
+        glow: 'shadow-[0_0_34px_rgba(18,216,255,0.18)]',
+    },
+    'ethical-hacking': {
+        icon: Shield,
+        accent: 'text-sky-300',
+        chip: 'bg-sky-500/12 border-sky-500/30',
+        glow: 'shadow-[0_0_34px_rgba(56,189,248,0.16)]',
+    },
+    programming: {
+        icon: Code2,
+        accent: 'text-blue-300',
+        chip: 'bg-blue-500/12 border-blue-500/30',
+        glow: 'shadow-[0_0_34px_rgba(59,130,246,0.16)]',
+    },
+};
+
+const FALLBACK_PILLARS = [
+    {
+        key: 'networking',
+        title: 'Networking',
+        description: 'Design, route, and secure modern networks with confidence.',
+        popularCourse: 'CCNA Foundations',
+    },
+    {
+        key: 'ethical-hacking',
+        title: 'Ethical Hacking',
+        description: 'Train offensive and defensive workflows in controlled labs.',
+        popularCourse: 'Penetration Testing Fundamentals',
+    },
+    {
+        key: 'programming',
+        title: 'Programming',
+        description: 'Build automation tools that scale cybersecurity operations.',
+        popularCourse: 'Python for Security Automation',
+    },
+];
+
+const extractYouTubeId = (url = '') => {
+    if (!url) return '';
+    try {
+        if (url.includes('youtu.be/')) return url.split('youtu.be/')[1].split(/[?&]/)[0];
+        if (url.includes('watch?v=')) return url.split('watch?v=')[1].split('&')[0];
+        if (url.includes('/embed/')) return url.split('/embed/')[1].split(/[?&]/)[0];
+    } catch {
+        return '';
     }
-}
+    return '';
+};
 
-class GlobalErrorBoundary extends Component {
-    state = { hasError: false, error: null };
-    static getDerivedStateFromError(error) { return { hasError: true, error }; }
-    componentDidCatch(error, errorInfo) {
-        console.error("Uncaught error:", error, errorInfo);
-    }
-    render() {
-        if (this.state.hasError) {
-            return (
-                <div style={{ position: 'fixed', inset: 0, zIndex: 9999, backgroundColor: 'white', color: 'red', padding: '20px', overflow: 'auto', fontFamily: 'monospace' }}>
-                    <h1>Application Error</h1>
-                    <pre style={{ whiteSpace: 'pre-wrap' }}>{this.state.error?.toString()}</pre>
-                </div>
-            );
-        }
-        return this.props.children;
-    }
-}
-
-/**
- * PublicHome
- * Premium landing page featuring a scroll-driven 3D particle assembly effect.
- * The background is a fixed WebGL canvas with particles that morph into
- * thematic shapes (Router, Shield, Laptop) as the user scrolls.
- */
-const PublicHome = () => {
-    const [scrollProgress, setScrollProgress] = useState(0);
-    const [sectionsProgress, setSectionsProgress] = useState(-1); // -1 means not in sections area
-    const { user, loginWithGoogle, logout } = useAuth();
-    const googleBtnRef = useRef(null);
-    const footerRef = useRef(null);
-    const sectionsContainerRef = useRef(null);
-    const [googleReady, setGoogleReady] = useState(false);
-
-    // Initialize with default content to render immediately (prevents blank screen)
-    const [publicContent, setPublicContent] = useState(DEFAULT_PUBLIC_CONTENT);
-    const [featured, setFeatured] = useState(null);
-
-    const extractDriveId = (raw) => {
-        if (!raw) return null;
-        if (!raw.startsWith('http')) return raw;
-        try {
-            const url = new URL(raw);
-            return url.searchParams.get('id') || url.pathname.match(/\/(?:file\/d|folders|d)\/([^/]+)/)?.[1] || raw;
-        } catch {
-            return raw;
-        }
-    };
-
-    // Dynamic Data Fetching
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [pubRes, featRes] = await Promise.all([
-                    axios.get('/api/public'),
-                    axios.get('/api/public/featured')
-                ]);
-                if (pubRes.data) {
-                    setPublicContent(prev => ({
-                        ...prev,
-                        ...pubRes.data,
-                        hero: { ...prev.hero, ...pubRes.data.hero }
-                    }));
-                }
-                if (featRes.data) setFeatured(featRes.data);
-            } catch (err) {
-                console.error('[PublicHome] Failed to fetch layout data:', err);
-                // Keep default content on error
+const buildLatestFallback = (content) => {
+    for (const section of content.sections || []) {
+        for (const video of section.videos || []) {
+            const id = extractYouTubeId(video.url || '');
+            if (id) {
+                return {
+                    id,
+                    title: video.title || 'Latest upload',
+                    description: video.description || 'Watch the latest lesson from our channel.',
+                    url: `https://www.youtube.com/watch?v=${id}`,
+                    thumbnail: `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
+                };
             }
-        };
-        fetchData();
+        }
+    }
+    return null;
+};
+
+export default function PublicHome() {
+    const [publicContent, setPublicContent] = useState(DEFAULT_PUBLIC_CONTENT);
+    const [latestVideo, setLatestVideo] = useState(null);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) entry.target.classList.add('visible');
+                });
+            },
+            { threshold: 0.15 }
+        );
+
+        document.querySelectorAll('.reveal-on-scroll').forEach((el) => observer.observe(el));
+        return () => observer.disconnect();
     }, []);
 
-    // Google Auth Initialization
-    // Cleanup Google One Tap if user is logged in
     useEffect(() => {
-        if (user && window.google?.accounts?.id) {
-            window.google.accounts.id.cancel();
-            const picker = document.getElementById('credential_picker_container');
-            if (picker) picker.style.display = 'none';
-            // Aggressive removal
-            const banners = document.querySelectorAll('iframe[src*="accounts.google.com/gsi/iframe"], #credential_picker_container');
-            banners.forEach(b => b.remove());
-        }
-    }, [user]);
+        const load = async () => {
+            try {
+                const [publicRes, latestRes] = await Promise.all([
+                    axios.get('/api/public'),
+                    axios.get('/api/public/youtube-latest').catch(() => ({ data: null })),
+                ]);
 
-    useEffect(() => {
-        const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+                const normalized = normalizePublicContent(publicRes.data);
+                setPublicContent(normalized);
 
-        // Don't initialize if logged in
-        if (user) return;
-
-        const initGoogle = () => {
-            if (!window.google || !googleBtnRef.current) return;
-            window.google.accounts.id.initialize({
-                client_id: clientId,
-                callback: async (response) => {
-                    await loginWithGoogle(response.credential, { requireAdmin: false });
+                if (latestRes.data?.id) {
+                    setLatestVideo(latestRes.data);
+                } else {
+                    setLatestVideo(buildLatestFallback(normalized));
                 }
-            });
-            window.google.accounts.id.renderButton(googleBtnRef.current, {
-                theme: 'outline',
-                size: 'large',
-                text: 'continue_with',
-                width: '220'
-            });
-            setGoogleReady(true);
+            } catch {
+                setPublicContent(DEFAULT_PUBLIC_CONTENT);
+                setLatestVideo(buildLatestFallback(DEFAULT_PUBLIC_CONTENT));
+            }
         };
+        load();
+    }, []);
 
-        if (window.google) {
-            initGoogle();
-        } else {
-            const script = document.createElement('script');
-            script.src = 'https://accounts.google.com/gsi/client?hl=en';
-            script.async = true;
-            script.defer = true;
-            script.onload = initGoogle;
-            document.body.appendChild(script);
-
-            return () => {
-                script.onload = null;
+    const pillars = useMemo(() => {
+        const sections = publicContent.sections || [];
+        if (sections.length === 0) return FALLBACK_PILLARS;
+        return FALLBACK_PILLARS.map((fallback) => {
+            const section = sections.find((item) => item.key === fallback.key);
+            const popular = section?.videos?.[0]?.title || fallback.popularCourse;
+            return {
+                ...fallback,
+                title: section?.title || fallback.title,
+                description: section?.description || fallback.description,
+                popularCourse: popular,
             };
-        }
-    }, [loginWithGoogle, user, googleReady]);
-
-    const getEmbedUrl = (url) => {
-        if (!url) return '';
-        const rawUrl = String(url).trim();
-
-        if (rawUrl.includes('youtube.com/embed/') || rawUrl.includes('drive.google.com/file/d/')) {
-            if (rawUrl.includes('drive.google.com')) {
-                return rawUrl.replace('/view', '/preview');
-            }
-            return rawUrl;
-        }
-
-        // YouTube robust check
-        const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
-        const match = rawUrl.match(ytRegex);
-        if (match && match[1]) {
-            return `https://www.youtube.com/embed/${match[1]}?autoplay=0&rel=0`;
-        }
-
-        // Google Drive
-        const driveRegex = /[-\w]{25,}/;
-        if (rawUrl.includes('drive.google.com')) {
-            const dMatch = rawUrl.match(driveRegex);
-            if (dMatch) return `https://drive.google.com/file/d/${dMatch[0]}/preview`;
-        }
-
-        return rawUrl;
-    };
-
-    const scrollToAbout = (event) => {
-        event.preventDefault();
-        if (!footerRef.current) return;
-        const top = footerRef.current.getBoundingClientRect().top + window.scrollY - 88;
-        window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
-    };
-
-    const scrollToSection = (id, event) => {
-        if (event) event.preventDefault();
-        const target = document.getElementById(id);
-        if (target) {
-            // Precise offset captured from user's manual scroll: 56px past the element top
-            const offset = -56;
-            const top = target.getBoundingClientRect().top + window.scrollY - offset;
-            window.scrollTo({ top, behavior: 'smooth' });
-            window.history.pushState(null, null, `#${id}`);
-        }
-    };
-
-    const scrollToNetworking = (event) => scrollToSection('networking', event);
-
-    useEffect(() => {
-        // Global Scroll Tracking for Ambient Waves
-        const globalTrigger = ScrollTrigger.create({
-            trigger: document.documentElement,
-            start: 0,
-            end: "bottom bottom",
-            onUpdate: (self) => {
-                // setScrollProgress(self.progress);
-                // Wait, the previous code triggered re-renders every frame? 
-                // That might be intentional for the morph. 
-                setScrollProgress(self.progress);
-            }
         });
+    }, [publicContent.sections]);
 
-        // Specific Sections Tracking for Assembly
-        let sectionsTrigger;
-        if (sectionsContainerRef.current) {
-            sectionsTrigger = ScrollTrigger.create({
-                trigger: sectionsContainerRef.current,
-                start: "top bottom", // Start when sections container enters bottom of screen
-                end: "bottom top",    // End when sections container leaves top of screen
-                onUpdate: (self) => {
-                    setSectionsProgress(self.progress);
-                },
-                onToggle: (self) => {
-                    if (!self.isActive) setSectionsProgress(-1);
-                }
-            });
+    const footer = publicContent?.footer || DEFAULT_PUBLIC_CONTENT.footer;
+    const footerColumns = footer?.columns || DEFAULT_PUBLIC_CONTENT.footer.columns;
+    const footerHeadings = footer?.headings || DEFAULT_PUBLIC_CONTENT.footer.headings;
+    const socialLinks = [
+        { key: 'youtube', icon: Youtube },
+        { key: 'telegram', icon: Send },
+        { key: 'discord', icon: MessageSquare },
+        { key: 'instagram', icon: Instagram },
+        { key: 'tiktok', icon: Music },
+        { key: 'facebook', icon: Facebook },
+        { key: 'twitter', icon: Twitter },
+        { key: 'linkedin', icon: Linkedin },
+    ].filter((item) => publicContent?.socials?.[item.key]);
+
+    const renderFooterLink = (item, idx) => {
+        const href = item?.url || '#';
+        const label = item?.label || `Link ${idx + 1}`;
+        const isExternal = href.startsWith('http');
+        if (href.startsWith('/')) {
+            return (
+                <Link key={`${label}-${idx}`} to={href} className="text-slate-300/85 hover:text-cyan-200 transition-colors">
+                    {label}
+                </Link>
+            );
         }
-
-        ScrollTrigger.refresh();
-
-        return () => {
-            globalTrigger.kill();
-            if (sectionsTrigger) sectionsTrigger.kill();
-        };
-    }, [publicContent]);
-
-    const heroTiles = [
-        {
-            id: 'networking',
-            label: 'Network',
-            subtitle: 'Routing / Switching',
-            Icon: Network,
-            cardClass: 'border-cyan-400/20 hover:border-cyan-300/45 hover:shadow-[0_14px_30px_rgba(34,211,238,0.14)]',
-            iconClass: 'text-cyan-300 bg-cyan-400/12 border-cyan-300/30',
-            dotClass: 'bg-cyan-300/70'
-        },
-        {
-            id: 'ethical-hacking',
-            label: 'Ethical Hacking',
-            subtitle: 'Security / Defense',
-            Icon: Shield,
-            cardClass: 'border-fuchsia-400/20 hover:border-fuchsia-300/45 hover:shadow-[0_14px_30px_rgba(217,70,239,0.14)]',
-            iconClass: 'text-fuchsia-300 bg-fuchsia-400/12 border-fuchsia-300/30',
-            dotClass: 'bg-fuchsia-300/70'
-        },
-        {
-            id: 'programming',
-            label: 'Programming',
-            subtitle: 'Python / JS / TS',
-            Icon: Code2,
-            cardClass: 'border-blue-400/20 hover:border-blue-300/45 hover:shadow-[0_14px_30px_rgba(96,165,250,0.14)]',
-            iconClass: 'text-blue-300 bg-blue-400/12 border-blue-300/30',
-            dotClass: 'bg-blue-300/70'
-        }
-    ];
+        return (
+            <a
+                key={`${label}-${idx}`}
+                href={href}
+                target={isExternal ? '_blank' : undefined}
+                rel={isExternal ? 'noreferrer' : undefined}
+                className="text-slate-300/85 hover:text-cyan-200 transition-colors"
+            >
+                {label}
+            </a>
+        );
+    };
 
     return (
-        <GlobalErrorBoundary>
-            <div className="min-h-screen bg-[#0d1526] text-primary selection:bg-cyan-500/30 overflow-x-hidden">
-                {/* Fixed 3D Particle Background */}
-                <CanvasErrorBoundary>
-                    <div className="fixed inset-0 z-0 bg-[#0d1526]">
-                        <Canvas camera={{ position: [0, 0, 15], fov: 35 }} dpr={[1, 2]}>
-                            <color attach="background" args={['#0d1526']} />
-                            <fog attach="fog" args={['#0d1526', 20, 45]} />
-                            <ambientLight intensity={0.5} />
-                            <pointLight position={[10, 10, 10]} intensity={1} color="#00e5ff" />
-                            <Suspense fallback={null}>
-                                <ParticleMorph
-                                    scrollProgress={scrollProgress}
-                                    sectionsProgress={sectionsProgress}
-                                    sectionCount={publicContent?.sections?.length || 3}
-                                />
-                            </Suspense>
-                        </Canvas>
-                        <div className="absolute inset-0 bg-gradient-to-b from-[#0d1526]/30 via-transparent to-[#0d1526]/70 pointer-events-none" />
-                    </div>
-                </CanvasErrorBoundary>
+        <div className="min-h-screen bg-app text-primary relative overflow-x-hidden">
+            <div className="fixed inset-0 bg-gradient-to-b from-[#08152e] via-[#071226] to-[#08152e] -z-10" />
+            <div className="fixed inset-0 pointer-events-none -z-10">
+                <div className="absolute top-0 left-0 h-[30rem] w-[30rem] rounded-full bg-cyan-500/8 blur-[120px]" />
+                <div className="absolute right-0 top-44 h-[22rem] w-[22rem] rounded-full bg-blue-500/8 blur-[100px]" />
+                <div className="absolute bottom-10 left-1/3 h-[26rem] w-[26rem] rounded-full bg-sky-500/6 blur-[120px]" />
+            </div>
 
-                {/* Warm ambient glow blobs to break monotone blue */}
-                <div className="fixed inset-0 z-[1] pointer-events-none">
-                    <div className="absolute top-[20%] right-[10%] w-[500px] h-[500px] rounded-full bg-purple-600/[0.04] blur-[120px]" />
-                    <div className="absolute bottom-[15%] left-[5%] w-[400px] h-[400px] rounded-full bg-amber-500/[0.03] blur-[100px]" />
-                    <div className="absolute top-[60%] right-[30%] w-[300px] h-[300px] rounded-full bg-cyan-400/[0.03] blur-[80px]" />
-                </div>
+            <PublicNavbar />
 
-                {/* Header / Navbar */}
-                <header className="fixed top-0 left-0 w-full z-50 border-b border-white/5 bg-slate-950/20 backdrop-blur-md">
-                    <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
-                                <ShieldCheck size={18} className="text-cyan-400" />
-                            </div>
-                            <div>
-                                <p className="text-sm font-bold tracking-tight">UNREAL CYBER</p>
-                                <p className="text-[10px] text-secondary uppercase tracking-[0.2em] opacity-60 font-semibold">Vision 2026</p>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-6">
-                            <nav className="hidden lg:flex items-center gap-8 text-[10px] uppercase tracking-[0.2em] text-secondary font-bold">
-                                {/* Tracks Dropdown */}
-                                <div className="relative group">
-                                    <button className="flex items-center gap-1 hover:text-cyan-400 transition-colors py-2">
-                                        TRACKS <ChevronDown size={12} />
-                                    </button>
-                                    <div className="absolute top-full left-0 mt-2 w-48 bg-[#0a101f] border border-white/10 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all transform translate-y-2 group-hover:translate-y-0 z-50 overflow-hidden">
-                                        <button onClick={(e) => scrollToSection('networking', e)} className="w-full text-left block px-4 py-3 hover:bg-white/5 hover:text-cyan-400 transition-colors">Network</button>
-                                        <button onClick={(e) => scrollToSection('ethical-hacking', e)} className="w-full text-left block px-4 py-3 hover:bg-white/5 hover:text-purple-400 transition-colors">Ethical Hacking</button>
-                                        <button onClick={(e) => scrollToSection('programming', e)} className="w-full text-left block px-4 py-3 hover:bg-white/5 hover:text-blue-400 transition-colors">Programming</button>
-                                    </div>
-                                </div>
-
-                                <Link to="/progress" className="hover:text-cyan-400 transition-colors">Progress</Link>
-                                <Link to="/profile" className="hover:text-cyan-400 transition-colors">Profile</Link>
-                                <button type="button" onClick={scrollToAbout} className="hover:text-cyan-400 transition-colors">ABOUT</button>
-                            </nav>
-
-                            <div className="h-6 w-[1px] bg-white/10 hidden lg:block" />
-
-                            <div className="flex items-center gap-4">
-                                {!user ? (
-                                    <div className="flex flex-col items-end">
-                                        <div ref={googleBtnRef} />
-                                        {!googleReady && (
-                                            <span className="text-[8px] text-secondary/40 mt-1 uppercase tracking-widest font-bold">Initializing...</span>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center gap-3">
-                                        <style>{`
-                                            #credential_picker_container, 
-                                            iframe[src*="accounts.google.com/gsi/iframe"],
-                                            .google-one-tap { 
-                                                display: none !important; 
-                                                visibility: hidden !important;
-                                                opacity: 0 !important;
-                                                pointer-events: none !important;
-                                            }
-                                        `}</style>
-                                        <div className="flex flex-col items-end">
-                                            <span className="text-[10px] font-black text-white uppercase tracking-wider">{user.display_name || user.username}</span>
-                                            <button
-                                                onClick={async () => {
-                                                    await logout();
-                                                    if (window.google?.accounts?.id) {
-                                                        window.google.accounts.id.cancel();
-                                                    }
-                                                    window.location.assign('/'); // Full reload and clear
-                                                }}
-                                                className="text-[8px] font-bold text-red-400/60 hover:text-red-400 uppercase tracking-[0.2em] transition-colors"
-                                            >
-                                                Sign Out
-                                            </button>
-                                        </div>
-                                        <div className="w-9 h-9 rounded-xl overflow-hidden border border-white/10 bg-white/5 p-0.5">
-                                            {user.avatar_url ? (
-                                                <img src={user.avatar_url} className="w-full h-full object-cover rounded-lg" alt="" />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-[11px] font-black text-white bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-lg">
-                                                    {user.display_name?.[0] || 'U'}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {user && (user.role === 'admin' || user.private_access === 1) && (
-                                    <Link
-                                        to="/private"
-                                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-[10px] font-black text-cyan-400 hover:bg-cyan-500/20 transition-all uppercase tracking-[0.2em] hover:shadow-[0_0_20px_rgba(6,182,212,0.15)] group"
-                                    >
-                                        <span>Join Private Lab</span>
-                                        <ArrowUpRight size={12} strokeWidth={3} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                                    </Link>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </header>
-
-                {/* HERO SECTION - REFINED */}
-                <section className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 pt-32 pb-20 overflow-hidden">
-                    <div className="max-w-4xl mx-auto w-full text-center flex flex-col gap-16">
-                        {/* 1. Headline & CTA First (Top) */}
-                        <div className="space-y-8 max-w-3xl mx-auto order-1">
-                            <div className="space-y-4">
-                                <h1 className="text-[clamp(2.5rem,10vw,7.5rem)] font-black tracking-tighter uppercase leading-[0.8] text-white">
-                                    Unreal<span className="text-cyan-500">Cyber</span><br />
-                                    Academy
-                                </h1>
-                                <p className="text-lg md:text-xl text-slate-300 font-medium leading-relaxed max-w-2xl mx-auto">
-                                    {publicContent?.hero?.subtitle || 'Networking, ethical hacking, and programming. Learn fast, build real skills.'}
-                                </p>
-                            </div>
-
-                            <div className="flex flex-wrap items-center justify-center gap-6 pt-4">
-                                <a
-                                    href={publicContent?.hero?.ctaLink || "https://www.youtube.com/@UnrealCyber"}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="px-8 py-4 rounded-2xl bg-white text-black font-black uppercase tracking-widest text-xs hover:bg-cyan-400 transition-all transform hover:-translate-y-1"
-                                >
-                                    {publicContent?.hero?.ctaText || 'Watch on YouTube'}
-                                </a>
-                                <button
-                                    onClick={scrollToNetworking}
-                                    className="px-8 py-4 rounded-2xl bg-white/5 border border-white/10 text-white font-black uppercase tracking-widest text-xs hover:bg-white/10 transition-all"
-                                >
-                                    Explore Academy
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* 2. Video Card Second (Below) */}
-                        <div className="relative group w-full max-w-4xl mx-auto order-2">
-                            <div className="absolute -inset-4 bg-cyan-500/5 rounded-[2rem] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                            {publicContent?.hero?.heroVideoLink || featured?.featuredVideo || DEFAULT_PUBLIC_CONTENT.hero.heroVideoLink ? (
-                                <div className="aspect-video w-full rounded-2xl overflow-hidden shadow-2xl border border-white/5 bg-slate-900/50 backdrop-blur-sm relative transition-transform hover:scale-[1.01] duration-500">
-                                    <iframe
-                                        className="w-full h-full"
-                                        src={getEmbedUrl(publicContent?.hero?.heroVideoLink || (featured?.featuredVideo?.drive_link ? featured.featuredVideo.drive_link : DEFAULT_PUBLIC_CONTENT.hero.heroVideoLink))}
-                                        title="Platform Preview"
-                                        frameBorder="0"
-                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                        allowFullScreen
-                                    />
-                                </div>
-                            ) : (
-                                <div className="aspect-video w-full rounded-3xl overflow-hidden shadow-2xl border border-white/10 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center relative group/vid">
-                                    <div className="text-center space-y-4">
-                                        <Activity size={48} className="mx-auto text-cyan-500/30 animate-pulse" />
-                                        <p className="text-secondary/40 uppercase tracking-[0.3em] text-[11px] font-black">Syncing Unreal Collective Data...</p>
-                                    </div>
-                                </div>
-                            )}
+            <main className="pt-24 md:pt-28 pb-20">
+                <section className="section-padding reveal-on-scroll">
+                    <div className="max-w-6xl mx-auto text-center glass-card p-8 md:p-14 scanline-overlay">
+                        <p className="text-[11px] uppercase tracking-[0.36em] text-cyan-300">UnrealCyber Academy</p>
+                        <h1 className="mt-6 text-4xl sm:text-6xl lg:text-7xl font-bold leading-[0.95]">
+                            Become a{' '}
+                            <span className="glitch-text is-active cyber-text-gradient" data-text="CYBERSECURITY EXPERT">
+                                CYBERSECURITY EXPERT
+                            </span>
+                        </h1>
+                        <p className="mt-6 max-w-2xl mx-auto text-slate-300/90 text-base sm:text-lg leading-relaxed">
+                            Learn networking, ethical hacking, and programming through structured modules and practical labs.
+                        </p>
+                        <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+                            <Link
+                                to="/tracking"
+                                className="glitch-hover inline-flex items-center justify-center gap-2 px-7 py-3 rounded-xl bg-cyan-500/90 text-slate-950 font-bold uppercase tracking-[0.14em]"
+                            >
+                                Start Learning
+                                <ArrowUpRight size={16} />
+                            </Link>
+                            <Link
+                                to="/tracking"
+                                className="glitch-hover inline-flex items-center justify-center gap-2 px-7 py-3 rounded-xl border border-cyan-500/30 bg-cyan-500/8 text-cyan-200 font-semibold uppercase tracking-[0.14em]"
+                            >
+                                Tracks
+                            </Link>
                         </div>
                     </div>
                 </section>
 
-                {/* Scrollable Content Layers */}
-                < main ref={sectionsContainerRef} className="relative z-10" >
-                    <ScrollSections sections={publicContent?.sections} />
-                </main >
-
-                {/* Footer */}
-                < footer id="about-section" ref={footerRef} className="relative z-10 border-t border-white/5 bg-[#02040a]/40" >
-                    <div className="max-w-7xl mx-auto px-6 py-16 flex flex-col md:flex-row justify-between items-center gap-12 text-center md:text-left">
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-center md:justify-start gap-4">
-                                <ShieldCheck size={24} className="text-cyan-400" />
-                                <span className="text-sm font-black uppercase tracking-[0.5em]">Unreal Cyber Academy</span>
-                            </div>
-                            <p className="text-secondary text-[10px] max-w-sm leading-relaxed opacity-50 font-medium">
-                                The elite training ground for the next generation of cybersecurity experts. Join the collective and master the digital frontier.
-                            </p>
+                <section className="section-padding mt-16 reveal-on-scroll">
+                    <div className="max-w-6xl mx-auto">
+                        <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
+                            <h2 className="text-2xl md:text-3xl font-bold glitch-hover">Latest From Our Channel</h2>
+                            {publicContent?.socials?.youtube && (
+                                <a
+                                    href={publicContent.socials.youtube}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center gap-2 text-sm text-cyan-300 hover:text-cyan-200"
+                                >
+                                    <Youtube size={16} /> Visit Channel
+                                </a>
+                            )}
                         </div>
 
-                        <div className="space-y-6">
-                            <h3 className="text-xl font-black uppercase tracking-tight">Connect</h3>
-                            <div className="flex flex-wrap justify-end gap-3">
-                                {publicContent?.socials?.youtube && (
-                                    <a href={publicContent.socials.youtube} target="_blank" rel="noopener noreferrer"
-                                        className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500/20 transition-all" title="YouTube">
-                                        <Youtube size={16} />
+                        <div className="glass-card overflow-hidden border-cyan-500/22">
+                            <div className="grid grid-cols-1 lg:grid-cols-2">
+                                <div className="aspect-video lg:aspect-auto min-h-[260px] bg-[#081327]">
+                                    {latestVideo?.id ? (
+                                        <iframe
+                                            src={`https://www.youtube.com/embed/${latestVideo.id}`}
+                                            className="w-full h-full"
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                            allowFullScreen
+                                            title={latestVideo.title || 'Latest from channel'}
+                                        />
+                                    ) : (
+                                        <div className="h-full flex items-center justify-center text-slate-400">
+                                            Channel video feed unavailable
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="p-6 md:p-8 flex flex-col justify-between gap-5">
+                                    <div>
+                                        {latestVideo?.thumbnail && (
+                                            <img
+                                                src={latestVideo.thumbnail}
+                                                alt=""
+                                                className="w-32 h-20 object-cover rounded-lg border border-white/10 mb-4"
+                                                loading="lazy"
+                                            />
+                                        )}
+                                        <h3 className="text-xl font-bold text-white leading-snug">
+                                            {latestVideo?.title || 'Latest video will appear here'}
+                                        </h3>
+                                        <p className="mt-3 text-slate-300/80 text-sm leading-relaxed line-clamp-4">
+                                            {latestVideo?.description || 'Connect your YouTube channel link in site settings to auto-load your latest upload.'}
+                                        </p>
+                                    </div>
+                                    <a
+                                        href={latestVideo?.url || publicContent?.socials?.youtube || '#'}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="glitch-hover inline-flex w-fit items-center gap-2 px-5 py-2.5 rounded-lg bg-cyan-500/14 border border-cyan-500/32 text-cyan-100 font-semibold"
+                                    >
+                                        <Play size={14} /> Watch Now
                                     </a>
-                                )}
-                                {publicContent?.socials?.telegram && (
-                                    <a href={publicContent.socials.telegram} target="_blank" rel="noopener noreferrer"
-                                        className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 transition-all" title="Telegram">
-                                        <Send size={16} />
-                                    </a>
-                                )}
-                                {publicContent?.socials?.discord && (
-                                    <a href={publicContent.socials.discord} target="_blank" rel="noopener noreferrer"
-                                        className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 transition-all" title="Discord">
-                                        <MessageSquare size={16} />
-                                    </a>
-                                )}
-                                {publicContent?.socials?.instagram && (
-                                    <a href={publicContent.socials.instagram} target="_blank" rel="noopener noreferrer"
-                                        className="p-3 rounded-xl bg-pink-500/10 border border-pink-500/20 text-pink-400 hover:bg-pink-500/20 transition-all" title="Instagram">
-                                        <Instagram size={16} />
-                                    </a>
-                                )}
-                                {publicContent?.socials?.tiktok && (
-                                    <a href={publicContent.socials.tiktok} target="_blank" rel="noopener noreferrer"
-                                        className="p-3 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all" title="TikTok">
-                                        <Music size={16} />
-                                    </a>
-                                )}
-                                {publicContent?.socials?.facebook && (
-                                    <a href={publicContent.socials.facebook} target="_blank" rel="noopener noreferrer"
-                                        className="p-3 rounded-xl bg-blue-600/10 border border-blue-600/20 text-blue-600 hover:bg-blue-600/20 transition-all" title="Facebook">
-                                        <Facebook size={16} />
-                                    </a>
-                                )}
-                                {publicContent?.socials?.twitter && (
-                                    <a href={publicContent.socials.twitter} target="_blank" rel="noopener noreferrer"
-                                        className="p-3 rounded-xl bg-blue-400/10 border border-blue-400/20 text-blue-400 hover:bg-blue-400/20 transition-all" title="X (Twitter)">
-                                        <Twitter size={16} />
-                                    </a>
-                                )}
-                                {publicContent?.socials?.linkedin && (
-                                    <a href={publicContent.socials.linkedin} target="_blank" rel="noopener noreferrer"
-                                        className="p-3 rounded-xl bg-blue-700/10 border border-blue-700/20 text-blue-700 hover:bg-blue-700/20 transition-all" title="LinkedIn">
-                                        <Linkedin size={16} />
-                                    </a>
-                                )}
+                                </div>
                             </div>
                         </div>
-                        {publicContent?.socialLinks?.filter((link) => link.url).map((link, idx) => (
-                            <a
-                                key={idx}
-                                href={link.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-cyan-500/50 hover:bg-cyan-500/5 transition-all group"
-                                title={link.platform}
+                    </div>
+                </section>
+
+                <section className="section-padding mt-20 reveal-on-scroll">
+                    <div className="max-w-6xl mx-auto">
+                        <h2 className="text-2xl md:text-3xl font-bold mb-8">Three Pillars of Mastery</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {pillars.map((pillar) => {
+                                const meta = SECTION_META[pillar.key] || SECTION_META.networking;
+                                const Icon = meta.icon;
+                                return (
+                                    <div key={pillar.key} className="flip-card h-72 md:h-80">
+                                        <div className="flip-card-inner">
+                                            <div className={`flip-card-front glass-card cyber-border-glow p-6 md:p-7 ${meta.glow}`}>
+                                                <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl border ${meta.chip}`}>
+                                                    <Icon size={22} className={meta.accent} />
+                                                </div>
+                                                <h3 className="mt-5 text-2xl font-bold">{pillar.title}</h3>
+                                                <p className="mt-3 text-slate-300/80 leading-relaxed text-sm">{pillar.description}</p>
+                                            </div>
+                                            <div className="flip-card-back glass-card p-6 md:p-7 bg-gradient-to-br from-[#0a1b39] to-[#071428]">
+                                                <p className="text-[11px] uppercase tracking-[0.2em] text-cyan-300/80">Most Popular Course</p>
+                                                <h4 className="mt-5 text-xl font-semibold text-white">{pillar.popularCourse}</h4>
+                                                <Link
+                                                    to={`/vision/${pillar.key}`}
+                                                    className={`mt-8 inline-flex items-center gap-2 ${meta.accent} font-semibold`}
+                                                >
+                                                    View Course <ArrowUpRight size={14} />
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </section>
+
+                <section className="section-padding mt-20 reveal-on-scroll">
+                    <div className="max-w-6xl mx-auto">
+                        <h2 className="text-2xl md:text-3xl font-bold mb-8">A Proven Learning Method</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                            {METHOD_STEPS.map((step, index) => {
+                                const Icon = step.icon;
+                                return (
+                                    <article
+                                        key={step.title}
+                                        className="glass-card-hover p-6 md:p-7 group relative overflow-hidden"
+                                    >
+                                        <span className="absolute -right-3 top-1 text-7xl font-bold text-white/5">0{index + 1}</span>
+                                        <div className="w-12 h-12 rounded-xl bg-cyan-500/12 border border-cyan-500/25 flex items-center justify-center group-hover:scale-105 transition-transform">
+                                            <Icon size={20} className="text-cyan-300" />
+                                        </div>
+                                        <h3 className="mt-5 text-xl font-semibold text-white">{step.title}</h3>
+                                        <p className="mt-3 text-sm leading-relaxed text-slate-300/80">{step.description}</p>
+                                    </article>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </section>
+
+                <section className="section-padding mt-20 reveal-on-scroll">
+                    <div className="max-w-6xl mx-auto glass-card p-6 md:p-8">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                            <div>
+                                <h2 className="text-2xl font-bold">Choose Your Track</h2>
+                                <p className="text-slate-300/80 mt-2">Open a track and start with clear modules and session-by-session progress.</p>
+                            </div>
+                            <Link
+                                to="/tracking"
+                                className="glitch-hover inline-flex items-center gap-2 w-fit px-6 py-3 rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-cyan-100 font-semibold"
                             >
-                                <span className="text-secondary group-hover:text-white uppercase text-[10px] font-black tracking-widest">{link.platform}</span>
-                            </a>
-                        ))}
-                    </div>
-
-                    <div className="max-w-7xl mx-auto px-6 py-8 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4 text-[8px] uppercase tracking-[0.4em] text-secondary/30 font-bold">
-                        <span>&copy; 2026 Unreal Cyber Collective. All Rights Reserved.</span>
-                        <div className="flex gap-8">
-                            {/* Policy links removed as per request */}
+                                Open Learning Hub
+                                <ArrowUpRight size={16} />
+                            </Link>
                         </div>
                     </div>
-                </footer >
-            </div >
-        </GlobalErrorBoundary >
-    );
-};
+                </section>
+            </main>
 
-export default PublicHome;
+            {footer?.enabled !== false && (
+            <footer className="bg-[#031024] mt-24">
+                <div className="max-w-7xl mx-auto px-6 py-14 grid grid-cols-1 md:grid-cols-4 gap-10">
+                    <div className="md:col-span-1">
+                        <span className="text-2xl font-bold tracking-tight text-white">{footer?.brand || 'UNREALCYBER'}</span>
+                        <p className="mt-6 text-slate-300/80 leading-relaxed text-lg max-w-sm">
+                            {footer?.description || DEFAULT_PUBLIC_CONTENT.footer.description}
+                        </p>
+                        {socialLinks.length > 0 && (
+                            <div className="mt-6 flex flex-wrap gap-3">
+                                {socialLinks.map(({ key, icon: Icon }) => (
+                                    <a
+                                        key={key}
+                                        href={publicContent.socials[key]}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-300 hover:text-cyan-200 hover:border-cyan-500/35 transition-all"
+                                    >
+                                        <Icon size={18} />
+                                    </a>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {(footerHeadings?.platform || (footerColumns?.platform || []).length > 0) && (
+                    <div>
+                        <h3 className="text-white font-bold text-2xl mb-4">{footerHeadings?.platform || 'Platform'}</h3>
+                        <div className="flex flex-col gap-3 text-lg">
+                            {(footerColumns?.platform || []).map(renderFooterLink)}
+                        </div>
+                    </div>
+                    )}
+
+                    {(footerHeadings?.resources || (footerColumns?.resources || []).length > 0) && (
+                    <div>
+                        <h3 className="text-white font-bold text-2xl mb-4">{footerHeadings?.resources || 'Resources'}</h3>
+                        <div className="flex flex-col gap-3 text-lg">
+                            {(footerColumns?.resources || []).map(renderFooterLink)}
+                        </div>
+                    </div>
+                    )}
+
+                    {(footerHeadings?.legal || (footerColumns?.legal || []).length > 0) && (
+                    <div>
+                        <h3 className="text-white font-bold text-2xl mb-4">{footerHeadings?.legal || 'Legal'}</h3>
+                        <div className="flex flex-col gap-3 text-lg">
+                            {(footerColumns?.legal || []).map(renderFooterLink)}
+                        </div>
+                    </div>
+                    )}
+                </div>
+
+                <div>
+                    <div className="max-w-7xl mx-auto px-6 py-7 text-sm md:text-base text-slate-300/70 flex flex-col md:flex-row items-center justify-between gap-3">
+                        <span>{footer?.copyrightText || DEFAULT_PUBLIC_CONTENT.footer.copyrightText}</span>
+                        <span>{footer?.madeWithText || DEFAULT_PUBLIC_CONTENT.footer.madeWithText}</span>
+                    </div>
+                </div>
+            </footer>
+            )}
+        </div>
+    );
+}

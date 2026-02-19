@@ -27,18 +27,18 @@
   }
 
   :root[data-theme='light'] {
-    --bg: #10233f;
-    --bg-soft: #173358;
-    --text: #f1f8ff;
-    --card: rgba(24, 52, 88, 0.72);
-    --muted: #b8cce6;
-    --border: rgba(116, 160, 212, 0.28);
-    --accent: #38bdf8;
-    --accent-alt: #60a5fa;
-    --accent-glow: rgba(96, 165, 250, 0.22);
-    --danger: #ff6b86;
-    --bg-grad-1: #112745;
-    --bg-grad-2: #183b66;
+    --bg: #edf4ff;
+    --bg-soft: #e2edff;
+    --text: #10223d;
+    --card: rgba(255, 255, 255, 0.82);
+    --muted: #56729a;
+    --border: rgba(53, 101, 158, 0.22);
+    --accent: #0284c7;
+    --accent-alt: #2563eb;
+    --accent-glow: rgba(37, 99, 235, 0.2);
+    --danger: #e11d48;
+    --bg-grad-1: #f5f9ff;
+    --bg-grad-2: #e9f1ff;
   }
 
   body {
@@ -356,6 +356,18 @@
 
 .theme-page-bg {
   background: linear-gradient(to bottom, var(--bg-grad-1), var(--bg-grad-2), var(--bg-grad-1));
+}
+
+:root[data-theme='light'] .text-white {
+  color: #10223d !important;
+}
+
+:root[data-theme='light'] .text-slate-300,
+:root[data-theme='light'] .text-slate-300\/80,
+:root[data-theme='light'] .text-slate-300\/85,
+:root[data-theme='light'] .text-slate-300\/90,
+:root[data-theme='light'] .text-slate-400 {
+  color: #4f6689 !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

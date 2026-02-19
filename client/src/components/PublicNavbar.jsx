@@ -148,10 +148,7 @@ export default function PublicNavbar() {
                             <div className="scale-[0.85] origin-right" ref={desktopGoogleBtnRef} />
                         ) : (
                             <div className="flex items-center gap-3">
-                                <Link
-                                    to="/profile"
-                                    className="inline-flex items-center gap-2 px-2.5 py-2 rounded-xl border border-white/10 bg-white/[0.03] hover:border-cyan-400/35 transition-colors"
-                                >
+                                <div className="inline-flex items-center gap-2 px-2.5 py-2 rounded-xl border border-white/10 bg-white/[0.03]">
                                     {avatarUrl ? (
                                         <img src={avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover" />
                                     ) : (
@@ -159,20 +156,22 @@ export default function PublicNavbar() {
                                             {avatarLetter}
                                         </span>
                                     )}
-                                    <span className="text-[10px] uppercase tracking-[0.16em] text-slate-200 max-w-[110px] truncate">
-                                        {displayName}
-                                    </span>
-                                </Link>
-                                <button
-                                    onClick={async () => {
-                                        await logout();
-                                        if (window.google?.accounts?.id) window.google.accounts.id.cancel();
-                                        window.location.assign('/');
-                                    }}
-                                    className="text-[10px] uppercase tracking-[0.18em] text-red-300/75 hover:text-red-200 transition-colors"
-                                >
-                                    Sign Out
-                                </button>
+                                    <div className="flex flex-col min-w-0">
+                                        <span className="text-[10px] uppercase tracking-[0.16em] text-slate-200 max-w-[110px] truncate">
+                                            {displayName}
+                                        </span>
+                                        <button
+                                            onClick={async () => {
+                                                await logout();
+                                                if (window.google?.accounts?.id) window.google.accounts.id.cancel();
+                                                window.location.assign('/');
+                                            }}
+                                            className="text-[9px] uppercase tracking-[0.16em] text-red-300/80 hover:text-red-200 transition-colors text-left"
+                                        >
+                                            Sign Out
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         )}
 

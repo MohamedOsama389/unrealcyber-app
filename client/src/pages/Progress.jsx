@@ -155,9 +155,10 @@ export default function Progress() {
     const overallPercent = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
 
     return (
-        <div ref={pageRef} className="min-h-screen bg-[#0d1526] text-white">
+        <div ref={pageRef} className="min-h-screen bg-app text-primary">
             <PublicNavbar />
 
+            <div className="fixed inset-0 theme-page-bg -z-10" />
             <div className="fixed -top-40 -right-40 h-96 w-96 rounded-full bg-cyan-500/5 blur-3xl pointer-events-none" />
             <div className="fixed bottom-0 -left-40 h-96 w-96 rounded-full bg-blue-500/5 blur-3xl pointer-events-none" />
 

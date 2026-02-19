@@ -209,7 +209,7 @@ export default function PublicHome() {
 
     return (
         <div className="min-h-screen bg-app text-primary relative overflow-x-hidden">
-            <div className="fixed inset-0 bg-gradient-to-b from-[#08152e] via-[#071226] to-[#08152e] -z-10" />
+            <div className="fixed inset-0 theme-page-bg -z-10" />
             <div className="fixed inset-0 pointer-events-none -z-10">
                 <div className="absolute top-0 left-0 h-[30rem] w-[30rem] rounded-full bg-cyan-500/8 blur-[120px]" />
                 <div className="absolute right-0 top-44 h-[22rem] w-[22rem] rounded-full bg-blue-500/8 blur-[100px]" />

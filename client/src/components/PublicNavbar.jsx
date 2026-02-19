@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { Menu, X, ArrowUpRight, Sun, Moon } from 'lucide-react';
+import { Menu, X, ArrowUpRight, Sun, Moon, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -83,13 +83,16 @@ export default function PublicNavbar() {
     }, [loginWithGoogle, user]);
 
     const hasPrivate = user && (user.role === 'admin' || user.private_access);
-    const displayName = (() => {
-        const rawDisplay = String(user?.display_name ?? '').trim();
-        const rawUser = String(user?.username ?? '').trim();
-        if (rawDisplay && rawDisplay !== '0') return rawDisplay;
-        if (rawUser && rawUser !== '0') return rawUser;
-        return 'Member';
-    })();
+    const normalizeString = (value) => {
+        const normalized = String(value ?? '').trim();
+        if (!normalized) return '';
+        if (normalized === '0' || normalized.toLowerCase() === 'null' || normalized.toLowerCase() === 'undefined') return '';
+        return normalized;
+    };
+
+    const displayName = normalizeString(user?.display_name) || normalizeString(user?.username) || 'Member';
+    const avatarUrl = normalizeString(user?.avatar_url);
+    const avatarLetter = displayName.charAt(0).toUpperCase();
 
     return (
         <>
@@ -126,26 +129,51 @@ export default function PublicNavbar() {
 
                         <button
                             onClick={toggleTheme}
-                            className="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-white/10 bg-white/[0.03] text-slate-200 hover:text-cyan-200 hover:border-cyan-400/35 transition-colors"
+                            className="relative w-[86px] h-11 rounded-full border border-white/15 bg-white/[0.03] p-1 transition-colors hover:border-cyan-400/35"
                             title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
                             aria-label="Toggle theme"
                         >
-                            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+                            <span className="absolute inset-1 rounded-full border border-cyan-500/35 bg-gradient-to-r from-blue-500/20 to-cyan-400/20" />
+                            <span
+                                className={`relative z-10 flex items-center justify-center w-9 h-9 rounded-full shadow-lg transition-transform duration-300 ${theme === 'dark'
+                                        ? 'translate-x-0 bg-gradient-to-br from-cyan-300 to-blue-500 text-[#071226]'
+                                        : 'translate-x-[42px] bg-gradient-to-br from-orange-300 via-pink-400 to-violet-500 text-[#1d0f2c]'
+                                    }`}
+                            >
+                                {theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
+                            </span>
                         </button>
 
                         {!user ? (
                             <div className="scale-[0.85] origin-right" ref={desktopGoogleBtnRef} />
                         ) : (
-                            <button
-                                onClick={async () => {
-                                    await logout();
-                                    if (window.google?.accounts?.id) window.google.accounts.id.cancel();
-                                    window.location.assign('/');
-                                }}
-                                className="text-[10px] uppercase tracking-[0.18em] text-red-300/75 hover:text-red-200 transition-colors"
-                            >
-                                Sign Out
-                            </button>
+                            <div className="flex items-center gap-3">
+                                <Link
+                                    to="/profile"
+                                    className="inline-flex items-center gap-2 px-2.5 py-2 rounded-xl border border-white/10 bg-white/[0.03] hover:border-cyan-400/35 transition-colors"
+                                >
+                                    {avatarUrl ? (
+                                        <img src={avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover" />
+                                    ) : (
+                                        <span className="w-7 h-7 rounded-full bg-cyan-500/25 text-cyan-200 text-xs font-bold flex items-center justify-center">
+                                            {avatarLetter}
+                                        </span>
+                                    )}
+                                    <span className="text-[10px] uppercase tracking-[0.16em] text-slate-200 max-w-[110px] truncate">
+                                        {displayName}
+                                    </span>
+                                </Link>
+                                <button
+                                    onClick={async () => {
+                                        await logout();
+                                        if (window.google?.accounts?.id) window.google.accounts.id.cancel();
+                                        window.location.assign('/');
+                                    }}
+                                    className="text-[10px] uppercase tracking-[0.18em] text-red-300/75 hover:text-red-200 transition-colors"
+                                >
+                                    Sign Out
+                                </button>
+                            </div>
                         )}
 
                         {hasPrivate && (
@@ -208,7 +236,7 @@ export default function PublicNavbar() {
                                     onClick={toggleTheme}
                                     className="mt-2 px-4 py-3 rounded-xl text-sm uppercase tracking-[0.16em] font-semibold text-slate-200 border border-white/10 bg-white/[0.03] hover:border-cyan-400/35 transition-colors flex items-center justify-center gap-2"
                                 >
-                                    {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+                                    {theme === 'dark' ? <Moon size={14} /> : <Sun size={14} />}
                                     {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
                                 </button>
 
@@ -217,8 +245,17 @@ export default function PublicNavbar() {
                                         <div ref={mobileGoogleBtnRef} className="w-full" />
                                     ) : (
                                         <div className="space-y-3">
-                                            <div className="text-xs uppercase tracking-[0.16em] text-slate-300">
-                                                {displayName}
+                                            <div className="flex items-center gap-2">
+                                                {avatarUrl ? (
+                                                    <img src={avatarUrl} alt="" className="w-7 h-7 rounded-full object-cover" />
+                                                ) : (
+                                                    <span className="w-7 h-7 rounded-full bg-cyan-500/25 text-cyan-200 text-xs font-bold flex items-center justify-center">
+                                                        {avatarLetter}
+                                                    </span>
+                                                )}
+                                                <div className="text-xs uppercase tracking-[0.16em] text-slate-300 truncate">
+                                                    {displayName}
+                                                </div>
                                             </div>
                                             <button
                                                 onClick={async () => {

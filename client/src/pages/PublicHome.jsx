@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { DEFAULT_PUBLIC_CONTENT, normalizePublicContent } from '../data/publicSite';
 import PublicNavbar from '../components/PublicNavbar';
+import { useTheme } from '../context/ThemeContext';
 
 const METHOD_STEPS = [
     {
@@ -115,6 +116,8 @@ const buildLatestFallback = (content) => {
 export default function PublicHome() {
     const [publicContent, setPublicContent] = useState(DEFAULT_PUBLIC_CONTENT);
     const [latestVideo, setLatestVideo] = useState(null);
+    const { theme } = useTheme();
+    const isLight = theme === 'light';
 
     useEffect(() => {
         const observer = new IntersectionObserver(
@@ -267,7 +270,7 @@ export default function PublicHome() {
 
                         <div className="glass-card overflow-hidden border-cyan-500/22">
                             <div className="grid grid-cols-1 lg:grid-cols-2">
-                                <div className="aspect-video lg:aspect-auto min-h-[260px] bg-[#081327]">
+                                <div className={`aspect-video lg:aspect-auto min-h-[260px] ${isLight ? 'bg-[#dce9ff]' : 'bg-[#081327]'}`}>
                                     {latestVideo?.id ? (
                                         <iframe
                                             src={`https://www.youtube.com/embed/${latestVideo.id}`}
@@ -304,7 +307,10 @@ export default function PublicHome() {
                                         href={latestVideo?.url || publicContent?.socials?.youtube || '#'}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="glitch-hover inline-flex w-fit items-center gap-2 px-5 py-2.5 rounded-lg bg-cyan-500/14 border border-cyan-500/32 text-cyan-100 font-semibold"
+                                        className={`glitch-hover inline-flex w-fit items-center gap-2 px-5 py-2.5 rounded-lg border font-semibold ${isLight
+                                            ? 'bg-cyan-500/20 border-cyan-600/35 text-cyan-700'
+                                            : 'bg-cyan-500/14 border-cyan-500/32 text-cyan-100'
+                                            }`}
                                     >
                                         <Play size={14} /> Watch Now
                                     </a>

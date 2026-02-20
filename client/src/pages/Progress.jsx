@@ -27,6 +27,7 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useAuth } from '../context/AuthContext';
 import PublicNavbar from '../components/PublicNavbar';
+import { useTheme } from '../context/ThemeContext';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -93,6 +94,8 @@ function getTrackKey(track) {
 
 export default function Progress() {
     const { user } = useAuth();
+    const { theme } = useTheme();
+    const isLight = theme === 'light';
     const [tracks, setTracks] = useState([]);
     const [progress, setProgress] = useState({});
     const [expandedTrack, setExpandedTrack] = useState(null);
@@ -201,28 +204,28 @@ export default function Progress() {
                         <div className="stats-grid grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
                             <div className="stats-card glass-card p-6 text-center">
                                 <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center mx-auto mb-3">
-                                    <BookOpen className="w-5 h-5 text-cyan-400" />
+                                    <BookOpen className={`w-5 h-5 ${isLight ? 'text-cyan-700' : 'text-cyan-400'}`} />
                                 </div>
                                 <p className="text-2xl font-bold">{tracks.length}</p>
                                 <p className="text-slate-400 text-sm">Tracks</p>
                             </div>
                             <div className="stats-card glass-card p-6 text-center">
                                 <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center mx-auto mb-3">
-                                    <Target className="w-5 h-5 text-blue-400" />
+                                    <Target className={`w-5 h-5 ${isLight ? 'text-blue-700' : 'text-blue-400'}`} />
                                 </div>
                                 <p className="text-2xl font-bold">{totalSteps}</p>
                                 <p className="text-slate-400 text-sm">Total Steps</p>
                             </div>
                             <div className="stats-card glass-card p-6 text-center">
                                 <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center mx-auto mb-3">
-                                    <TrendingUp className="w-5 h-5 text-emerald-400" />
+                                    <TrendingUp className={`w-5 h-5 ${isLight ? 'text-emerald-700' : 'text-emerald-400'}`} />
                                 </div>
                                 <p className="text-2xl font-bold">{completedSteps}</p>
                                 <p className="text-slate-400 text-sm">Completed</p>
                             </div>
                             <div className="stats-card glass-card p-6 text-center">
                                 <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center mx-auto mb-3">
-                                    <Clock className="w-5 h-5 text-amber-400" />
+                                    <Clock className={`w-5 h-5 ${isLight ? 'text-amber-700' : 'text-amber-400'}`} />
                                 </div>
                                 <p className="text-2xl font-bold">{overallPercent}%</p>
                                 <p className="text-slate-400 text-sm">Completion</p>

@@ -81,6 +81,16 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
+:root[data-theme='light'] .glass-panel,
+:root[data-theme='light'] .glass-card,
+:root[data-theme='light'] .glass-card-hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(37, 99, 235, 0.2);
+  box-shadow:
+    0 16px 42px rgba(15, 40, 86, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
 .glass-card-hover:hover {
   border-color: rgba(18, 216, 255, 0.32);
   transform: translateY(-3px);
@@ -368,6 +378,19 @@
 :root[data-theme='light'] .text-slate-300\/90,
 :root[data-theme='light'] .text-slate-400 {
   color: #4f6689 !important;
+}
+
+:root[data-theme='light'] .text-cyan-100 {
+  color: #0e5ea8 !important;
+}
+
+:root[data-theme='light'] .text-cyan-200 {
+  color: #0b67bc !important;
+}
+
+:root[data-theme='light'] .bg-slate-900\/70,
+:root[data-theme='light'] .bg-\[\#081327\] {
+  background-color: #dce9ff !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -28,12 +28,16 @@ export const AuthProvider = ({ children }) => {
         initAuth();
     }, []);
 
-    const login = async (username, password) => {
+    const login = async (username, password, options = {}) => {
         try {
-            const res = await axios.post('/api/auth/login', { username, password });
+            const res = await axios.post('/api/auth/login', {
+                username,
+                password,
+                requireAdmin: options.requireAdmin || false
+            });
             const { token, role, username: dbUsername, avatar_id, avatar_version, display_name, avatar_url, private_access } = res.data;
 
-            if (role?.toLowerCase() !== 'admin' && !private_access) {
+            if (options.requireAdmin && role?.toLowerCase() !== 'admin' && !private_access) {
                 return { success: false, error: 'Private access is restricted.' };
             }
 

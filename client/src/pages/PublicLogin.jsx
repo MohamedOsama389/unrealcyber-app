@@ -1,17 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { LogIn, ArrowLeft, Apple, Facebook, Chrome } from 'lucide-react';
+import { LogIn, ArrowLeft, Chrome, User, Lock } from 'lucide-react';
 import PublicNavbar from '../components/PublicNavbar';
 
 const PublicLogin = () => {
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
-    const { loginWithGoogle, user } = useAuth();
+    const { loginWithGoogle, login, user } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
     const googleBtnRef = useRef(null);
     const [googleReady, setGoogleReady] = useState(false);
-    const [socialNotice, setSocialNotice] = useState('');
 
     // Where to go after login — default to the page that redirected here
     const from = location.state?.from || '/progress';
@@ -62,22 +64,20 @@ const PublicLogin = () => {
         return () => { script.onload = null; };
     }, [loginWithGoogle, navigate, from]);
 
-    const handleProviderLogin = (provider) => {
+    const handleEmailLogin = async (e) => {
+        e.preventDefault();
+        setSubmitting(true);
         setError('');
-        setSocialNotice('');
 
-        if (provider === 'google') return;
+        const result = await login(username, password, { requireAdmin: false });
+        setSubmitting(false);
 
-        const envKey = provider === 'apple' ? 'VITE_APPLE_LOGIN_URL' : 'VITE_FACEBOOK_LOGIN_URL';
-        const providerLabel = provider === 'apple' ? 'Apple' : 'Facebook';
-        const providerUrl = import.meta.env[envKey];
-
-        if (providerUrl) {
-            window.location.assign(providerUrl);
+        if (result.success) {
+            navigate(from, { replace: true });
             return;
         }
 
-        setSocialNotice(`${providerLabel} login is not configured yet.`);
+        setError(result.error || 'Login failed. Please try again.');
     };
 
     return (
@@ -104,7 +104,7 @@ const PublicLogin = () => {
                             Sign In to Continue
                         </h2>
                         <p className="text-center text-white/40 text-sm mt-2 mb-8">
-                            Access your progress, tracking, and profile with your preferred provider.
+                            Continue with Google or your email account.
                         </p>
 
                         {/* Error */}
@@ -114,25 +114,45 @@ const PublicLogin = () => {
                             </div>
                         )}
 
-                        <div className="space-y-3">
+                        <form onSubmit={handleEmailLogin} className="space-y-3">
+                            <label className="block">
+                                <span className="mb-1.5 block text-[11px] uppercase tracking-[0.14em] text-white/50">Username or email</span>
+                                <div className="relative">
+                                    <User size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/35" />
+                                    <input
+                                        type="text"
+                                        value={username}
+                                        onChange={(e) => setUsername(e.target.value)}
+                                        className="w-full rounded-xl border border-white/12 bg-white/[0.04] px-10 py-3 text-sm text-white outline-none transition-colors focus:border-cyan-400/45"
+                                        placeholder="Enter username"
+                                        autoComplete="username"
+                                        required
+                                    />
+                                </div>
+                            </label>
+                            <label className="block">
+                                <span className="mb-1.5 block text-[11px] uppercase tracking-[0.14em] text-white/50">Password</span>
+                                <div className="relative">
+                                    <Lock size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/35" />
+                                    <input
+                                        type="password"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        className="w-full rounded-xl border border-white/12 bg-white/[0.04] px-10 py-3 text-sm text-white outline-none transition-colors focus:border-cyan-400/45"
+                                        placeholder="Enter password"
+                                        autoComplete="current-password"
+                                        required
+                                    />
+                                </div>
+                            </label>
                             <button
-                                type="button"
-                                onClick={() => handleProviderLogin('apple')}
-                                className="w-full inline-flex items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-semibold text-slate-100 hover:border-cyan-400/35 hover:bg-cyan-500/8 transition-colors"
+                                type="submit"
+                                disabled={submitting}
+                                className="w-full rounded-xl border border-cyan-500/30 bg-cyan-500/12 px-4 py-3 text-sm font-semibold text-cyan-200 transition-colors hover:bg-cyan-500/22 disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                                <Apple size={18} />
-                                Continue with Apple
+                                {submitting ? 'Signing In...' : 'Sign In with Email'}
                             </button>
-
-                            <button
-                                type="button"
-                                onClick={() => handleProviderLogin('facebook')}
-                                className="w-full inline-flex items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-semibold text-slate-100 hover:border-cyan-400/35 hover:bg-cyan-500/8 transition-colors"
-                            >
-                                <Facebook size={18} />
-                                Continue with Facebook
-                            </button>
-                        </div>
+                        </form>
 
                         <div className="my-5 flex items-center gap-3">
                             <span className="h-px bg-white/10 flex-1" />
@@ -151,12 +171,6 @@ const PublicLogin = () => {
                         {!googleReady && (
                             <p className="text-[11px] text-white/30 text-center mt-4">
                                 Loading Google sign-in...
-                            </p>
-                        )}
-
-                        {socialNotice && (
-                            <p className="text-[11px] text-amber-300/90 text-center mt-3">
-                                {socialNotice}
                             </p>
                         )}
 

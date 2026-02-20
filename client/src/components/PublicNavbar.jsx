@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { Menu, X, ArrowUpRight, Sun, Moon, Sparkles } from 'lucide-react';
+import { Menu, X, ArrowUpRight, Sun, Moon, LogIn } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,11 +14,9 @@ const NAV_LINKS = [
 export default function PublicNavbar() {
     const [open, setOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
-    const { user, loginWithGoogle, logout } = useAuth();
+    const { user, logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
     const location = useLocation();
-    const desktopGoogleBtnRef = useRef(null);
-    const mobileGoogleBtnRef = useRef(null);
 
     useEffect(() => {
         const onScroll = () => setScrolled(window.scrollY > 12);
@@ -29,58 +27,6 @@ export default function PublicNavbar() {
     useEffect(() => {
         setOpen(false);
     }, [location.pathname]);
-
-    useEffect(() => {
-        const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-        if (!clientId || user) return;
-
-        const renderGoogleButtons = () => {
-            if (!window.google?.accounts?.id) return;
-
-            window.google.accounts.id.initialize({
-                client_id: clientId,
-                callback: async (response) => {
-                    await loginWithGoogle(response.credential, { requireAdmin: false });
-                }
-            });
-
-            if (desktopGoogleBtnRef.current) {
-                desktopGoogleBtnRef.current.innerHTML = '';
-                window.google.accounts.id.renderButton(desktopGoogleBtnRef.current, {
-                    theme: 'outline',
-                    size: 'medium',
-                    text: 'continue_with',
-                    width: '210'
-                });
-            }
-
-            if (mobileGoogleBtnRef.current) {
-                mobileGoogleBtnRef.current.innerHTML = '';
-                window.google.accounts.id.renderButton(mobileGoogleBtnRef.current, {
-                    theme: 'outline',
-                    size: 'large',
-                    text: 'continue_with',
-                    width: '240'
-                });
-            }
-        };
-
-        if (window.google) {
-            renderGoogleButtons();
-            return;
-        }
-
-        const script = document.createElement('script');
-        script.src = 'https://accounts.google.com/gsi/client?hl=en';
-        script.async = true;
-        script.defer = true;
-        script.onload = renderGoogleButtons;
-        document.body.appendChild(script);
-
-        return () => {
-            script.onload = null;
-        };
-    }, [loginWithGoogle, user]);
 
     const hasPrivate = user && (user.role === 'admin' || user.private_access);
     const normalizeString = (value) => {
@@ -145,7 +91,14 @@ export default function PublicNavbar() {
                         </button>
 
                         {!user ? (
-                            <div className="scale-[0.85] origin-right" ref={desktopGoogleBtnRef} />
+                            <Link
+                                to="/login"
+                                state={{ from: location.pathname }}
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-[10px] font-bold uppercase tracking-[0.16em] text-cyan-200 hover:bg-cyan-500/20 transition-all"
+                            >
+                                Sign In
+                                <LogIn size={12} />
+                            </Link>
                         ) : (
                             <div className="flex items-center gap-3">
                                 <div className="inline-flex items-center gap-2 px-2.5 py-2 rounded-xl border border-white/10 bg-white/[0.03]">
@@ -241,7 +194,14 @@ export default function PublicNavbar() {
 
                                 <div className="mt-4 border-t border-white/10 pt-5">
                                     {!user ? (
-                                        <div ref={mobileGoogleBtnRef} className="w-full" />
+                                        <Link
+                                            to="/login"
+                                            state={{ from: location.pathname }}
+                                            className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm uppercase tracking-[0.16em] font-semibold text-cyan-200 border border-cyan-500/30 bg-cyan-500/10 hover:bg-cyan-500/20 transition-colors"
+                                        >
+                                            Sign In
+                                            <LogIn size={14} />
+                                        </Link>
                                     ) : (
                                         <div className="space-y-3">
                                             <div className="flex items-center gap-2">

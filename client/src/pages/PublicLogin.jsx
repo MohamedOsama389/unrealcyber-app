@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { LogIn, ArrowLeft } from 'lucide-react';
+import { LogIn, ArrowLeft, Apple, Facebook, Chrome } from 'lucide-react';
 import PublicNavbar from '../components/PublicNavbar';
 
 const PublicLogin = () => {
@@ -11,6 +11,7 @@ const PublicLogin = () => {
     const location = useLocation();
     const googleBtnRef = useRef(null);
     const [googleReady, setGoogleReady] = useState(false);
+    const [socialNotice, setSocialNotice] = useState('');
 
     // Where to go after login — default to the page that redirected here
     const from = location.state?.from || '/progress';
@@ -61,6 +62,24 @@ const PublicLogin = () => {
         return () => { script.onload = null; };
     }, [loginWithGoogle, navigate, from]);
 
+    const handleProviderLogin = (provider) => {
+        setError('');
+        setSocialNotice('');
+
+        if (provider === 'google') return;
+
+        const envKey = provider === 'apple' ? 'VITE_APPLE_LOGIN_URL' : 'VITE_FACEBOOK_LOGIN_URL';
+        const providerLabel = provider === 'apple' ? 'Apple' : 'Facebook';
+        const providerUrl = import.meta.env[envKey];
+
+        if (providerUrl) {
+            window.location.assign(providerUrl);
+            return;
+        }
+
+        setSocialNotice(`${providerLabel} login is not configured yet.`);
+    };
+
     return (
         <div className="min-h-screen bg-[#0d1526] text-white">
             <PublicNavbar />
@@ -85,7 +104,7 @@ const PublicLogin = () => {
                             Sign In to Continue
                         </h2>
                         <p className="text-center text-white/40 text-sm mt-2 mb-8">
-                            Access your progress, tracking, and profile by signing in with Google.
+                            Access your progress, tracking, and profile with your preferred provider.
                         </p>
 
                         {/* Error */}
@@ -95,14 +114,49 @@ const PublicLogin = () => {
                             </div>
                         )}
 
-                        {/* Google Sign-In Button */}
-                        <div className="flex justify-center">
+                        <div className="space-y-3">
+                            <button
+                                type="button"
+                                onClick={() => handleProviderLogin('apple')}
+                                className="w-full inline-flex items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-semibold text-slate-100 hover:border-cyan-400/35 hover:bg-cyan-500/8 transition-colors"
+                            >
+                                <Apple size={18} />
+                                Continue with Apple
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => handleProviderLogin('facebook')}
+                                className="w-full inline-flex items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-semibold text-slate-100 hover:border-cyan-400/35 hover:bg-cyan-500/8 transition-colors"
+                            >
+                                <Facebook size={18} />
+                                Continue with Facebook
+                            </button>
+                        </div>
+
+                        <div className="my-5 flex items-center gap-3">
+                            <span className="h-px bg-white/10 flex-1" />
+                            <span className="text-[10px] uppercase tracking-[0.18em] text-white/35">or</span>
+                            <span className="h-px bg-white/10 flex-1" />
+                        </div>
+
+                        <div className="flex flex-col items-center gap-2">
                             <div ref={googleBtnRef} />
+                            <div className="inline-flex items-center gap-1.5 text-[11px] text-white/40">
+                                <Chrome size={12} />
+                                Google
+                            </div>
                         </div>
 
                         {!googleReady && (
                             <p className="text-[11px] text-white/30 text-center mt-4">
                                 Loading Google sign-in...
+                            </p>
+                        )}
+
+                        {socialNotice && (
+                            <p className="text-[11px] text-amber-300/90 text-center mt-3">
+                                {socialNotice}
                             </p>
                         )}
 

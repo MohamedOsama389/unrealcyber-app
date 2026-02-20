@@ -1672,6 +1672,26 @@ const AdminPanel = () => {
                                         value={section.description || ''}
                                         onChange={(e) => updateSection(sectionIndex, { description: e.target.value })}
                                     />
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                        <input
+                                            className="input-field"
+                                            placeholder="Popular video title (card)"
+                                            value={section.popularVideoTitle || ''}
+                                            onChange={(e) => updateSection(sectionIndex, { popularVideoTitle: e.target.value })}
+                                        />
+                                        <input
+                                            className="input-field"
+                                            placeholder="Popular video link (YouTube / internal)"
+                                            value={section.popularVideoUrl || ''}
+                                            onChange={(e) => updateSection(sectionIndex, { popularVideoUrl: e.target.value })}
+                                        />
+                                        <input
+                                            className="input-field"
+                                            placeholder="Playlist link (optional)"
+                                            value={section.playlistUrl || ''}
+                                            onChange={(e) => updateSection(sectionIndex, { playlistUrl: e.target.value })}
+                                        />
+                                    </div>
 
                                     <div className="space-y-4">
                                         {(section.videos || []).map((video, videoIndex) => (
@@ -1695,6 +1715,15 @@ const AdminPanel = () => {
                                                             className="text-red-400 hover:text-red-300"
                                                         >
                                                             <Trash2 size={14} />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => updateSection(sectionIndex, {
+                                                                popularVideoTitle: video.title || section.popularVideoTitle || '',
+                                                                popularVideoUrl: video.url || section.popularVideoUrl || ''
+                                                            })}
+                                                            className="px-2 py-1 rounded text-[10px] font-black uppercase bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/25"
+                                                        >
+                                                            Set Card Video
                                                         </button>
                                                     </div>
                                                 </div>

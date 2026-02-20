@@ -5,6 +5,17 @@ import { ArrowLeft, ArrowUpRight, Play, ChevronDown, ChevronUp, BookOpen } from 
 import { DEFAULT_PUBLIC_CONTENT, normalizePublicContent, buildVideoSlug, getSectionTheme, getVideoThumbnailUrl } from '../data/publicSite';
 import PublicNavbar from '../components/PublicNavbar';
 
+const getYouTubePlaylistEmbed = (url = '') => {
+    if (!url) return '';
+    try {
+        const parsed = new URL(url);
+        const list = parsed.searchParams.get('list');
+        return list ? `https://www.youtube.com/embed/videoseries?list=${encodeURIComponent(list)}` : '';
+    } catch {
+        return '';
+    }
+};
+
 export default function PublicSection() {
     const { sectionKey } = useParams();
     const [content, setContent] = useState(DEFAULT_PUBLIC_CONTENT);
@@ -40,6 +51,7 @@ export default function PublicSection() {
 
     const section = sections.find((item) => item.key === sectionKey);
     const theme = getSectionTheme(sectionKey);
+    const playlistEmbedUrl = getYouTubePlaylistEmbed(section?.playlistUrl || '');
 
     const toggleModule = (index) => {
         setExpandedModules((prev) => ({ ...prev, [index]: !prev[index] }));
@@ -83,7 +95,42 @@ export default function PublicSection() {
                     </div>
                     <h1 className="text-3xl md:text-5xl font-bold mt-4 glitch-hover">{section.title}</h1>
                     {section.description && <p className="text-slate-300/85 text-base md:text-lg mt-4 max-w-3xl">{section.description}</p>}
+                    <div className="mt-6 flex flex-wrap gap-3">
+                        <Link
+                            to={section.videos?.[0] ? `/vision/${section.key}/${section.videos[0].slug}` : `/vision/${section.key}`}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-cyan-500/30 bg-cyan-500/12 text-cyan-200 text-sm font-semibold"
+                        >
+                            <Play size={14} /> Start Playlist
+                        </Link>
+                        {section.playlistUrl && (
+                            <a
+                                href={section.playlistUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-white/15 bg-white/5 text-slate-200 text-sm font-semibold"
+                            >
+                                <ArrowUpRight size={14} /> Open YouTube Playlist
+                            </a>
+                        )}
+                    </div>
                 </section>
+
+                {playlistEmbedUrl && (
+                    <section className="mt-6">
+                        <div className="glass-card p-4 border-white/12">
+                            <h2 className="text-sm uppercase tracking-[0.2em] text-cyan-300 mb-3">Playlist Preview</h2>
+                            <div className="aspect-video rounded-2xl overflow-hidden border border-white/10 bg-[#071327]">
+                                <iframe
+                                    src={playlistEmbedUrl}
+                                    className="w-full h-full"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowFullScreen
+                                    title={`${section.title} playlist`}
+                                />
+                            </div>
+                        </div>
+                    </section>
+                )}
 
                 <section className="mt-10">
                     <div className="flex items-center justify-between mb-5">

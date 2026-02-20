@@ -104,7 +104,7 @@ const resolveYouTubeChannelId = async (channelUrl = '') => {
 
 const DEFAULT_PUBLIC_CONTENT = {
     hero: {
-        title: 'UnrealCyber Vision',
+        title: 'UnrealCyber Latest Video',
         subtitle: 'Networking, ethical hacking, and programming. Learn fast, build real skills.',
         ctaText: 'Watch on YouTube',
         ctaLink: 'https://www.youtube.com/',
@@ -120,6 +120,9 @@ const DEFAULT_PUBLIC_CONTENT = {
             key: 'networking',
             title: 'Networking',
             description: 'Core networking foundations and lab walkthroughs.',
+            popularVideoTitle: '',
+            popularVideoUrl: '',
+            playlistUrl: '',
             videos: [
                 { title: 'Intro to Networking', description: 'Quick fundamentals to get started.', url: '', downloads: [] }
             ]
@@ -128,12 +131,18 @@ const DEFAULT_PUBLIC_CONTENT = {
             key: 'ethical-hacking',
             title: 'Ethical Hacking',
             description: 'Red-team mindset, tooling, and practical exploits.',
+            popularVideoTitle: '',
+            popularVideoUrl: '',
+            playlistUrl: '',
             videos: []
         },
         {
             key: 'programming',
             title: 'Programming',
             description: 'Build scripts, automation, and security tooling.',
+            popularVideoTitle: '',
+            popularVideoUrl: '',
+            playlistUrl: '',
             videos: []
         }
     ],
@@ -827,17 +836,27 @@ app.get('/api/public', (req, res) => {
             };
 
             if (content.sections) {
+                const hasAdminVideos = (section) =>
+                    Array.isArray(section?.videos) &&
+                    section.videos.some(v => (v?.title || '').trim() || (v?.url || '').trim());
+
                 // Networking
                 const netSec = content.sections.find(s => s.key === 'networking');
-                if (netSec) netSec.videos = getVideosFor(['network', 'rout', 'switch', 'osi', 'protocol', 'ip', 'subnet']);
+                if (netSec && !hasAdminVideos(netSec)) {
+                    netSec.videos = getVideosFor(['network', 'rout', 'switch', 'osi', 'protocol', 'ip', 'subnet']);
+                }
 
                 // Hacking
                 const hackSec = content.sections.find(s => s.key === 'ethical-hacking' || s.key === 'hacking');
-                if (hackSec) hackSec.videos = getVideosFor(['hack', 'pentest', 'recon', 'exploit', 'security', 'ctf', 'nmap']);
+                if (hackSec && !hasAdminVideos(hackSec)) {
+                    hackSec.videos = getVideosFor(['hack', 'pentest', 'recon', 'exploit', 'security', 'ctf', 'nmap']);
+                }
 
                 // Programming
                 const progSec = content.sections.find(s => s.key === 'programming');
-                if (progSec) progSec.videos = getVideosFor(['python', 'javascript', 'code', 'script', 'automat', 'tool', 'bot']);
+                if (progSec && !hasAdminVideos(progSec)) {
+                    progSec.videos = getVideosFor(['python', 'javascript', 'code', 'script', 'automat', 'tool', 'bot']);
+                }
             }
         } catch (videoErr) {
             console.error('[API] Video injection failed:', videoErr.message);

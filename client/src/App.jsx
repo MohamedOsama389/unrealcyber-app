@@ -70,6 +70,7 @@ function AppContent() {
           <Route element={<ProtectedRoute allowedRoles={['admin', 'student']} />}>
             <Route path="/private" element={<Navigate to="/private/dashboard" replace />} />
             <Route path="/private/dashboard" element={<Dashboard />} />
+            <Route path="/private/meetings" element={<Meetings />} />
             <Route path="/private/b/*" element={<BuilderPage />} />
             <Route path="/private/admin" element={<AdminPanel />} />
             <Route path="/private/tasks" element={<Tasks />} />

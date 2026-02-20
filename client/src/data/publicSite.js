@@ -1,6 +1,6 @@
 export const DEFAULT_PUBLIC_CONTENT = {
     hero: {
-        title: 'UnrealCyber Vision',
+        title: 'UnrealCyber Latest Video',
         subtitle: 'Networking, ethical hacking, and programming. Learn fast, build real skills.',
         ctaText: 'Watch on YouTube',
         ctaLink: 'https://www.youtube.com/',
@@ -16,6 +16,9 @@ export const DEFAULT_PUBLIC_CONTENT = {
             key: 'networking',
             title: 'Networking',
             description: 'Core networking foundations and lab walkthroughs.',
+            popularVideoTitle: '',
+            popularVideoUrl: '',
+            playlistUrl: '',
             videos: [
                 { title: 'Intro to Networking', description: 'Quick fundamentals to get started.', url: '', downloads: [] }
             ]
@@ -24,12 +27,18 @@ export const DEFAULT_PUBLIC_CONTENT = {
             key: 'ethical-hacking',
             title: 'Ethical Hacking',
             description: 'Red-team mindset, tooling, and practical exploits.',
+            popularVideoTitle: '',
+            popularVideoUrl: '',
+            playlistUrl: '',
             videos: []
         },
         {
             key: 'programming',
             title: 'Programming',
             description: 'Build scripts, automation, and security tooling.',
+            popularVideoTitle: '',
+            popularVideoUrl: '',
+            playlistUrl: '',
             videos: []
         }
     ],
@@ -87,6 +96,9 @@ export const normalizePublicContent = (content) => {
     merged.sections = merged.sections.map((section, idx) => ({
         ...section,
         key: section.key || DEFAULT_PUBLIC_CONTENT.sections[idx]?.key || `section-${idx}`,
+        popularVideoTitle: section.popularVideoTitle || '',
+        popularVideoUrl: section.popularVideoUrl || '',
+        playlistUrl: section.playlistUrl || '',
         videos: Array.isArray(section.videos) ? section.videos : []
     }));
     merged.footer = {

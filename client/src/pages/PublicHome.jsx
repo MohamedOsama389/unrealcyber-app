@@ -62,24 +62,21 @@ const SECTION_META = {
     },
 };
 
-const FALLBACK_PILLARS = [
+const BASE_PILLARS = [
     {
         key: 'networking',
         title: 'Networking',
         description: 'Design, route, and secure modern networks with confidence.',
-        popularCourse: 'CCNA Foundations',
     },
     {
         key: 'ethical-hacking',
         title: 'Ethical Hacking',
         description: 'Train offensive and defensive workflows in controlled labs.',
-        popularCourse: 'Penetration Testing Fundamentals',
     },
     {
         key: 'programming',
         title: 'Programming',
         description: 'Build automation tools that scale cybersecurity operations.',
-        popularCourse: 'Python for Security Automation',
     },
 ];
 
@@ -102,7 +99,7 @@ const buildLatestFallback = (content) => {
     if (heroId) {
         return {
             id: heroId,
-            title: content?.hero?.title || 'Latest upload',
+            title: 'UnrealCyber Latest Video',
             description: content?.hero?.subtitle || 'Watch the latest lesson from our channel.',
             url: `https://www.youtube.com/watch?v=${heroId}`,
             thumbnail: `https://img.youtube.com/vi/${heroId}/hqdefault.jpg`,
@@ -121,7 +118,7 @@ const buildLatestFallback = (content) => {
     }
 
     for (const section of content.sections || []) {
-        for (const video of section.videos || []) {
+        for (const [index, video] of (section.videos || []).entries()) {
             const id = extractYouTubeId(video.url || '');
             if (id) {
                 return {
@@ -130,6 +127,13 @@ const buildLatestFallback = (content) => {
                     description: video.description || 'Watch the latest lesson from our channel.',
                     url: `https://www.youtube.com/watch?v=${id}`,
                     thumbnail: `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
+                    internalPath: `/vision/${section.key}/${
+                        (video.title || `video-${index + 1}`)
+                            .toLowerCase()
+                            .trim()
+                            .replace(/[^a-z0-9]+/g, '-')
+                            .replace(/(^-|-$)+/g, '') || `video-${index + 1}`
+                    }-${index + 1}`,
                 };
             }
         }
@@ -183,15 +187,54 @@ export default function PublicHome() {
 
     const pillars = useMemo(() => {
         const sections = publicContent.sections || [];
-        if (sections.length === 0) return FALLBACK_PILLARS;
-        return FALLBACK_PILLARS.map((fallback) => {
+        if (sections.length === 0) {
+            return BASE_PILLARS.map((pillar) => ({
+                ...pillar,
+                popularCourse: 'Set from admin panel',
+                popularPath: `/vision/${pillar.key}`,
+                popularExternal: false,
+            }));
+        }
+        return BASE_PILLARS.map((fallback) => {
             const section = sections.find((item) => item.key === fallback.key);
-            const popular = section?.videos?.[0]?.title || fallback.popularCourse;
+            const videos = section?.videos || [];
+            const popularUrl = (section?.popularVideoUrl || '').trim();
+            const popularTitle = (section?.popularVideoTitle || '').trim();
+            const matchedByUrlIndex = videos.findIndex((video) => (video?.url || '').trim() === popularUrl);
+            const matchedByTitleIndex = videos.findIndex((video) =>
+                (video?.title || '').trim().toLowerCase() === popularTitle.toLowerCase()
+            );
+            const matchedIndex = matchedByUrlIndex >= 0 ? matchedByUrlIndex : matchedByTitleIndex;
+            const matchedVideo = matchedIndex >= 0 ? videos[matchedIndex] : null;
+            const fallbackVideo = videos[0] || null;
+            const chosenVideo = matchedVideo || fallbackVideo;
+            const chosenIndex = matchedVideo ? matchedIndex : 0;
+
+            let popularPath = section?.key ? `/vision/${section.key}` : '/tracking';
+            let popularExternal = false;
+
+            if (chosenVideo?.title && section?.key) {
+                const slugBase = chosenVideo.title
+                    .toLowerCase()
+                    .trim()
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/(^-|-$)+/g, '') || `video-${chosenIndex + 1}`;
+                popularPath = `/vision/${section.key}/${slugBase}-${chosenIndex + 1}`;
+            } else if (popularUrl) {
+                popularPath = popularUrl;
+                popularExternal = popularUrl.startsWith('http');
+            } else if ((section?.playlistUrl || '').trim()) {
+                popularPath = section.playlistUrl.trim();
+                popularExternal = popularPath.startsWith('http');
+            }
+
             return {
                 ...fallback,
                 title: section?.title || fallback.title,
                 description: section?.description || fallback.description,
-                popularCourse: popular,
+                popularCourse: popularTitle || chosenVideo?.title || 'Set from admin panel',
+                popularPath,
+                popularExternal,
             };
         });
     }, [publicContent.sections]);
@@ -321,23 +364,41 @@ export default function PublicHome() {
                                             />
                                         )}
                                         <h3 className="text-xl font-bold text-white leading-snug">
-                                            {latestVideo?.title || 'Latest video will appear here'}
+                                            {latestVideo?.internalPath ? (
+                                                <Link to={latestVideo.internalPath} className="hover:text-cyan-300 transition-colors">
+                                                    {latestVideo?.title || 'Latest video will appear here'}
+                                                </Link>
+                                            ) : (
+                                                latestVideo?.title || 'Latest video will appear here'
+                                            )}
                                         </h3>
                                         <p className="mt-3 text-slate-300/80 text-sm leading-relaxed line-clamp-4">
                                             {latestVideo?.description || 'Connect your YouTube channel link in site settings to auto-load your latest upload.'}
                                         </p>
                                     </div>
-                                    <a
-                                        href={latestVideo?.url || publicContent?.socials?.youtube || '#'}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className={`glitch-hover inline-flex w-fit items-center gap-2 px-5 py-2.5 rounded-lg border font-semibold ${isLight
-                                            ? 'bg-cyan-500/20 border-cyan-600/35 text-cyan-700'
-                                            : 'bg-cyan-500/14 border-cyan-500/32 text-cyan-100'
-                                            }`}
-                                    >
-                                        <Play size={14} /> Watch Now
-                                    </a>
+                                    {latestVideo?.internalPath ? (
+                                        <Link
+                                            to={latestVideo.internalPath}
+                                            className={`glitch-hover inline-flex w-fit items-center gap-2 px-5 py-2.5 rounded-lg border font-semibold ${isLight
+                                                ? 'bg-cyan-500/20 border-cyan-600/35 text-cyan-700'
+                                                : 'bg-cyan-500/14 border-cyan-500/32 text-cyan-100'
+                                                }`}
+                                        >
+                                            <Play size={14} /> Watch Now
+                                        </Link>
+                                    ) : (
+                                        <a
+                                            href={latestVideo?.url || publicContent?.socials?.youtube || '#'}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className={`glitch-hover inline-flex w-fit items-center gap-2 px-5 py-2.5 rounded-lg border font-semibold ${isLight
+                                                ? 'bg-cyan-500/20 border-cyan-600/35 text-cyan-700'
+                                                : 'bg-cyan-500/14 border-cyan-500/32 text-cyan-100'
+                                                }`}
+                                        >
+                                            <Play size={14} /> Watch Now
+                                        </a>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -363,12 +424,28 @@ export default function PublicHome() {
                                             </div>
                                             <div className="flip-card-back glass-card p-6 md:p-7 bg-gradient-to-br from-[#0a1b39] to-[#071428]">
                                                 <p className="text-[11px] uppercase tracking-[0.2em] text-cyan-300/80">Most Popular Course</p>
-                                                <h4 className="mt-5 text-xl font-semibold text-white">{pillar.popularCourse}</h4>
+                                                {pillar.popularExternal ? (
+                                                    <a
+                                                        href={pillar.popularPath}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="mt-5 block text-xl font-semibold text-white hover:text-cyan-300 transition-colors"
+                                                    >
+                                                        {pillar.popularCourse}
+                                                    </a>
+                                                ) : (
+                                                    <Link
+                                                        to={pillar.popularPath}
+                                                        className="mt-5 block text-xl font-semibold text-white hover:text-cyan-300 transition-colors"
+                                                    >
+                                                        {pillar.popularCourse}
+                                                    </Link>
+                                                )}
                                                 <Link
-                                                    to={`/vision/${pillar.key}`}
+                                                    to="/tracking"
                                                     className={`mt-8 inline-flex items-center gap-2 ${meta.accent} font-semibold`}
                                                 >
-                                                    View Course <ArrowUpRight size={14} />
+                                                    View Courses <ArrowUpRight size={14} />
                                                 </Link>
                                             </div>
                                         </div>

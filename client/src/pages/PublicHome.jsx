@@ -89,6 +89,8 @@ const extractYouTubeId = (url = '') => {
         if (url.includes('youtu.be/')) return url.split('youtu.be/')[1].split(/[?&]/)[0];
         if (url.includes('watch?v=')) return url.split('watch?v=')[1].split('&')[0];
         if (url.includes('/embed/')) return url.split('/embed/')[1].split(/[?&]/)[0];
+        if (url.includes('/shorts/')) return url.split('/shorts/')[1].split(/[?&/]/)[0];
+        if (url.includes('/live/')) return url.split('/live/')[1].split(/[?&/]/)[0];
     } catch {
         return '';
     }
@@ -96,6 +98,28 @@ const extractYouTubeId = (url = '') => {
 };
 
 const buildLatestFallback = (content) => {
+    const heroId = extractYouTubeId(content?.hero?.heroVideoLink || '');
+    if (heroId) {
+        return {
+            id: heroId,
+            title: content?.hero?.title || 'Latest upload',
+            description: content?.hero?.subtitle || 'Watch the latest lesson from our channel.',
+            url: `https://www.youtube.com/watch?v=${heroId}`,
+            thumbnail: `https://img.youtube.com/vi/${heroId}/hqdefault.jpg`,
+        };
+    }
+
+    const socialVideoId = extractYouTubeId(content?.socials?.youtube || '');
+    if (socialVideoId) {
+        return {
+            id: socialVideoId,
+            title: 'Latest upload',
+            description: 'Watch the latest lesson from our channel.',
+            url: `https://www.youtube.com/watch?v=${socialVideoId}`,
+            thumbnail: `https://img.youtube.com/vi/${socialVideoId}/hqdefault.jpg`,
+        };
+    }
+
     for (const section of content.sections || []) {
         for (const video of section.videos || []) {
             const id = extractYouTubeId(video.url || '');

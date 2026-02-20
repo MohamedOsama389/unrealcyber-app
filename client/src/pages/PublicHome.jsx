@@ -190,7 +190,7 @@ export default function PublicHome() {
         if (sections.length === 0) {
             return BASE_PILLARS.map((pillar) => ({
                 ...pillar,
-                popularCourse: 'Set from admin panel',
+                popularCourse: '',
                 popularPath: `/vision/${pillar.key}`,
                 popularExternal: false,
             }));
@@ -232,7 +232,7 @@ export default function PublicHome() {
                 ...fallback,
                 title: section?.title || fallback.title,
                 description: section?.description || fallback.description,
-                popularCourse: popularTitle || chosenVideo?.title || 'Set from admin panel',
+                popularCourse: popularTitle || chosenVideo?.title || '',
                 popularPath,
                 popularExternal,
             };
@@ -424,22 +424,26 @@ export default function PublicHome() {
                                             </div>
                                             <div className="flip-card-back glass-card p-6 md:p-7 bg-gradient-to-br from-[#0a1b39] to-[#071428]">
                                                 <p className="text-[11px] uppercase tracking-[0.2em] text-cyan-300/80">Most Popular Course</p>
-                                                {pillar.popularExternal ? (
-                                                    <a
-                                                        href={pillar.popularPath}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        className="mt-5 block text-xl font-semibold text-white hover:text-cyan-300 transition-colors"
-                                                    >
-                                                        {pillar.popularCourse}
-                                                    </a>
+                                                {pillar.popularCourse ? (
+                                                    pillar.popularExternal ? (
+                                                        <a
+                                                            href={pillar.popularPath}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="mt-5 block text-xl font-semibold text-white hover:text-cyan-300 transition-colors"
+                                                        >
+                                                            {pillar.popularCourse}
+                                                        </a>
+                                                    ) : (
+                                                        <Link
+                                                            to={pillar.popularPath}
+                                                            className="mt-5 block text-xl font-semibold text-white hover:text-cyan-300 transition-colors"
+                                                        >
+                                                            {pillar.popularCourse}
+                                                        </Link>
+                                                    )
                                                 ) : (
-                                                    <Link
-                                                        to={pillar.popularPath}
-                                                        className="mt-5 block text-xl font-semibold text-white hover:text-cyan-300 transition-colors"
-                                                    >
-                                                        {pillar.popularCourse}
-                                                    </Link>
+                                                    <div className="mt-5 h-8" />
                                                 )}
                                                 <Link
                                                     to="/tracking"

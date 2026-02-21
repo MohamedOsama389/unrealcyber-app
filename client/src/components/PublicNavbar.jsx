@@ -28,7 +28,7 @@ export default function PublicNavbar() {
         setOpen(false);
     }, [location.pathname]);
 
-    const hasPrivate = user && (user.role === 'admin' || user.private_access);
+    const hasPrivate = Boolean(user && (user.role === 'admin' || user.private_access));
     const normalizeString = (value) => {
         const normalized = String(value ?? '').trim();
         if (!normalized) return '';

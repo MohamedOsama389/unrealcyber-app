@@ -240,12 +240,8 @@ export default function PublicHome() {
     }, [publicContent.sections]);
 
     const footer = publicContent?.footer || DEFAULT_PUBLIC_CONTENT.footer;
-    const footerColumns = footer?.columns || DEFAULT_PUBLIC_CONTENT.footer.columns;
-    const footerHeadings = footer?.headings || DEFAULT_PUBLIC_CONTENT.footer.headings;
-    const showPlatform = Boolean(footerHeadings?.platform || (footerColumns?.platform || []).length > 0);
-    const showResources = Boolean(footerHeadings?.resources || (footerColumns?.resources || []).length > 0);
-    const showLegal = Boolean(footerHeadings?.legal || (footerColumns?.legal || []).length > 0);
-    const onlyPlatformColumn = showPlatform && !showResources && !showLegal;
+    const footerMadeWith = (footer?.madeWithText || DEFAULT_PUBLIC_CONTENT.footer.madeWithText || 'Made with ❤️ for Unreal Cyber community')
+        .replace(/love/gi, '❤️');
     const socialLinks = [
         { key: 'youtube', icon: Youtube },
         { key: 'telegram', icon: Send },
@@ -256,30 +252,6 @@ export default function PublicHome() {
         { key: 'twitter', icon: Twitter },
         { key: 'linkedin', icon: Linkedin },
     ].filter((item) => publicContent?.socials?.[item.key]);
-
-    const renderFooterLink = (item, idx) => {
-        const href = item?.url || '#';
-        const label = item?.label || `Link ${idx + 1}`;
-        const isExternal = href.startsWith('http');
-        if (href.startsWith('/')) {
-            return (
-                <Link key={`${label}-${idx}`} to={href} className="text-slate-300/85 hover:text-cyan-200 transition-colors">
-                    {label}
-                </Link>
-            );
-        }
-        return (
-            <a
-                key={`${label}-${idx}`}
-                href={href}
-                target={isExternal ? '_blank' : undefined}
-                rel={isExternal ? 'noreferrer' : undefined}
-                className="text-slate-300/85 hover:text-cyan-200 transition-colors"
-            >
-                {label}
-            </a>
-        );
-    };
 
     return (
         <div className="min-h-screen bg-app text-primary relative overflow-x-hidden">
@@ -508,66 +480,35 @@ export default function PublicHome() {
             </main>
 
             {footer?.enabled !== false && (
-            <footer className="bg-[#031024] mt-24">
-                <div className="max-w-7xl mx-auto px-6 py-14 grid grid-cols-1 md:grid-cols-4 gap-10">
-                    <div className="md:col-span-1">
-                        <span className="text-2xl font-bold tracking-tight text-white">{footer?.brand || 'UNREALCYBER'}</span>
-                        <p className="mt-6 text-slate-300/80 leading-relaxed text-lg max-w-sm">
-                            {footer?.description || DEFAULT_PUBLIC_CONTENT.footer.description}
-                        </p>
-                        {socialLinks.length > 0 && (
-                            <div className="mt-6 flex flex-wrap gap-3">
-                                {socialLinks.map(({ key, icon: Icon }) => (
-                                    <a
-                                        key={key}
-                                        href={publicContent.socials[key]}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-300 hover:text-cyan-200 hover:border-cyan-500/35 transition-all"
-                                    >
-                                        <Icon size={18} />
-                                    </a>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    {showPlatform && (
-                    <div className={onlyPlatformColumn ? 'md:col-start-4 md:justify-self-end' : ''}>
-                        <h3 className="text-white font-bold text-2xl mb-4">{footerHeadings?.platform || 'Platform'}</h3>
-                        <div className="flex flex-col gap-3 text-lg">
-                            {(footerColumns?.platform || []).map(renderFooterLink)}
+                <footer className="bg-[#031024] mt-24 border-t border-white/10">
+                    <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col md:flex-row items-center justify-between gap-4">
+                        <span className="text-sm md:text-base text-slate-300/80">{footerMadeWith}</span>
+                        <div className="flex items-center gap-3">
+                            {socialLinks.map(({ key, icon: Icon }) => (
+                                <a
+                                    key={key}
+                                    href={publicContent.socials[key]}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="w-11 h-11 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-slate-300 hover:text-cyan-200 hover:border-cyan-500/35 transition-all"
+                                    aria-label={key}
+                                >
+                                    <Icon size={18} />
+                                </a>
+                            ))}
                         </div>
                     </div>
-                    )}
-
-                    {showResources && (
-                    <div>
-                        <h3 className="text-white font-bold text-2xl mb-4">{footerHeadings?.resources || 'Resources'}</h3>
-                        <div className="flex flex-col gap-3 text-lg">
-                            {(footerColumns?.resources || []).map(renderFooterLink)}
-                        </div>
-                    </div>
-                    )}
-
-                    {showLegal && (
-                    <div>
-                        <h3 className="text-white font-bold text-2xl mb-4">{footerHeadings?.legal || 'Legal'}</h3>
-                        <div className="flex flex-col gap-3 text-lg">
-                            {(footerColumns?.legal || []).map(renderFooterLink)}
-                        </div>
-                    </div>
-                    )}
-                </div>
-
-                <div>
-                    <div className="max-w-7xl mx-auto px-6 py-7 text-sm md:text-base text-slate-300/70 flex flex-col md:flex-row items-center justify-between gap-3">
-                        <span>{footer?.copyrightText || DEFAULT_PUBLIC_CONTENT.footer.copyrightText}</span>
-                        <span>{footer?.madeWithText || DEFAULT_PUBLIC_CONTENT.footer.madeWithText}</span>
-                    </div>
-                </div>
-            </footer>
+                </footer>
             )}
+
+            <button
+                type="button"
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                aria-label="Back to top"
+                className="fixed bottom-5 right-5 z-40 w-12 h-12 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 text-white shadow-[0_10px_30px_rgba(34,211,238,0.35)] border border-cyan-200/30 hover:scale-105 active:scale-95 transition-transform"
+            >
+                <ArrowUpRight size={18} className="-rotate-45 mx-auto" />
+            </button>
         </div>
     );
 }

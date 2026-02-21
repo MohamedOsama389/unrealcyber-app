@@ -144,6 +144,7 @@ const buildLatestFallback = (content) => {
 export default function PublicHome() {
     const [publicContent, setPublicContent] = useState(DEFAULT_PUBLIC_CONTENT);
     const [latestVideo, setLatestVideo] = useState(null);
+    const [showBackToTop, setShowBackToTop] = useState(false);
     const { theme } = useTheme();
     const isLight = theme === 'light';
 
@@ -183,6 +184,23 @@ export default function PublicHome() {
             }
         };
         load();
+    }, []);
+
+    useEffect(() => {
+        const onScroll = () => {
+            const doc = document.documentElement;
+            const maxScroll = Math.max(0, doc.scrollHeight - doc.clientHeight);
+            const halfPoint = maxScroll / 2;
+            setShowBackToTop(window.scrollY >= halfPoint && maxScroll > 0);
+        };
+
+        onScroll();
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', onScroll);
+        return () => {
+            window.removeEventListener('scroll', onScroll);
+            window.removeEventListener('resize', onScroll);
+        };
     }, []);
 
     const pillars = useMemo(() => {
@@ -501,14 +519,16 @@ export default function PublicHome() {
                 </footer>
             )}
 
-            <button
-                type="button"
-                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                aria-label="Back to top"
-                className="fixed bottom-5 right-5 z-40 w-12 h-12 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 text-white shadow-[0_10px_30px_rgba(34,211,238,0.35)] border border-cyan-200/30 hover:scale-105 active:scale-95 transition-transform"
-            >
-                <ArrowUpRight size={18} className="-rotate-45 mx-auto" />
-            </button>
+            {showBackToTop && (
+                <button
+                    type="button"
+                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    aria-label="Back to top"
+                    className="fixed bottom-5 right-5 z-40 w-12 h-12 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 text-white shadow-[0_10px_30px_rgba(34,211,238,0.35)] border border-cyan-200/30 hover:scale-105 active:scale-95 transition-transform"
+                >
+                    <ArrowUpRight size={18} className="-rotate-45 mx-auto" />
+                </button>
+            )}
         </div>
     );
 }

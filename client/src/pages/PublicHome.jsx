@@ -242,6 +242,10 @@ export default function PublicHome() {
     const footer = publicContent?.footer || DEFAULT_PUBLIC_CONTENT.footer;
     const footerColumns = footer?.columns || DEFAULT_PUBLIC_CONTENT.footer.columns;
     const footerHeadings = footer?.headings || DEFAULT_PUBLIC_CONTENT.footer.headings;
+    const showPlatform = Boolean(footerHeadings?.platform || (footerColumns?.platform || []).length > 0);
+    const showResources = Boolean(footerHeadings?.resources || (footerColumns?.resources || []).length > 0);
+    const showLegal = Boolean(footerHeadings?.legal || (footerColumns?.legal || []).length > 0);
+    const onlyPlatformColumn = showPlatform && !showResources && !showLegal;
     const socialLinks = [
         { key: 'youtube', icon: Youtube },
         { key: 'telegram', icon: Send },
@@ -528,8 +532,8 @@ export default function PublicHome() {
                         )}
                     </div>
 
-                    {(footerHeadings?.platform || (footerColumns?.platform || []).length > 0) && (
-                    <div>
+                    {showPlatform && (
+                    <div className={onlyPlatformColumn ? 'md:col-start-4 md:justify-self-end' : ''}>
                         <h3 className="text-white font-bold text-2xl mb-4">{footerHeadings?.platform || 'Platform'}</h3>
                         <div className="flex flex-col gap-3 text-lg">
                             {(footerColumns?.platform || []).map(renderFooterLink)}
@@ -537,7 +541,7 @@ export default function PublicHome() {
                     </div>
                     )}
 
-                    {(footerHeadings?.resources || (footerColumns?.resources || []).length > 0) && (
+                    {showResources && (
                     <div>
                         <h3 className="text-white font-bold text-2xl mb-4">{footerHeadings?.resources || 'Resources'}</h3>
                         <div className="flex flex-col gap-3 text-lg">
@@ -546,7 +550,7 @@ export default function PublicHome() {
                     </div>
                     )}
 
-                    {(footerHeadings?.legal || (footerColumns?.legal || []).length > 0) && (
+                    {showLegal && (
                     <div>
                         <h3 className="text-white font-bold text-2xl mb-4">{footerHeadings?.legal || 'Legal'}</h3>
                         <div className="flex flex-col gap-3 text-lg">

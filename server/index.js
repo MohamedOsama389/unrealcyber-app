@@ -2436,6 +2436,50 @@ app.get(/.*/, (req, res) => {
 });
 
 const PORT = Number(process.env.PORT) || 8080;
+const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
+const AUTO_BACKUP_ENABLED = String(process.env.AUTO_DB_BACKUP_ENABLED || 'true').toLowerCase() !== 'false';
+const FORCE_DB_RESTORE_ON_START = String(process.env.FORCE_DB_RESTORE_ON_START || 'false').toLowerCase() === 'true';
+let backupIntervalHandle;
+
+const checkpointDatabase = () => {
+    if (!db) return;
+    try {
+        db.pragma('wal_checkpoint(FULL)');
+    } catch (err) {
+        console.warn("[System] WAL checkpoint failed before backup:", err.message);
+    }
+};
+
+const backupDatabaseToDrive = async (reason = "scheduled") => {
+    if (!driveService.isInitialized()) {
+        console.warn(`[System] Skipping ${reason} backup: Drive not initialized.`);
+        return;
+    }
+    checkpointDatabase();
+    await driveService.uploadSQLDump();
+    console.log(`[System] Drive SQL backup completed (${reason}).`);
+};
+
+const scheduleDriveBackups = () => {
+    if (!AUTO_BACKUP_ENABLED) {
+        console.log("[System] Automatic 12-hour Drive backups are disabled by AUTO_DB_BACKUP_ENABLED=false.");
+        return;
+    }
+    backupDatabaseToDrive("startup").catch(err => {
+        console.error("[System] Startup backup failed:", err.message);
+    });
+
+    backupIntervalHandle = setInterval(() => {
+        backupDatabaseToDrive("12h schedule").catch(err => {
+            console.error("[System] Scheduled backup failed:", err.message);
+        });
+    }, TWELVE_HOURS_MS);
+
+    if (typeof backupIntervalHandle.unref === 'function') {
+        backupIntervalHandle.unref();
+    }
+    console.log("[System] Automatic Drive SQL backups scheduled every 12 hours.");
+};
 
 const startServer = async () => {
     try {
@@ -2446,9 +2490,15 @@ const startServer = async () => {
         // Initialize Labs folder
         await driveService.ensureLabsFolder();
         const dbPath = path.join(__dirname, '../database.db');
-        if (!fs.existsSync(dbPath)) {
-            console.log("[System] Local database missing. Attempting SQL dump restore...");
+        let restoredFromDriveOnStart = false;
+        if (!fs.existsSync(dbPath) || FORCE_DB_RESTORE_ON_START) {
+            if (FORCE_DB_RESTORE_ON_START) {
+                console.log("[System] FORCE_DB_RESTORE_ON_START=true. Restoring latest SQL dump from Drive.");
+            } else {
+                console.log("[System] Local database missing. Attempting SQL dump restore...");
+            }
             const restored = await driveService.restoreSQLDump();
+            restoredFromDriveOnStart = !!restored;
 
             if (restored) {
                 if (fs.existsSync(dbPath) && fs.statSync(dbPath).size > 0) {
@@ -2484,6 +2534,12 @@ const startServer = async () => {
 
         // Initialize Drive Service with DB for token persistence
         driveService.setDB(db);
+
+        if (restoredFromDriveOnStart && botInstance?.sendAdminAlert) {
+            botInstance.sendAdminAlert(
+                "System notice: latest database backup was restored from Google Drive on startup after release. Please restart the website service for stability."
+            );
+        }
 
         // --- PRIVACY FIX: Auto-unfeature Python videos (Private) ---
         try {
@@ -2619,9 +2675,11 @@ const startServer = async () => {
             console.error("[Labs] Thumbnail backfill failed:", err.message);
         }
 
+        scheduleDriveBackups();
+
         server.listen(PORT, '0.0.0.0', () => {
             console.log(`Server running on port ${PORT} (Bound to 0.0.0.0 for Railway)`);
-            console.log(`[System] Manual Database Mode: Automatic backups disabled.`);
+            console.log(`[System] Automatic 12-hour Drive backup: ${AUTO_BACKUP_ENABLED ? "ENABLED" : "DISABLED"}.`);
 
             console.log(`Environment: ${process.env.NODE_ENV}`);
             console.log(`Health Check: Server is ready.`);

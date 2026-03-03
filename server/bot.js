@@ -393,6 +393,15 @@ function initBot(db) {
         });
     };
 
+    const sendAdminAlert = async (message) => {
+        if (!bot || !process.env.TELEGRAM_ADMIN_CHAT_ID || !message) return;
+        try {
+            await bot.telegram.sendMessage(process.env.TELEGRAM_ADMIN_CHAT_ID, message);
+        } catch (err) {
+            console.error("Admin alert send failed:", err.message);
+        }
+    };
+
     // Launch with robust error handling
     const launchBot = (instance, name) => {
         if (!instance) return;
@@ -422,7 +431,8 @@ function initBot(db) {
         sendCongrats,
         sendDenial,
         notifyAdminsOfUpload,
-        broadcastPublicUpdate
+        broadcastPublicUpdate,
+        sendAdminAlert
     };
 }
 

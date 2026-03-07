@@ -346,21 +346,11 @@
 /* ── Flip Card ─────────────────────────────────────────────── */
 .flip-card {
   perspective: 1200px;
-  --flip-duration: 600ms;
-  cursor: pointer;
-  border-radius: 1.25rem;
-  transition: box-shadow 400ms ease;
-}
-
-.flip-card:hover {
-  box-shadow:
-    0 0 0 1.5px rgba(18, 216, 255, 0.5),
-    0 0 40px rgba(18, 216, 255, 0.22),
-    0 24px 60px rgba(2, 10, 25, 0.6);
+  --flip-duration: 900ms;
 }
 
 .flip-card.flip-card-fast {
-  --flip-duration: 680ms;
+  --flip-duration: 320ms;
 }
 
 .flip-card-inner {
@@ -369,7 +359,7 @@
   height: 100%;
   transform-style: preserve-3d;
   will-change: transform;
-  transition: transform var(--flip-duration) cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: transform var(--flip-duration) cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .flip-card:hover .flip-card-inner,
@@ -384,30 +374,6 @@
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
   border-radius: 1.25rem;
-  overflow: hidden;
-  transform-style: preserve-3d;
-}
-
-/* Light-sweep on front face when card is hovered */
-.flip-card-front::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(115deg,
-      transparent 0%,
-      rgba(255, 255, 255, 0.0) 35%,
-      rgba(18, 216, 255, 0.13) 50%,
-      rgba(255, 255, 255, 0.0) 65%,
-      transparent 100%);
-  transform: translateX(-160%) skewX(-10deg) translateZ(1px);
-  transition: transform 0ms linear;
-  pointer-events: none;
-}
-
-.flip-card:hover .flip-card-front::after {
-  transform: translateX(180%) skewX(-10deg) translateZ(1px);
-  transition: transform 420ms ease;
 }
 
 .flip-card-back {
@@ -441,8 +407,8 @@
   transform-style: preserve-3d;
 }
 
-.pillar-flip-front > *,
-.pillar-flip-back > * {
+.pillar-flip-front>*,
+.pillar-flip-back>* {
   transform: translateZ(24px);
 }
 
@@ -450,77 +416,11 @@
   transform: rotateY(0.5turn);
 }
 
-/* Holographic shimmer on back face */
-.flip-card-back::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background:
-    radial-gradient(ellipse at 25% 35%, rgba(18, 216, 255, 0.14) 0%, transparent 55%),
-    radial-gradient(ellipse at 75% 75%, rgba(56, 189, 248, 0.1) 0%, transparent 50%);
-  pointer-events: none;
-  opacity: 0;
-  transform: translateZ(1px);
-  transition: opacity 300ms ease 250ms;
-}
 
-.flip-card:hover .flip-card-back::before {
-  opacity: 1;
-}
 
-/* Animated neon ring that pulses when the back is showing */
-.flip-card-back::after {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: 1.4rem;
-  background: linear-gradient(140deg,
-      rgba(18, 216, 255, 0.7) 0%,
-      rgba(14, 165, 255, 0.4) 35%,
-      rgba(99, 102, 241, 0.3) 65%,
-      rgba(18, 216, 255, 0.7) 100%);
-  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: destination-out;
-  padding: 2px;
-  opacity: 0;
-  pointer-events: none;
-  animation: none;
-}
 
-.flip-card:hover .flip-card-back::after {
-  opacity: 1;
-  animation: neon-ring-pulse 2s ease-in-out infinite;
-}
 
-@keyframes neon-ring-pulse {
 
-  0%,
-  100% {
-    opacity: 0.85;
-    box-shadow: 0 0 10px rgba(18, 216, 255, 0.35), inset 0 0 10px rgba(18, 216, 255, 0.1);
-  }
-
-  50% {
-    opacity: 1;
-    box-shadow: 0 0 22px rgba(18, 216, 255, 0.65), inset 0 0 18px rgba(18, 216, 255, 0.2);
-  }
-}
-
-/* Stagger card entry animations */
-.flip-card:nth-child(1) {
-  --card-delay: 0ms;
-}
-
-.flip-card:nth-child(2) {
-  --card-delay: 90ms;
-}
-
-.flip-card:nth-child(3) {
-  --card-delay: 180ms;
-}
 
 .cyber-border-glow {
   position: relative;

@@ -407,16 +407,16 @@ export default function PublicHome() {
                                 const meta = SECTION_META[pillar.key] || SECTION_META.networking;
                                 const Icon = meta.icon;
                                 return (
-                                    <div key={pillar.key} className="flip-card flip-card-fast h-72 md:h-80">
-                                        <div className="flip-card-inner">
-                                            <div className={`flip-card-front glass-card cyber-border-glow p-6 md:p-7 ${meta.glow}`}>
+                                    <div key={pillar.key} className="pillar-flip-card h-72 md:h-80">
+                                        <div className="pillar-flip-content">
+                                            <article className={`pillar-flip-face pillar-flip-front glass-card cyber-border-glow p-6 md:p-7 ${meta.glow}`}>
                                                 <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl border ${meta.chip}`}>
                                                     <Icon size={22} className={meta.accent} />
                                                 </div>
                                                 <h3 className="mt-5 text-2xl font-bold">{pillar.title}</h3>
                                                 <p className="mt-3 text-slate-300/80 leading-relaxed text-sm">{pillar.description}</p>
-                                            </div>
-                                            <div className="flip-card-back glass-card p-6 md:p-7 bg-gradient-to-br from-[#0a1b39] to-[#071428]">
+                                            </article>
+                                            <article className="pillar-flip-face pillar-flip-back glass-card p-6 md:p-7 bg-gradient-to-br from-[#0a1b39] to-[#071428]">
                                                 <p className="text-[11px] uppercase tracking-[0.2em] text-cyan-300/80">Most Popular Course</p>
                                                 {pillar.popularCourse ? (
                                                     pillar.popularExternal ? (
@@ -445,7 +445,7 @@ export default function PublicHome() {
                                                 >
                                                     View Courses <ArrowUpRight size={14} />
                                                 </Link>
-                                            </div>
+                                            </article>
                                         </div>
                                     </div>
                                 );

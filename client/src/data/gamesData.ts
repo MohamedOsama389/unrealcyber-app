@@ -16,10 +16,21 @@ export const GAMES_REGISTRY: GameMetadata[] = [
         title: 'Circuit Construction Kit: DC',
         category: 'Science',
         unit: 'Unit 2: Electric Energy',
-        lesson: 'Embedded Science Project',
-        description: 'Launch the embedded Scinece project directly inside the game viewer.',
+        lesson: 'Lesson 1: Physical Properties of Current',
+        description: 'Build circuits with batteries, light bulbs, resistors, and switches.',
+        simUrl: 'https://phet.colorado.edu/sims/html/circuit-construction-kit-dc/latest/circuit-construction-kit-dc_en.html',
+        isPhET: true,
+        tags: ['Electricity', 'Circuits', 'Physics']
+    },
+    {
+        id: 'reaction-visualizer',
+        title: 'Cheminal Reactions',
+        category: 'Science',
+        unit: 'Unit 1: Chemical Reactions',
+        lesson: 'Interactive Reaction Builder',
+        description: 'Launch the embedded Scinece reaction visualizer as a separate game.',
         simUrl: '/scinece/index.html',
         isPhET: false,
-        tags: ['Electricity', 'Circuits', 'Physics']
+        tags: ['Chemistry', 'Reactions', 'Visualizer']
     }
 ];

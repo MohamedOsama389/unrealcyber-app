@@ -187,9 +187,17 @@
 }
 
 @keyframes gradient-shift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 .shimmer-effect {
@@ -250,11 +258,32 @@
 }
 
 @keyframes glitch-flicker {
-  0%, 100% { clip-path: inset(0 0 0 0); transform: translate(0); }
-  20% { clip-path: inset(60% 0 0 0); transform: translate(-2px, 1px); }
-  40% { clip-path: inset(0 0 55% 0); transform: translate(2px, -1px); }
-  60% { clip-path: inset(35% 0 40% 0); transform: translate(-1px, 1px); }
-  80% { clip-path: inset(48% 0 20% 0); transform: translate(1px, -1px); }
+
+  0%,
+  100% {
+    clip-path: inset(0 0 0 0);
+    transform: translate(0);
+  }
+
+  20% {
+    clip-path: inset(60% 0 0 0);
+    transform: translate(-2px, 1px);
+  }
+
+  40% {
+    clip-path: inset(0 0 55% 0);
+    transform: translate(2px, -1px);
+  }
+
+  60% {
+    clip-path: inset(35% 0 40% 0);
+    transform: translate(-1px, 1px);
+  }
+
+  80% {
+    clip-path: inset(48% 0 20% 0);
+    transform: translate(1px, -1px);
+  }
 }
 
 .glitch-hover {
@@ -278,10 +307,23 @@
 }
 
 @keyframes rgb-jitter {
-  0%, 100% { transform: translate(0); }
-  25% { transform: translate(-1px, 0); }
-  50% { transform: translate(1px, 0); }
-  75% { transform: translate(0, -1px); }
+
+  0%,
+  100% {
+    transform: translate(0);
+  }
+
+  25% {
+    transform: translate(-1px, 0);
+  }
+
+  50% {
+    transform: translate(1px, 0);
+  }
+
+  75% {
+    transform: translate(0, -1px);
+  }
 }
 
 .scanline-overlay {
@@ -293,22 +335,28 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    rgba(255, 255, 255, 0) 0px,
-    rgba(255, 255, 255, 0) 3px,
-    rgba(18, 216, 255, 0.03) 3px,
-    rgba(18, 216, 255, 0.03) 4px
-  );
+  background: repeating-linear-gradient(0deg,
+      rgba(255, 255, 255, 0) 0px,
+      rgba(255, 255, 255, 0) 3px,
+      rgba(18, 216, 255, 0.03) 3px,
+      rgba(18, 216, 255, 0.03) 4px);
   pointer-events: none;
 }
 
 /* ── Flip Card ─────────────────────────────────────────────── */
 .flip-card {
-  perspective: 1400px;
-  --flip-duration: 680ms;
-  --flip-ease: cubic-bezier(0.34, 1.3, 0.64, 1);
+  perspective: 1200px;
+  --flip-duration: 600ms;
   cursor: pointer;
+  border-radius: 1.25rem;
+  transition: box-shadow 400ms ease;
+}
+
+.flip-card:hover {
+  box-shadow:
+    0 0 0 1.5px rgba(18, 216, 255, 0.5),
+    0 0 40px rgba(18, 216, 255, 0.22),
+    0 24px 60px rgba(2, 10, 25, 0.6);
 }
 
 .flip-card.flip-card-fast {
@@ -321,17 +369,59 @@
   height: 100%;
   transform-style: preserve-3d;
   will-change: transform;
-  transition: transform var(--flip-duration) var(--flip-ease);
-  filter: drop-shadow(0 0 0px rgba(18, 216, 255, 0));
-  transition:
-    transform var(--flip-duration) var(--flip-ease),
-    filter 400ms ease;
 }
 
 .flip-card:hover .flip-card-inner,
 .flip-card:focus-within .flip-card-inner {
-  transform: rotateY(180deg);
-  filter: drop-shadow(0 0 18px rgba(18, 216, 255, 0.45));
+  animation: card-flip var(--flip-duration) cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes card-flip {
+  0% {
+    transform: rotateY(0deg) scale3d(1, 1, 1);
+  }
+
+  35% {
+    transform: rotateY(70deg) scale3d(1.04, 1.04, 1);
+  }
+
+  50% {
+    transform: rotateY(90deg) scale3d(1.06, 1.06, 1);
+  }
+
+  65% {
+    transform: rotateY(110deg) scale3d(1.04, 1.04, 1);
+  }
+
+  100% {
+    transform: rotateY(180deg) scale3d(1, 1, 1);
+  }
+}
+
+.flip-card:not(:hover) .flip-card-inner {
+  animation: card-flip-back var(--flip-duration) cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes card-flip-back {
+  0% {
+    transform: rotateY(180deg) scale3d(1, 1, 1);
+  }
+
+  35% {
+    transform: rotateY(110deg) scale3d(1.04, 1.04, 1);
+  }
+
+  50% {
+    transform: rotateY(90deg) scale3d(1.06, 1.06, 1);
+  }
+
+  65% {
+    transform: rotateY(70deg) scale3d(1.04, 1.04, 1);
+  }
+
+  100% {
+    transform: rotateY(0deg) scale3d(1, 1, 1);
+  }
 }
 
 .flip-card-front,
@@ -350,22 +440,20 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(
-    115deg,
-    transparent 0%,
-    rgba(18, 216, 255, 0.08) 40%,
-    rgba(255, 255, 255, 0.12) 50%,
-    rgba(18, 216, 255, 0.06) 60%,
-    transparent 100%
-  );
-  transform: translateX(-140%) skewX(-12deg);
+  background: linear-gradient(115deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.0) 35%,
+      rgba(18, 216, 255, 0.13) 50%,
+      rgba(255, 255, 255, 0.0) 65%,
+      transparent 100%);
+  transform: translateX(-160%) skewX(-10deg);
   transition: transform 0ms linear;
   pointer-events: none;
 }
 
 .flip-card:hover .flip-card-front::after {
-  transform: translateX(160%) skewX(-12deg);
-  transition: transform 480ms ease;
+  transform: translateX(180%) skewX(-10deg);
+  transition: transform 420ms ease;
 }
 
 .flip-card-back {
@@ -379,11 +467,11 @@
   inset: 0;
   border-radius: inherit;
   background:
-    radial-gradient(ellipse at 20% 40%, rgba(18, 216, 255, 0.12) 0%, transparent 55%),
-    radial-gradient(ellipse at 80% 70%, rgba(56, 189, 248, 0.1) 0%, transparent 50%);
+    radial-gradient(ellipse at 25% 35%, rgba(18, 216, 255, 0.14) 0%, transparent 55%),
+    radial-gradient(ellipse at 75% 75%, rgba(56, 189, 248, 0.1) 0%, transparent 50%);
   pointer-events: none;
   opacity: 0;
-  transition: opacity 350ms ease;
+  transition: opacity 300ms ease 250ms;
 }
 
 .flip-card:hover .flip-card-back::before {
@@ -396,13 +484,11 @@
   position: absolute;
   inset: -2px;
   border-radius: 1.4rem;
-  background: linear-gradient(
-    140deg,
-    rgba(18, 216, 255, 0.7) 0%,
-    rgba(14, 165, 255, 0.4) 35%,
-    rgba(99, 102, 241, 0.3) 65%,
-    rgba(18, 216, 255, 0.7) 100%
-  );
+  background: linear-gradient(140deg,
+      rgba(18, 216, 255, 0.7) 0%,
+      rgba(14, 165, 255, 0.4) 35%,
+      rgba(99, 102, 241, 0.3) 65%,
+      rgba(18, 216, 255, 0.7) 100%);
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   mask-composite: exclude;
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
@@ -419,10 +505,13 @@
 }
 
 @keyframes neon-ring-pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.85;
     box-shadow: 0 0 10px rgba(18, 216, 255, 0.35), inset 0 0 10px rgba(18, 216, 255, 0.1);
   }
+
   50% {
     opacity: 1;
     box-shadow: 0 0 22px rgba(18, 216, 255, 0.65), inset 0 0 18px rgba(18, 216, 255, 0.2);
@@ -430,9 +519,17 @@
 }
 
 /* Stagger card entry animations */
-.flip-card:nth-child(1) { --card-delay: 0ms; }
-.flip-card:nth-child(2) { --card-delay: 90ms; }
-.flip-card:nth-child(3) { --card-delay: 180ms; }
+.flip-card:nth-child(1) {
+  --card-delay: 0ms;
+}
+
+.flip-card:nth-child(2) {
+  --card-delay: 90ms;
+}
+
+.flip-card:nth-child(3) {
+  --card-delay: 180ms;
+}
 
 .cyber-border-glow {
   position: relative;
@@ -497,6 +594,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {

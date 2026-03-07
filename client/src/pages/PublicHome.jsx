@@ -407,7 +407,7 @@ export default function PublicHome() {
                                 const meta = SECTION_META[pillar.key] || SECTION_META.networking;
                                 const Icon = meta.icon;
                                 return (
-                                    <div key={pillar.key} className="flip-card h-72 md:h-80">
+                                    <div key={pillar.key} className="flip-card flip-card-fast h-72 md:h-80">
                                         <div className="flip-card-inner">
                                             <div className={`flip-card-front glass-card cyber-border-glow p-6 md:p-7 ${meta.glow}`}>
                                                 <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl border ${meta.chip}`}>

@@ -1,21 +1,78 @@
+# Dependencies
 node_modules/
-.env
-database.db
-database.db-shm
-database.db-wal
 server/node_modules/
 client/node_modules/
-dist/
-client/dist/
+Scinece/node_modules/
+
+# Environment & secrets
+.env
 service-account.json
 client_secret*.json
 final_tokens.json
+final_tokens*.json
+tokens.json
+last_tokens.json
 secrets_output.txt
 secrets_utf8.txt
-validation_output.txt
 auth_url*.txt
 clean_url.txt
-tokens.json
-final_tokens*.json
-last_tokens.json
+validation_output.txt
+print_secrets.js
+
+# Database
+database.db
+database.db-shm
+database.db-wal
+server/database.db
+
+# Build output & generated files
+dist/
+client/dist/
+client/output.css
+client/build_log.txt
+Scinece/release/
+Scinece/tsconfig.tsbuildinfo
+Scinece/test-results/
+
+# Compiled Scinece build served in client
+client/public/scinece/
+
+# Logs
+*.log
+server/final_error.log
+server/server_verified.log
+
+# Debug / one-off scripts (server)
+server/debug_*.js
+server/check_*.js
+server/test_*.js
+server/exchange_*.js
+server/retry_exchange.js
+server/final_exchange.js
+server/generate_auth_url*.js
+server/get_auth_url_v2.js
+server/extract_url.js
+server/find_tasks_folders.js
+server/parse_*.js
+server/read_log.js
+server/reproduce_upload.js
+server/migrate_db.js
+server/migrate_status.js
+server/dummy_think.js
+server/validate_key.js
+check_user.js
+
+# Reference / design scratch files (personal)
+Refrence/
+temp_design_assets/
+3D/
+cyber_models/
+*.zip
+unreal_cyber_redesign_plan.md
+THUMBNAIL_FIX_README.md
+where_the scroll_should_be.png
+Cybersecurity 3D Node Railway.pdf
+
+# OS
 .DS_Store
+Thumbs.db

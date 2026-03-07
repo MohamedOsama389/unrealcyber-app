@@ -291,9 +291,15 @@ app.use(express.json());
 app.use('/api/tracks', tracksRouter);
 
 const SECRET_KEY = "UNREAL_CYBER_SECRET_KEY_2026"; // In prod, use .env
+const AUTO_DB_BACKUP_ENABLED = String(process.env.AUTO_DB_BACKUP_ENABLED || 'false').toLowerCase() === 'true';
 
 // Serve Static Files (Production)
 app.use(express.static(path.join(__dirname, '../client/dist')));
+
+const maybeAutoBackupDatabase = () => {
+    if (!AUTO_DB_BACKUP_ENABLED) return;
+    driveService.backupDatabase();
+};
 
 // Middleware
 const authenticateToken = (req, res, next) => {
@@ -331,7 +337,7 @@ app.post('/api/auth/register', (req, res) => {
     try {
         const hash = bcrypt.hashSync(password, 10);
         const result = db.prepare('INSERT INTO users (username, password, role, display_name) VALUES (?, ?, ?, ?)').run(username, hash, 'student', username);
-        driveService.backupDatabase(); // Persist new user immediately
+        maybeAutoBackupDatabase(); // Persist new user immediately
         res.json({ success: true, userId: result.lastInsertRowid });
     } catch (err) {
         res.status(400).json({ error: "Username already exists" });
@@ -369,7 +375,7 @@ app.post('/api/auth/login', (req, res) => {
 
         // Trigger a backup if critical data changed or just periodically?
         // For now, let's keep it in login to ensure student progress is backed up
-        driveService.backupDatabase();
+        maybeAutoBackupDatabase();
 
         const token = jwt.sign({ id: user.id, username: user.username, role: user.role, private_access: user.private_access || 0 }, SECRET_KEY);
         res.json({
@@ -511,7 +517,7 @@ app.post('/api/profile/upload-avatar', authenticateToken, upload.single('avatar'
         console.log(`[AvatarUpload] Drive upload successful. ID: ${avatarId}`);
         const version = Date.now();
         db.prepare('UPDATE users SET avatar_id = ?, avatar_version = ? WHERE id = ?').run(avatarId, version, req.user.id);
-        driveService.backupDatabase(); // Persist avatar change immediately
+        maybeAutoBackupDatabase(); // Persist avatar change immediately
         res.json({ success: true, avatar_id: avatarId, avatar_version: version });
     } catch (err) {
         console.error("[AvatarUpload] Error:", err);
@@ -1456,7 +1462,7 @@ app.post('/api/videos', authenticateToken, async (req, res) => {
     } catch (err) {
         console.warn("[Videos] Failed to set public permission:", err.message);
     }
-    driveService.backupDatabase();
+    maybeAutoBackupDatabase();
     res.json({ success: true });
 });
 
@@ -1477,7 +1483,7 @@ app.post('/api/videos/upload', authenticateToken, upload.single('file'), async (
             targetFolder,
             JSON.stringify(parsedResources)
         );
-        driveService.backupDatabase();
+        maybeAutoBackupDatabase();
         res.json({ success: true, link: driveFile.webViewLink });
     } catch (err) {
         res.status(500).json({ error: "Upload failed" });
@@ -2437,7 +2443,7 @@ app.get(/.*/, (req, res) => {
 
 const PORT = Number(process.env.PORT) || 8080;
 const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
-const AUTO_BACKUP_ENABLED = String(process.env.AUTO_DB_BACKUP_ENABLED || 'true').toLowerCase() !== 'false';
+const AUTO_BACKUP_ENABLED = AUTO_DB_BACKUP_ENABLED;
 const FORCE_DB_RESTORE_ON_START = String(process.env.FORCE_DB_RESTORE_ON_START || 'false').toLowerCase() === 'true';
 let backupIntervalHandle;
 

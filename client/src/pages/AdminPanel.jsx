@@ -1,5 +1,5 @@
 // v2.0.1 - Force rebuild
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -42,6 +42,7 @@ const AdminPanel = () => {
     const [newTrack, setNewTrack] = useState({ title: '', description: '', icon: 'Network' });
     const [newStep, setNewStep] = useState({ title: '', type: 'video', online_id: '', drive_id: '', upload_url: '', order_index: 0 });
     const [showPublicVideoSelector, setShowPublicVideoSelector] = useState(false);
+    const dbUploadInputRef = useRef(null);
 
     const fetchTracks = async () => {
         try {
@@ -431,13 +432,11 @@ const AdminPanel = () => {
         } catch (err) { alert("Failed to update settings"); }
     };
 
-    const handleDbUpload = async (e) => {
-        e.preventDefault();
-        if (!dbFile) return alert("Please select a database.db file first.");
+    const uploadDatabaseFile = async (file) => {
+        if (!file) return;
         if (!window.confirm("WARNING: This will overwrite the current database. All existing data will be replaced. Proceed?")) return;
-
         const formData = new FormData();
-        formData.append('db', dbFile);
+        formData.append('db', file);
 
         try {
             const res = await axios.post('/api/admin/upload-db', formData, {
@@ -448,6 +447,24 @@ const AdminPanel = () => {
         } catch (err) {
             alert("Database upload failed: " + (err.response?.data?.error || err.message));
         }
+    };
+
+    const handleDbUpload = async (e) => {
+        e.preventDefault();
+        if (!dbFile) return alert("Please select a database.db file first.");
+        await uploadDatabaseFile(dbFile);
+    };
+
+    const handleDbUploadPick = () => {
+        dbUploadInputRef.current?.click();
+    };
+
+    const handleDbFileSelected = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setDbFile(file);
+        await uploadDatabaseFile(file);
+        e.target.value = '';
     };
 
     const handleDbDownload = async () => {
@@ -962,64 +979,6 @@ const AdminPanel = () => {
                         </motion.div>
                     ))}
                 </div>
-            )}
-            {/* DATABASE TAB */}
-            {activeTab === 'database' && (
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-                    <section className="bg-panel border border-border p-6 rounded-2xl">
-                        <h2 className="text-xl font-bold text-primary flex items-center mb-4">
-                            <Globe className="mr-2 text-cyan-400" /> Database Management
-                        </h2>
-                        <p className="text-xs text-secondary mb-6 leading-relaxed">
-                            Manage your local and cloud database backups. You can manually restore the system by uploading a valid <code className="text-cyan-400 font-bold">database.db</code> file.
-                        </p>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                            <div className="bg-app/50 p-4 rounded-xl border border-red-500/30">
-                                <span className="text-[10px] uppercase font-bold text-red-400 mb-1 block">Automatic Backups</span>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                                    <span className="text-sm font-bold text-primary">DISABLED (Manual Mode)</span>
-                                </div>
-                            </div>
-                            <div className="bg-app/50 p-4 rounded-xl border border-border">
-                                <span className="text-[10px] uppercase font-bold text-secondary mb-1 block">Manual Download</span>
-                                <button
-                                    onClick={handleDbDownload}
-                                    className="mt-1 flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition-colors"
-                                >
-                                    <Shield size={14} />
-                                    <span className="text-sm font-bold">Download Current .db File</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <form onSubmit={handleDbUpload} className="bg-cyan-600/5 border-2 border-dashed border-cyan-500/30 p-8 rounded-2xl text-center">
-                            <Globe size={40} className="mx-auto text-cyan-500/50 mb-4" />
-                            <h3 className="text-lg font-bold text-primary mb-2">Manual Recovery</h3>
-                            <p className="text-xs text-secondary mb-6">Drop your <code className="bg-app px-2 py-1 rounded">database.db</code> here to overwrite the entire system.</p>
-
-                            <input
-                                type="file"
-                                accept=".db"
-                                onChange={(e) => setDbFile(e.target.files[0])}
-                                className="hidden"
-                                id="db-upload"
-                            />
-                            <div className="flex flex-col items-center gap-4">
-                                <label htmlFor="db-upload" className="cursor-pointer px-6 py-2 bg-app border border-cyan-500/50 text-cyan-400 text-xs font-bold rounded-lg hover:bg-cyan-500 hover:text-white transition-all">
-                                    {dbFile ? dbFile.name : 'Select database.db'}
-                                </label>
-
-                                {dbFile && (
-                                    <button type="submit" className="px-8 py-3 bg-red-600 text-white text-sm font-black uppercase tracking-wider rounded-xl shadow-lg shadow-red-500/20 hover:scale-105 active:scale-95 transition-all">
-                                        Execute Restore Now
-                                    </button>
-                                )}
-                            </div>
-                        </form>
-                    </section>
-                </motion.div>
             )}
             {activeTab === 'votes' && (
                 <div className="space-y-6">
@@ -2011,7 +1970,7 @@ const AdminPanel = () => {
                         <ul className="text-xs text-secondary space-y-2 list-disc pl-4">
                             <li>Make sure <code className="text-cyan-400">TELEGRAM_BOT_TOKEN</code> is set in Railway.</li>
                             <li>Ensure <code className="text-cyan-400">SITE_BASE_URL</code> is set to your Railway app domain.</li>
-                            <li>Database persistence is handled by Google Drive backups.</li>
+                            <li>Database backup is manual mode only.</li>
                         </ul>
                     </div>
                 </div>
@@ -2023,87 +1982,41 @@ const AdminPanel = () => {
                     <div className="bg-panel border border-border p-8 rounded-2xl">
                         <h3 className="text-2xl font-bold text-primary mb-6 flex items-center gap-3">
                             <Shield className="text-emerald-400" size={28} />
-                            Database Management (SQL Mode)
+                            Database Management (Manual Mode)
                         </h3>
+                        <p className="text-sm text-secondary mb-6">
+                            Automatic backups are disabled. Use only manual download and manual upload/restore.
+                        </p>
 
-                        <div className="grid md:grid-cols-2 gap-6">
-                            {/* Export SQL */}
-                            <div className="bg-panel/30 border border-border p-6 rounded-xl">
-                                <h4 className="font-bold text-primary mb-3 flex items-center gap-2">
-                                    <FileCheck size={18} className="text-emerald-400" />
-                                    Export Database as SQL
-                                </h4>
-                                <p className="text-sm text-secondary mb-4">
-                                    Download your entire database as SQL text commands. You can inspect, edit, or save this file.
-                                </p>
-                                <button
-                                    onClick={handleSqlExport}
-                                    className="btn-primary w-full h-[48px] flex items-center justify-center gap-2"
-                                >
-                                    <FileCheck size={18} />
-                                    Export SQL Dump
-                                </button>
-                            </div>
-
-                            {/* Import SQL */}
-                            <div className="bg-panel/30 border border-border p-6 rounded-xl">
-                                <h4 className="font-bold text-primary mb-3 flex items-center gap-2">
-                                    <Send size={18} className="text-cyan-400" />
-                                    Import Database from SQL
-                                </h4>
-                                <p className="text-sm text-secondary mb-4">
-                                    Paste SQL dump text to restore your database. This will replace all current data.
-                                </p>
-                                <button
-                                    onClick={() => setShowSqlModal(true)}
-                                    className="btn-secondary w-full h-[48px] flex items-center justify-center gap-2"
-                                >
-                                    <Send size={18} />
-                                    Paste & Import SQL
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Legacy Binary Upload */}
-                        <div className="mt-6 bg-panel/30 border border-border p-6 rounded-xl">
-                            <h4 className="font-bold text-primary mb-3 flex items-center gap-2">
-                                <Shield size={18} className="text-yellow-400" />
-                                Legacy: Upload Binary .db File
-                            </h4>
-                            <p className="text-sm text-secondary mb-4">
-                                Upload a binary database.db file (less reliable than SQL mode).
-                            </p>
-                            <form onSubmit={handleDbUpload} className="flex gap-4 items-end">
-                                <div className="flex-1">
-                                    <input
-                                        type="file"
-                                        accept=".db"
-                                        onChange={(e) => setDbFile(e.target.files[0])}
-                                        className="input-field w-full"
-                                    />
-                                </div>
-                                <button type="submit" className="btn-primary px-8 h-[48px] whitespace-nowrap">
-                                    Upload .db
-                                </button>
-                            </form>
-                        </div>
-
-                        {/* Download Binary */}
-                        <div className="mt-6 bg-panel/30 border border-border p-6 rounded-xl">
-                            <h4 className="font-bold text-primary mb-3 flex items-center gap-2">
-                                <Key size={18} className="text-purple-400" />
-                                Download Binary .db File
-                            </h4>
-                            <p className="text-sm text-secondary mb-4">
-                                Download the current database as a binary .db file.
-                            </p>
+                        <div className="grid md:grid-cols-2 gap-4">
                             <button
                                 onClick={handleDbDownload}
-                                className="btn-secondary px-8 h-[48px]"
+                                className="btn-secondary h-[52px] flex items-center justify-center gap-2"
                             >
+                                <Key size={18} />
                                 Download database.db
                             </button>
+                            <button
+                                onClick={handleDbUploadPick}
+                                className="btn-primary h-[52px] flex items-center justify-center gap-2"
+                            >
+                                <Shield size={18} />
+                                Upload and Restore database.db
+                            </button>
                         </div>
+
+                        <input
+                            ref={dbUploadInputRef}
+                            type="file"
+                            accept=".db"
+                            onChange={handleDbFileSelected}
+                            className="hidden"
+                        />
+                        {dbFile && (
+                            <p className="text-xs text-secondary mt-4">
+                                Selected file: <span className="text-primary font-semibold">{dbFile.name}</span>
+                            </p>
+                        )}
                     </div>
                 </div>
             )}

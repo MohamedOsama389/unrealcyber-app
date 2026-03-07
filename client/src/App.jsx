@@ -18,7 +18,6 @@ import VMRental from './pages/VMRental';
 import Chat from './pages/Chat';
 import Games from './pages/Games';
 import GameViewPage from './pages/GameViewPage';
-import AtomGame from './pages/AtomGame';
 import HandsOn from './pages/HandsOn';
 import AdminPanel from './pages/AdminPanel';
 import PublicHome from './pages/PublicHome';
@@ -80,7 +79,6 @@ function AppContent() {
             <Route path="/private/chat" element={<Chat />} />
             <Route path="/private/games" element={<Games />} />
             <Route path="/private/games/:gameId" element={<GameViewPage />} />
-            <Route path="/private/games/atom-builder" element={<AtomGame />} />
             <Route path="/private/hands-on" element={<HandsOn />} />
           </Route>
 

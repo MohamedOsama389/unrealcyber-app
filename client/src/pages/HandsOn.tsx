@@ -44,7 +44,7 @@ const HandsOn = () => {
     const [isAdmin, setIsAdmin] = useState(false);
     const [editingLab, setEditingLab] = useState<Lab | null>(null);
 
-    const categories = ['All', 'Science', 'Math', 'English', 'Social Studies', 'Arabic'];
+    const categories = ['All', 'Science'];
 
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -208,17 +208,18 @@ const HandsOn = () => {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="aspect-video w-full bg-black relative group">
-                                    <iframe
-                                        src="https://netlab.thecybersecguru.com/"
-                                        title="The Cybersec Guru NetLab"
-                                        className="w-full h-full border-none"
-                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                        allowFullScreen
-                                    />
-                                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button className="p-2 bg-slate-900/80 backdrop-blur rounded-lg text-secondary border border-white/10 hover:text-primary">
+                                <div className="aspect-video w-full bg-gradient-to-br from-slate-950 to-slate-900 flex items-center justify-center p-8">
+                                    <div className="text-center max-w-xl space-y-4">
+                                        <h4 className="text-2xl font-black text-primary">Open NetLab Directly</h4>
+                                        <p className="text-sm text-secondary">
+                                            Embedded mode is disabled for stability. Launch the simulator in a new browser tab.
+                                        </p>
+                                        <button
+                                            onClick={() => window.open('https://netlab.thecybersecguru.com/', '_blank')}
+                                            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-cyan-500 text-white font-bold hover:bg-cyan-400 transition-colors"
+                                        >
                                             <ExternalLink size={16} />
+                                            <span>Open Network Simulator Website</span>
                                         </button>
                                     </div>
                                 </div>

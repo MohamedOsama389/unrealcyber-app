@@ -500,9 +500,4 @@
   .shimmer-effect::after {
     display: none;
   }
-
-  .pillar-flip-card:hover .pillar-flip-content,
-  .pillar-flip-card:focus-within .pillar-flip-content {
-    transform: none;
-  }
 }

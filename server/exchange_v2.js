@@ -2,7 +2,7 @@ const { google } = require('googleapis');
 
 const client_id = process.env.GOOGLE_CLIENT_ID;
 const client_secret = process.env.GOOGLE_CLIENT_SECRET;
-const redirect_uri = 'http://localhost:3000';
+const redirect_uri = process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000';
 
 // PASS THE CODE AS AN ARGUMENT: node exchange_v2.js YOUR_CODE_HERE
 const code = process.argv[2];
@@ -27,6 +27,9 @@ const oauth2Client = new google.auth.OAuth2(
 async function run() {
     try {
         const { tokens } = await oauth2Client.getToken(code);
+        if (!tokens.refresh_token) {
+            console.warn("\n[Warning] No refresh_token returned. Re-generate auth URL with prompt=consent and use a fresh consent flow.");
+        }
         console.log("\n✅ TOKENS GENERATED SUCCESSFULLY!");
         console.log("\n--- COPY THE JSON BELOW INTO YOUR RAILWAY 'GOOGLE_TOKENS' VARIABLE ---");
         console.log(JSON.stringify(tokens));
@@ -37,3 +40,4 @@ async function run() {
 }
 
 run();
+

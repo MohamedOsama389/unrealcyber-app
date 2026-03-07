@@ -1,0 +1,13 @@
+{
+  "name": "Egyptian Curriculum Mode",
+  "activitySeries": ["K","Na","Ca","Mg","Al","Zn","Fe","Sn","Pb","H","Cu","Hg","Ag","Au"],
+  "halogenSeries": ["F2","Cl2","Br2","I2"],
+  "solubilityTweaks": {
+    "includeCalciumSulfateAsLowSolubility": true,
+    "hydroxideExceptions": ["Ba", "Sr", "Ca"]
+  },
+  "notes": [
+    "Designed for high-school reaction prediction and qualitative chemistry.",
+    "Transition-metal variable oxidation states are partially simplified."
+  ]
+}

@@ -19,11 +19,71 @@ let oauth2Client;
 let dbInstance;
 let keys;
 let tokens;
+let tokenRefreshInFlight;
+
+const mergeTokens = (base = {}, incoming = {}) => {
+    const merged = { ...(base || {}), ...(incoming || {}) };
+    if (!merged.refresh_token && base?.refresh_token) {
+        merged.refresh_token = base.refresh_token;
+    }
+    return merged;
+};
+
+const persistTokens = (nextTokens) => {
+    if (!nextTokens) return;
+    tokens = nextTokens;
+
+    if (dbInstance) {
+        try {
+            dbInstance.prepare('INSERT OR REPLACE INTO site_settings (key, value) VALUES (?, ?)').run('google_tokens', JSON.stringify(nextTokens));
+            console.log("Tokens saved to database.");
+        } catch (dbErr) {
+            console.error("Failed to save tokens to database:", dbErr.message);
+        }
+    }
+
+    try {
+        fs.writeFileSync(TOKENS_PATH, JSON.stringify(nextTokens, null, 2));
+    } catch (_) { }
+};
+
+const refreshAccessTokenIfNeeded = async (context = "startup") => {
+    if (!oauth2Client) return;
+    const creds = oauth2Client.credentials || {};
+    if (!creds.refresh_token) {
+        console.warn(`[DriveService] No refresh_token available during ${context}. Auto-renew cannot run.`);
+        return;
+    }
+
+    if (tokenRefreshInFlight) {
+        await tokenRefreshInFlight;
+        return;
+    }
+
+    tokenRefreshInFlight = (async () => {
+        try {
+            const tokenResult = await oauth2Client.getAccessToken();
+            const accessToken = tokenResult?.token || tokenResult;
+            if (accessToken) {
+                const updated = mergeTokens(oauth2Client.credentials, { access_token: accessToken });
+                oauth2Client.setCredentials(updated);
+                persistTokens(updated);
+                console.log(`[DriveService] Access token refreshed successfully (${context}).`);
+            }
+        } catch (err) {
+            console.error(`[DriveService] Failed to refresh access token (${context}):`, err.message);
+        } finally {
+            tokenRefreshInFlight = null;
+        }
+    })();
+
+    await tokenRefreshInFlight;
+};
 
 const initOAuth = (tokens) => {
     try {
         if (!keys || !keys.client_id || !keys.client_secret) {
-            console.error("❌ Cannot initialize OAuth: Missing keys (client_id/client_secret)");
+            console.error("Cannot initialize OAuth: Missing keys (client_id/client_secret)");
             return false;
         }
 
@@ -35,31 +95,23 @@ const initOAuth = (tokens) => {
         );
 
         if (tokens) {
-            oauth2Client.setCredentials(tokens);
-            console.log("✅ Google tokens applied from source.");
+            const merged = mergeTokens({}, tokens);
+            oauth2Client.setCredentials(merged);
+            persistTokens(merged);
+            console.log("Google tokens applied from source.");
+            if (!merged.refresh_token) {
+                console.warn("[DriveService] Loaded tokens do not include refresh_token. Generate fresh tokens with access_type=offline and prompt=consent.");
+            }
         }
 
         oauth2Client.on('tokens', (newTokens) => {
             if (!newTokens) return;
-            console.log("✅ Google tokens refreshed.");
-            const updated = { ...oauth2Client.credentials, ...newTokens };
+            console.log("Google tokens refreshed.");
+            const updated = mergeTokens(oauth2Client.credentials, newTokens);
+            oauth2Client.setCredentials(updated);
+            persistTokens(updated);
 
-            // 1. Save to DB if available
-            if (dbInstance) {
-                try {
-                    dbInstance.prepare('INSERT OR REPLACE INTO site_settings (key, value) VALUES (?, ?)').run('google_tokens', JSON.stringify(updated));
-                    console.log("Tokens saved to database.");
-                } catch (dbErr) {
-                    console.error("Failed to save tokens to database:", dbErr.message);
-                }
-            }
-
-            // 2. Save to local file (Dev fallback)
-            try {
-                fs.writeFileSync(TOKENS_PATH, JSON.stringify(updated, null, 2));
-            } catch (e) { }
-
-            console.log("📢 Railway/Production Tip: Update GOOGLE_TOKENS env var if DB is not persistent.");
+            console.log("[DriveService] If DB is not persistent, keep GOOGLE_TOKENS env var updated.");
         });
 
         drive = google.drive({ version: 'v3', auth: oauth2Client });
@@ -73,13 +125,23 @@ const initOAuth = (tokens) => {
 
 const setDB = (db) => {
     dbInstance = db;
-    // Try to load tokens from DB
     try {
         const row = db.prepare('SELECT value FROM site_settings WHERE key = ?').get('google_tokens');
         if (row && row.value) {
             console.log("Loading Google Tokens from Database...");
-            const tokens = JSON.parse(row.value);
-            initOAuth(tokens);
+            const dbTokens = JSON.parse(row.value);
+            if (!oauth2Client) {
+                initOAuth(dbTokens);
+            } else {
+                const merged = mergeTokens(oauth2Client.credentials, dbTokens);
+                oauth2Client.setCredentials(merged);
+                persistTokens(merged);
+                console.log("[DriveService] Google tokens merged from database.");
+            }
+
+            refreshAccessTokenIfNeeded("database load").catch((e) => {
+                console.error("[DriveService] Post-DB token refresh failed:", e.message);
+            });
         }
     } catch (err) {
         console.error("Failed to load tokens from site_settings:", err.message);
@@ -108,6 +170,9 @@ const init = async () => {
             try {
                 console.log("Found Google Tokens in Environment Variables.");
                 tokens = JSON.parse(process.env.GOOGLE_TOKENS);
+                if (!tokens?.refresh_token) {
+                    console.warn("[DriveService] GOOGLE_TOKENS does not include refresh_token. Access will expire unless DB has a refresh token.");
+                }
             } catch (e) {
                 console.error("Failed to parse GOOGLE_TOKENS env var:", e.message);
             }
@@ -125,15 +190,16 @@ const init = async () => {
         if (keys) {
             const success = initOAuth(tokens);
             if (success) {
-                console.log("🚀 Google Drive Service fully started.");
+                await refreshAccessTokenIfNeeded("startup");
+                console.log("Google Drive Service fully started.");
                 return true;
             } else {
-                console.error("❌ Google Drive Service failed to start after key loading.");
+                console.error("Google Drive Service failed to start after key loading.");
                 return false;
             }
         } else {
-            console.error("❌ FAILED to load Google credentials keys (ID/Secret). Drive features will be disabled.");
-            console.log("ℹ️ Troubleshooting: Ensure GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are set in your environment variables.");
+            console.error("FAILED to load Google credentials keys (ID/Secret). Drive features will be disabled.");
+            console.log("Troubleshooting: Ensure GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are set in your environment variables.");
             return false;
         }
     } catch (err) {
@@ -886,3 +952,4 @@ module.exports = {
     AVATAR_FOLDER_ID,
     PARTY_FOLDER_ID
 };
+

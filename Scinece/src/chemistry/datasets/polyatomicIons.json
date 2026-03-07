@@ -1,0 +1,15 @@
+[
+  {"name":"Ammonium","formula":"NH4","charge":1,"type":"cation"},
+  {"name":"Hydroxide","formula":"OH","charge":-1,"type":"anion"},
+  {"name":"Nitrate","formula":"NO3","charge":-1,"type":"anion"},
+  {"name":"Sulfate","formula":"SO4","charge":-2,"type":"anion"},
+  {"name":"Carbonate","formula":"CO3","charge":-2,"type":"anion"},
+  {"name":"Bicarbonate","formula":"HCO3","charge":-1,"type":"anion"},
+  {"name":"Sulfite","formula":"SO3","charge":-2,"type":"anion"},
+  {"name":"Phosphate","formula":"PO4","charge":-3,"type":"anion"},
+  {"name":"Sulfide","formula":"S","charge":-2,"type":"anion"},
+  {"name":"Chloride","formula":"Cl","charge":-1,"type":"anion"},
+  {"name":"Bromide","formula":"Br","charge":-1,"type":"anion"},
+  {"name":"Iodide","formula":"I","charge":-1,"type":"anion"},
+  {"name":"Fluoride","formula":"F","charge":-1,"type":"anion"}
+]

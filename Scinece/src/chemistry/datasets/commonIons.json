@@ -1,0 +1,28 @@
+{
+  "cations": [
+    {"label":"H+","formula":"H","charge":1},
+    {"label":"Na+","formula":"Na","charge":1},
+    {"label":"K+","formula":"K","charge":1},
+    {"label":"Ca2+","formula":"Ca","charge":2},
+    {"label":"Mg2+","formula":"Mg","charge":2},
+    {"label":"Al3+","formula":"Al","charge":3},
+    {"label":"Zn2+","formula":"Zn","charge":2},
+    {"label":"Fe2+","formula":"Fe","charge":2},
+    {"label":"Cu2+","formula":"Cu","charge":2},
+    {"label":"Ag+","formula":"Ag","charge":1},
+    {"label":"NH4+","formula":"NH4","charge":1}
+  ],
+  "anions": [
+    {"label":"Cl-","formula":"Cl","charge":-1},
+    {"label":"Br-","formula":"Br","charge":-1},
+    {"label":"I-","formula":"I","charge":-1},
+    {"label":"F-","formula":"F","charge":-1},
+    {"label":"OH-","formula":"OH","charge":-1},
+    {"label":"NO3-","formula":"NO3","charge":-1},
+    {"label":"SO4 2-","formula":"SO4","charge":-2},
+    {"label":"CO3 2-","formula":"CO3","charge":-2},
+    {"label":"HCO3-","formula":"HCO3","charge":-1},
+    {"label":"SO3 2-","formula":"SO3","charge":-2},
+    {"label":"PO4 3-","formula":"PO4","charge":-3}
+  ]
+}

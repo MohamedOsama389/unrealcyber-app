@@ -1,0 +1,8 @@
+{
+  "alwaysSolubleAnions": ["NO3"],
+  "alwaysSolubleCations": ["Li", "Na", "K", "Rb", "Cs", "NH4"],
+  "chlorideExceptions": ["Ag", "Pb", "Hg2"],
+  "sulfateExceptions": ["Ba", "Sr", "Pb", "Ca"],
+  "insolubleFamilies": ["CO3", "PO4", "S", "OH"],
+  "insolubleFamilyExceptions": ["Li", "Na", "K", "Rb", "Cs", "NH4", "Ba", "Sr", "Ca"]
+}

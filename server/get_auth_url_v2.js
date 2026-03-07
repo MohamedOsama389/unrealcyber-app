@@ -3,7 +3,7 @@ const { google } = require('googleapis');
 // Use Env Vars so it works in any environment
 const client_id = process.env.GOOGLE_CLIENT_ID;
 const client_secret = process.env.GOOGLE_CLIENT_SECRET;
-const redirect_uri = 'http://localhost:3000'; // Standard for this flow
+const redirect_uri = process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000';
 
 if (!client_id || !client_secret) {
     console.error("❌ ERROR: GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET not found in environment!");

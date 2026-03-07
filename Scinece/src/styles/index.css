@@ -1,0 +1,140 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  margin: 0;
+  color: #0f172a;
+}
+
+@keyframes rx-drift-left {
+  0% { transform: translateX(-6px); }
+  50% { transform: translateX(6px); }
+  100% { transform: translateX(-6px); }
+}
+
+@keyframes rx-drift-right {
+  0% { transform: translateX(6px); }
+  50% { transform: translateX(-6px); }
+  100% { transform: translateX(6px); }
+}
+
+@keyframes rx-hit-in {
+  0% { transform: translateX(-12px) scale(1); }
+  55% { transform: translateX(3px) scale(1.03); }
+  100% { transform: translateX(-12px) scale(1); }
+}
+
+@keyframes rx-h-leave {
+  0%, 30% { transform: translate(0, 0); opacity: 1; }
+  75% { transform: translate(92px, -38px); opacity: 1; }
+  100% { transform: translate(110px, -58px); opacity: 0; }
+}
+
+@keyframes rx-gas-up {
+  0%, 45% { opacity: 0; transform: translateY(6px); }
+  70% { opacity: 1; transform: translateY(-24px); }
+  100% { opacity: 0; transform: translateY(-44px); }
+}
+
+@keyframes rx-pushed {
+  0%, 30% { transform: translate(0, 0); opacity: 1; }
+  70% { transform: translate(92px, -24px); opacity: 1; }
+  100% { transform: translate(110px, -34px); opacity: 0; }
+}
+
+@keyframes rx-solid-out {
+  0%, 45% { opacity: 0; transform: translateY(8px); }
+  70%, 100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes rx-appear {
+  0%, 48% { opacity: 0; }
+  66%, 100% { opacity: 1; }
+}
+
+@keyframes rx-swap-left {
+  0%, 35% { transform: translate(0, 0); opacity: 0; }
+  70% { transform: translate(165px, 45px); opacity: 1; }
+  100% { transform: translate(165px, 45px); opacity: 0; }
+}
+
+@keyframes rx-swap-right {
+  0%, 35% { transform: translate(0, 0); opacity: 0; }
+  70% { transform: translate(-165px, 45px); opacity: 1; }
+  100% { transform: translate(-165px, 45px); opacity: 0; }
+}
+
+@keyframes rx-collide-left {
+  0% { transform: translateX(-10px); }
+  55% { transform: translateX(6px); }
+  100% { transform: translateX(-10px); }
+}
+
+@keyframes rx-collide-right {
+  0% { transform: translateX(10px); }
+  55% { transform: translateX(-6px); }
+  100% { transform: translateX(10px); }
+}
+
+@keyframes rx-electron {
+  0%, 20% { transform: translateX(0); opacity: 0; }
+  65% { transform: translateX(86px); opacity: 1; }
+  100% { transform: translateX(86px); opacity: 0; }
+}
+
+@keyframes rx-metal-bounce {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(72px); }
+}
+
+@keyframes rx-salt-idle {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(3px); }
+}
+
+@keyframes rx-metal-approach {
+  0%, 20% { transform: translateX(0); opacity: 1; }
+  65% { transform: translateX(180px); opacity: 1; }
+  100% { transform: translateX(180px); opacity: 0; }
+}
+
+@keyframes rx-kicked-out {
+  0%, 45% { transform: translateX(0); opacity: 1; }
+  82% { transform: translateX(110px); opacity: 1; }
+  100% { transform: translateX(132px); opacity: 0; }
+}
+
+@keyframes rx-final-metal {
+  0%, 58% { opacity: 0; }
+  72%, 100% { opacity: 1; }
+}
+
+@keyframes rx-bond-show {
+  0%, 58% { opacity: 0; }
+  72%, 100% { opacity: 1; }
+}
+
+.rx-drift-left { animation: rx-drift-left 2.6s ease-in-out infinite; }
+.rx-drift-right { animation: rx-drift-right 2.6s ease-in-out infinite; }
+.rx-hit-in { animation: rx-hit-in 2.5s ease-in-out infinite; }
+.rx-h-leave { animation: rx-h-leave 2.5s ease-in-out infinite; }
+.rx-gas-up { animation: rx-gas-up 2.5s ease-in-out infinite; }
+.rx-pushed { animation: rx-pushed 2.6s ease-in-out infinite; }
+.rx-solid-out { animation: rx-solid-out 2.6s ease-in-out infinite; }
+.rx-appear { animation: rx-appear 2.6s ease-in-out infinite; }
+.rx-swap-left { animation: rx-swap-left 2.8s ease-in-out infinite; }
+.rx-swap-right { animation: rx-swap-right 2.8s ease-in-out infinite; }
+.rx-collide-left { animation: rx-collide-left 2.4s ease-in-out infinite; }
+.rx-collide-right { animation: rx-collide-right 2.4s ease-in-out infinite; }
+.rx-electron { animation: rx-electron 2.4s ease-in-out infinite; }
+.rx-metal-bounce { animation: rx-metal-bounce 2.8s ease-in-out infinite; }
+.rx-salt-idle { animation: rx-salt-idle 2.8s ease-in-out infinite; }
+.rx-metal-approach { animation: rx-metal-approach 2.8s ease-in-out infinite; }
+.rx-kicked-out { animation: rx-kicked-out 2.8s ease-in-out infinite; }
+.rx-final-metal { animation: rx-final-metal 2.8s ease-in-out infinite; }
+.rx-bond-show { animation: rx-bond-show 2.8s ease-in-out infinite; }

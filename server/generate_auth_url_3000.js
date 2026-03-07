@@ -18,7 +18,7 @@ async function generateUrl() {
         const oauth2Client = new google.auth.OAuth2(
             key.client_id,
             key.client_secret,
-            'http://localhost:3000' // UPDATED to port 3000
+            process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000'
         );
 
         const authUrl = oauth2Client.generateAuthUrl({
